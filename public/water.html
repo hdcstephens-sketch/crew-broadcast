@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>CREW Broadcast - Water Spotter</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .water-shell {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 22px 16px 32px;
+    }
+
+    .water-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .water-brand {
+      display: grid;
+      gap: 6px;
+    }
+
+    .water-brand h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 0.96;
+    }
+
+    .water-brand p {
+      max-width: 560px;
+      color: var(--text2);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .water-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .water-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .water-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 22%), var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 18px 46px rgba(0,0,0,0.24);
+    }
+
+    .water-card.hero-card {
+      overflow: hidden;
+      position: relative;
+    }
+
+    .water-card.hero-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 14% 18%, rgba(0,72,48,0.22), transparent 24%),
+        linear-gradient(135deg, rgba(255,255,255,0.03), transparent 52%);
+      pointer-events: none;
+    }
+
+    .hero-copy,
+    .hero-pills,
+    .rate-panel,
+    .tap-card > * {
+      position: relative;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 8px;
+    }
+
+    .hero-copy h2,
+    .tap-head h3 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 25px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .hero-copy p,
+    .tap-head p,
+    .helper-copy {
+      margin-top: 6px;
+      color: var(--text2);
+      font-size: 12.5px;
+      line-height: 1.6;
+    }
+
+    .hero-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,0.04);
+      color: var(--text2);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .hero-pill.ok {
+      color: var(--green);
+      border-color: rgba(34,197,94,0.22);
+      background: rgba(34,197,94,0.08);
+    }
+
+    .hero-pill.live {
+      color: var(--accent);
+      border-color: rgba(0,72,48,0.32);
+      background: rgba(0,72,48,0.12);
+    }
+
+    .rate-panel {
+      display: grid;
+      gap: 16px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .live-toggle-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,0.03);
+      min-width: 150px;
+      justify-content: space-between;
+    }
+
+    .live-toggle-card strong {
+      display: block;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .live-toggle-card span {
+      display: block;
+      margin-top: 2px;
+      font-size: 10px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .rate-stage {
+      padding: 18px;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(0,72,48,0.2), transparent 22%),
+        rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .rate-stage-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .rate-stage-head .helper-copy {
+      margin-top: 0;
+    }
+
+    .big-rate-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .big-rate {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(96px, 26vw, 190px);
+      font-weight: 700;
+      line-height: 0.84;
+      color: var(--white);
+      text-shadow: 0 16px 38px rgba(0,0,0,0.22);
+    }
+
+    .big-rate-unit {
+      padding-bottom: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .rate-tools {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 180px;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .step-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .step-btn {
+      min-height: 62px;
+      border-radius: 14px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .send-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .rate-chip {
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,0.03);
+      color: var(--text2);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.16s;
+    }
+
+    .rate-chip:hover {
+      color: var(--text);
+      border-color: var(--accent-soft);
+    }
+
+    .tap-card {
+      display: grid;
+      gap: 16px;
+    }
+
+    .tap-stage {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,0.03);
+      text-align: center;
+    }
+
+    .tap-button {
+      width: 100%;
+      min-height: 170px;
+      border-radius: 24px;
+      border: 1px solid rgba(0,72,48,0.35);
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255,255,255,0.08), transparent 36%),
+        linear-gradient(135deg, rgba(0,72,48,0.92), rgba(10,103,74,0.92));
+      color: var(--white);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(28px, 8vw, 44px);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      box-shadow: 0 20px 44px rgba(0,72,48,0.32);
+      cursor: pointer;
+      transition: transform 0.08s ease, filter 0.16s ease;
+    }
+
+    .tap-button:active {
+      transform: scale(0.985);
+      filter: brightness(1.05);
+    }
+
+    .tap-estimate {
+      margin-top: 14px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 54px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .tap-meta {
+      margin-top: 6px;
+      color: var(--text2);
+      font-size: 12px;
+    }
+
+    .tap-actions,
+    .field-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--text3);
+      font-size: 11px;
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+
+    @media (max-width: 860px) {
+      .water-grid,
+      .rate-tools {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .water-shell {
+        padding: 18px 12px 28px;
+      }
+
+      .water-brand h1 {
+        font-size: 30px;
+      }
+
+      .field-grid,
+      .step-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tap-button {
+        min-height: 148px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="water-shell">
+  <div class="water-top">
+    <div class="water-brand">
+      <div class="eyebrow">Brooks Crew Cast</div>
+      <h1>Water Spotter</h1>
+      <p>Enter the leading boat's stroke rate live from a phone or launch. Tap every stroke for an instant estimate, or nudge the number and push it straight into the overlay.</p>
+    </div>
+    <div class="water-actions">
+      <div class="status" id="connSt"><div class="status-dot"></div> Connecting...</div>
+      <a class="btn btn-ghost btn-sm" href="/control.html">Back To Control</a>
+      <button class="btn btn-danger btn-sm" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="water-grid">
+    <div class="water-card hero-card">
+      <div class="hero-copy">
+        <div class="eyebrow">Live Overlay Feed</div>
+        <h2>Leading Boat SPM</h2>
+        <p>The same `strokeRate` graphic used in the main overlay is updated here. If the graphic is already active in control, this page will keep it in sync. If not, you can turn it on from here before sending the next value.</p>
+      </div>
+      <div class="hero-pills">
+        <div class="hero-pill" id="liveBadge">Overlay hidden</div>
+        <div class="hero-pill" id="sentBadge">No update sent yet</div>
+        <div class="hero-pill" id="autoBadge">Auto-send on</div>
+      </div>
+    </div>
+
+    <div class="water-card tap-card">
+      <div class="tap-head">
+        <div class="eyebrow">Tap To Rate</div>
+        <h3>Measure From The Water</h3>
+        <p>Tap once per stroke for the current leader. After a few taps, the page estimates the SPM and can send it live automatically.</p>
+      </div>
+      <div class="tap-stage">
+        <button class="tap-button" onclick="tapStroke()">Tap Each Stroke</button>
+        <div class="tap-estimate" id="tapEstimate">--</div>
+        <div class="tap-meta" id="tapMeta">Need at least 4 taps for a stable estimate.</div>
+      </div>
+      <div class="tap-actions">
+        <button class="btn btn-ghost btn-sm" onclick="clearTaps()">Clear Taps</button>
+        <button class="btn btn-primary btn-sm" onclick="sendStrokeRate()">Send Current Rate</button>
+      </div>
+    </div>
+
+    <div class="water-card">
+      <div class="rate-panel">
+        <div class="field-grid">
+          <div>
+            <div class="label">Overlay Label</div>
+            <input class="input" id="leaderLabel" type="text" placeholder="Leading Boat">
+          </div>
+          <div class="live-toggle-card">
+            <div>
+              <strong>Graphic Live</strong>
+              <span id="liveText">Off</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="visToggle" onchange="toggleLive(this.checked)">
+              <div class="toggle-bg"></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="rate-stage">
+          <div class="rate-stage-head">
+            <div>
+              <div class="eyebrow" style="margin-bottom:4px;">Current Rate</div>
+              <div class="helper-copy">Use the large step buttons for quick race-to-race changes, or type a value directly.</div>
+            </div>
+            <label class="hero-pill" style="cursor:pointer;">
+              <input type="checkbox" id="autoSendToggle" checked onchange="updateAutoBadge()" style="accent-color: var(--accent);">
+              Auto-send changes
+            </label>
+          </div>
+
+          <div class="big-rate-row">
+            <div class="big-rate" id="liveRate">36</div>
+            <div class="big-rate-unit">SPM</div>
+          </div>
+
+          <div class="rate-tools">
+            <div>
+              <div class="label">Manual SPM</div>
+              <input class="input" id="spmInput" type="number" min="10" max="60" value="36" inputmode="numeric" oninput="syncManualRate()">
+            </div>
+            <div class="send-stack">
+              <button class="btn btn-primary btn-full" onclick="sendStrokeRate()">Push To Overlay</button>
+              <button class="btn btn-ghost btn-full" onclick="toggleLive(!document.getElementById('visToggle').checked)">Toggle Graphic</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-grid">
+          <button class="btn btn-ghost step-btn" onclick="nudgeSpm(-2)">-2</button>
+          <button class="btn btn-ghost step-btn" onclick="nudgeSpm(-1)">-1</button>
+          <button class="btn btn-ghost step-btn" onclick="nudgeSpm(1)">+1</button>
+          <button class="btn btn-ghost step-btn" onclick="nudgeSpm(2)">+2</button>
+        </div>
+
+        <div>
+          <div class="label">Quick Rates</div>
+          <div class="chip-row">
+            <button class="rate-chip" onclick="setRate(32)">32</button>
+            <button class="rate-chip" onclick="setRate(34)">34</button>
+            <button class="rate-chip" onclick="setRate(36)">36</button>
+            <button class="rate-chip" onclick="setRate(38)">38</button>
+            <button class="rate-chip" onclick="setRate(40)">40</button>
+            <button class="rate-chip" onclick="setRate(42)">42</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">Open this page directly on a phone with <strong>/water.html</strong>. If you are prompted to sign in, the app will return you here automatically.</div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+const token = localStorage.getItem('crew_token');
+const user = JSON.parse(localStorage.getItem('crew_user') || 'null');
+
+if (!token || !user) {
+  location.href = `/?next=${encodeURIComponent(location.pathname + location.search)}`;
+}
+
+let ws;
+let strokeRate = {
+  active: false,
+  value: 36,
+  label: 'Leading Boat'
+};
+let tapTimes = [];
+let lastSentAt = null;
+
+function signOut() {
+  localStorage.clear();
+  location.href = '/';
+}
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' }));
+  };
+  ws.onclose = () => {
+    setStatus(false);
+    setTimeout(connect, 2500);
+  };
+  ws.onmessage = event => onMessage(JSON.parse(event.data));
+}
+
+function onMessage(message) {
+  if (message.type === 'auth-ok') {
+    setStatus(true);
+    toast('Water spotter linked', 'ok');
+  }
+
+  if (message.type === 'auth-fail') {
+    signOut();
+  }
+
+  if (message.type === 'state' && message.overlayState?.strokeRate) {
+    applyStrokeRate(message.overlayState.strokeRate);
+  }
+
+  if (message.type === 'update' && message.element === 'strokeRate') {
+    applyStrokeRate({ ...strokeRate, ...message.data });
+  }
+
+  if (message.type === 'toggle' && message.element === 'strokeRate') {
+    applyStrokeRate({ ...strokeRate, active: !!message.active });
+  }
+}
+
+function setStatus(ok) {
+  const el = document.getElementById('connSt');
+  el.className = `status ${ok ? 'live' : 'err'}`;
+  el.innerHTML = `<div class="status-dot"></div> ${ok ? 'Connected' : 'Reconnecting...'}`;
+}
+
+function send(payload, options = {}) {
+  if (ws?.readyState !== 1) {
+    if (!options.silent) {
+      toast('Not connected yet', 'err');
+    }
+    return false;
+  }
+  ws.send(JSON.stringify(payload));
+  return true;
+}
+
+function clampSpm(value) {
+  const numeric = Math.round(Number(value) || 0);
+  if (!numeric) return 0;
+  return Math.min(60, Math.max(10, numeric));
+}
+
+function applyStrokeRate(nextState) {
+  strokeRate = {
+    ...strokeRate,
+    ...nextState
+  };
+  renderState();
+}
+
+function renderState() {
+  const safeValue = clampSpm(strokeRate.value) || 36;
+  const labelInput = document.getElementById('leaderLabel');
+  const spmInput = document.getElementById('spmInput');
+
+  if (document.activeElement !== labelInput) {
+    labelInput.value = strokeRate.label || 'Leading Boat';
+  }
+
+  if (document.activeElement !== spmInput) {
+    spmInput.value = safeValue;
+  }
+
+  document.getElementById('liveRate').textContent = safeValue;
+  document.getElementById('visToggle').checked = !!strokeRate.active;
+  document.getElementById('liveText').textContent = strokeRate.active ? 'On Air' : 'Off';
+
+  const liveBadge = document.getElementById('liveBadge');
+  liveBadge.textContent = strokeRate.active ? 'Overlay live' : 'Overlay hidden';
+  liveBadge.className = `hero-pill ${strokeRate.active ? 'live' : ''}`;
+
+  updateAutoBadge();
+  updateSentBadge();
+}
+
+function updateAutoBadge() {
+  const auto = document.getElementById('autoSendToggle').checked;
+  const badge = document.getElementById('autoBadge');
+  badge.textContent = auto ? 'Auto-send on' : 'Auto-send off';
+  badge.className = `hero-pill ${auto ? 'ok' : ''}`;
+}
+
+function updateSentBadge() {
+  const badge = document.getElementById('sentBadge');
+  if (!lastSentAt) {
+    badge.textContent = 'No update sent yet';
+    badge.className = 'hero-pill';
+    return;
+  }
+
+  const seconds = Math.max(0, Math.floor((Date.now() - lastSentAt) / 1000));
+  badge.textContent = seconds < 2 ? 'Sent just now' : `Sent ${seconds}s ago`;
+  badge.className = 'hero-pill ok';
+}
+
+function syncManualRate() {
+  const rate = clampSpm(document.getElementById('spmInput').value || strokeRate.value) || 36;
+  document.getElementById('liveRate').textContent = rate;
+  if (document.getElementById('autoSendToggle').checked) {
+    sendStrokeRate(true);
+  }
+}
+
+function setRate(value) {
+  document.getElementById('spmInput').value = clampSpm(value);
+  document.getElementById('liveRate').textContent = clampSpm(value);
+  if (document.getElementById('autoSendToggle').checked) {
+    sendStrokeRate(true);
+  }
+}
+
+function nudgeSpm(delta) {
+  const current = clampSpm(document.getElementById('spmInput').value || strokeRate.value || 36) || 36;
+  const next = clampSpm(current + delta) || current;
+  document.getElementById('spmInput').value = next;
+  document.getElementById('liveRate').textContent = next;
+  if (document.getElementById('autoSendToggle').checked) {
+    sendStrokeRate(true);
+  }
+}
+
+function toggleLive(active) {
+  strokeRate.active = !!active;
+  renderState();
+  if (send({ type: 'toggle', element: 'strokeRate', active: !!active })) {
+    toast(active ? 'Stroke-rate graphic live' : 'Stroke-rate graphic hidden', 'ok');
+    vibrate(16);
+  }
+}
+
+function sendStrokeRate(silent) {
+  const value = clampSpm(document.getElementById('spmInput').value || strokeRate.value);
+  if (!value) {
+    if (!silent) toast('Enter a valid SPM', 'err');
+    return;
+  }
+
+  const label = document.getElementById('leaderLabel').value.trim() || 'Leading Boat';
+  strokeRate.value = value;
+  strokeRate.label = label;
+  renderState();
+
+  const sent = send({
+    type: 'update',
+    element: 'strokeRate',
+    data: {
+      value,
+      label
+    }
+  }, { silent: !!silent });
+
+  if (!sent) return;
+
+  send({
+    type: 'toggle',
+    element: 'strokeRate',
+    active: document.getElementById('visToggle').checked
+  }, { silent: !!silent });
+
+  lastSentAt = Date.now();
+  updateSentBadge();
+  if (!silent) toast(`Sent ${value} spm`, 'ok');
+  vibrate(20);
+}
+
+function tapStroke() {
+  const now = Date.now();
+  tapTimes.push(now);
+  if (tapTimes.length > 8) tapTimes.shift();
+
+  if (tapTimes.length < 2) {
+    document.getElementById('tapEstimate').textContent = '--';
+    document.getElementById('tapMeta').textContent = `${tapTimes.length} tap${tapTimes.length === 1 ? '' : 's'} recorded`;
+    vibrate(10);
+    return;
+  }
+
+  const intervals = [];
+  for (let i = 1; i < tapTimes.length; i += 1) {
+    intervals.push(tapTimes[i] - tapTimes[i - 1]);
+  }
+
+  const avgInterval = intervals.reduce((sum, value) => sum + value, 0) / intervals.length;
+  const estimate = clampSpm(60000 / avgInterval);
+
+  document.getElementById('tapEstimate').textContent = estimate || '--';
+  document.getElementById('tapMeta').textContent = `${tapTimes.length} taps | avg ${(avgInterval / 1000).toFixed(2)} sec/stroke`;
+  if (estimate) {
+    document.getElementById('spmInput').value = estimate;
+    document.getElementById('liveRate').textContent = estimate;
+    if (tapTimes.length >= 4 && document.getElementById('autoSendToggle').checked) {
+      sendStrokeRate(true);
+    }
+  }
+
+  vibrate(10);
+}
+
+function clearTaps() {
+  tapTimes = [];
+  document.getElementById('tapEstimate').textContent = '--';
+  document.getElementById('tapMeta').textContent = 'Need at least 4 taps for a stable estimate.';
+  toast('Tap history cleared', 'ok');
+}
+
+function vibrate(duration) {
+  if (navigator.vibrate) navigator.vibrate(duration);
+}
+
+function toast(message, type) {
+  const el = document.createElement('div');
+  el.className = `toast ${type || ''}`;
+  el.textContent = message;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 2200);
+}
+
+setInterval(updateSentBadge, 1000);
+connect();
+renderState();
+</script>
+</body>
+</html>

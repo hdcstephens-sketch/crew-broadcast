@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CREW Broadcast - Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg:#050807; --card:#0F1D17; --gold:#004830; --text:#FFFFFF; --text2:rgba(255,255,255,0.72); --text3:rgba(255,255,255,0.38); --line:rgba(255,255,255,0.06); --line2:rgba(255,255,255,0.12); --red:#F87171; }
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+    .page {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 60%, rgba(0,72,48,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 70% at 85% 30%, rgba(255,255,255,0.06) 0%, transparent 60%),
+        var(--bg);
+    }
+
+    .panel { width: 100%; max-width: 400px; }
+
+    .logo { text-align: center; margin-bottom: 32px; }
+    .logo-icon { width: 54px; height: 54px; background: var(--gold); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-family: 'Rajdhani', sans-serif; font-size: 30px; font-weight: 700; margin-bottom: 14px; box-shadow: 0 8px 28px rgba(0,72,48,0.35); }
+    .logo-name { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.09em; }
+    .logo-sub  { font-size: 12px; color: var(--text2); margin-top: 5px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 32px 28px;
+    }
+
+    .card h2 { font-size: 17px; font-weight: 700; margin-bottom: 5px; }
+    .card .hint { font-size: 12.5px; color: var(--text2); margin-bottom: 26px; }
+
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+
+    .input-wrap { position: relative; }
+    .input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none; }
+    input {
+      width: 100%;
+      background: #0A120E;
+      border: 1px solid var(--line2);
+      border-radius: 8px;
+      padding: 11px 12px 11px 38px;
+      color: var(--text); font-size: 14px; font-family: inherit;
+      outline: none; transition: 0.15s;
+    }
+    input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(240,180,41,0.1); }
+    input::placeholder { color: var(--text3); }
+
+    .err {
+      display: none;
+      background: rgba(248,113,113,0.08);
+      border: 1px solid rgba(248,113,113,0.2);
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 13px; color: var(--red);
+      margin-bottom: 16px;
+      align-items: center; gap: 8px;
+    }
+    .err.show { display: flex; }
+
+    .btn-submit {
+      width: 100%; padding: 12px;
+      background: var(--gold); color: #FFFFFF;
+      border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 800;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.05em; cursor: pointer;
+      transition: 0.15s; margin-top: 4px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit:hover { filter: brightness(1.1); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+
+    .spin { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.25); border-top-color: #FFFFFF; border-radius: 50%; animation: sp 0.7s linear infinite; display: none; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+
+    .footer { text-align: center; margin-top: 18px; font-size: 11.5px; color: var(--text3); }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="panel">
+
+    <div class="logo">
+      <div class="logo-icon">B</div>
+      <div class="logo-name">BROOKS CREW CAST</div>
+      <div class="logo-sub">Brooks School Athletic Media</div>
+    </div>
+
+    <div class="card">
+      <h2>Sign in</h2>
+      <p class="hint">Coaches and broadcast staff only.</p>
+
+      <div class="err" id="err"><span>⚠</span><span id="errMsg">Invalid credentials.</span></div>
+
+      <form id="form">
+        <div class="field">
+          <label>Username</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" id="user" placeholder="Enter username" autocomplete="username" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="pass" placeholder="Enter password" autocomplete="current-password" required>
+          </div>
+        </div>
+        <button type="submit" id="btn" class="btn-submit">
+          <div class="spin" id="spin"></div>
+          <span id="btnTxt">SIGN IN</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="footer">coach / crew2024 &nbsp;·&nbsp; admin / admin123 &nbsp;·&nbsp; staff / staff456</div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const getNextPath = () => {
+      const next = new URLSearchParams(location.search).get('next');
+      if (!next || !next.startsWith('/') || next.startsWith('//')) return '/control.html';
+      return next;
+    };
+
+    const t = localStorage.getItem('crew_token');
+    if (t) {
+      try {
+        const p = JSON.parse(atob(t.split('.')[1]));
+        if (p.exp > Date.now() / 1000) {
+          location.href = getNextPath();
+        }
+      } catch {}
+    }
+
+    const form = document.getElementById('form');
+    const btn  = document.getElementById('btn');
+    const spin = document.getElementById('spin');
+    const txt  = document.getElementById('btnTxt');
+    const err  = document.getElementById('err');
+    const errM = document.getElementById('errMsg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.classList.remove('show');
+      btn.disabled = true;
+      spin.style.display = 'block';
+      txt.textContent = 'Signing in…';
+
+      try {
+        const res  = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: document.getElementById('user').value.trim(), password: document.getElementById('pass').value }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+        localStorage.setItem('crew_token', data.token);
+        localStorage.setItem('crew_user',  JSON.stringify(data.user));
+        txt.textContent = '✓ Welcome';
+        setTimeout(() => {
+          location.href = getNextPath();
+        }, 350);
+      } catch(ex) {
+        errM.textContent = ex.message;
+        err.classList.add('show');
+        btn.disabled = false;
+        spin.style.display = 'none';
+        txt.textContent = 'SIGN IN';
+        document.getElementById('pass').value = '';
+        document.getElementById('pass').focus();
+      }
+    });
+  })();
+</script>
+</body>
+</html>

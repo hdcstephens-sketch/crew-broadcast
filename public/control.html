@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CREW Broadcast - Overlay Control</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .preset-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; margin-bottom: 12px; }
+    .preset-checks label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); cursor: pointer; }
+    .preset-checks input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; }
+
+    .team-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 16px; margin-bottom: 20px; }
+    .team-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+    .team-list { display: grid; gap: 8px; max-height: 420px; overflow: auto; }
+    .team-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line2);
+      border-radius: var(--r-sm);
+      background: var(--surface);
+      cursor: pointer;
+      transition: 0.16s;
+    }
+    .team-item:hover { border-color: var(--accent-soft); }
+    .team-item.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(0, 72, 48, 0.35); }
+    .team-chip {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line2);
+      background: var(--card2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+    .team-chip img { width: 100%; height: 100%; object-fit: cover; }
+    .team-copy { min-width: 0; flex: 1; }
+    .team-copy strong { display: block; font-size: 13px; color: var(--text); }
+    .team-copy span { display: block; font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .team-swatch-row { display: flex; gap: 6px; align-items: center; }
+    .team-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .asset-uploader {
+      width: 74px;
+      height: 74px;
+      border-radius: 14px;
+      border: 1px dashed var(--line2);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+      color: var(--text2);
+      font-size: 24px;
+    }
+    .asset-uploader img { width: 100%; height: 100%; object-fit: contain; background: rgba(255,255,255,0.02); }
+    .asset-uploader input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .asset-upload-wrap { display: flex; align-items: center; gap: 12px; }
+    .asset-upload-copy { font-size: 11px; color: var(--text2); }
+
+    .component-shell { margin-bottom: 20px; padding: 0; overflow: hidden; }
+    .lane-row,
+    .brand-row {
+      display: grid;
+      grid-template-columns: 42px minmax(140px, 0.9fr) minmax(120px, 0.9fr) 44px 44px;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .lane-row .lane-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text2);
+      text-align: center;
+    }
+    .brand-row {
+      grid-template-columns: minmax(180px, 1fr) 72px 120px;
+    }
+    .brand-row .input,
+    .lane-row .input,
+    .lane-row select,
+    .brand-row select {
+      min-width: 0;
+    }
+    .lane-row select,
+    .brand-row select,
+    .select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--line2);
+      border-radius: var(--r-sm);
+      padding: 8px 11px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    .lane-row select:focus,
+    .brand-row select:focus,
+    .select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+
+    .mini-upload {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--line2);
+      background: var(--card2);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text2);
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .mini-upload img { width: 100%; height: 100%; object-fit: contain; }
+    .mini-upload input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+    .results-note,
+    .editor-note {
+      font-size: 11px;
+      color: var(--text2);
+      margin-bottom: 8px;
+    }
+    .editor-note strong { color: var(--text); }
+
+    .countdown-line,
+    .timer-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .countdown-num,
+    .timer-num {
+      min-width: 128px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+    }
+
+    .component-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .sub-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .sub-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .empty-copy {
+      padding: 16px;
+      border-radius: var(--r-sm);
+      border: 1px dashed var(--line2);
+      color: var(--text2);
+      font-size: 12px;
+      text-align: center;
+      background: rgba(255,255,255,0.02);
+    }
+
+    @media (max-width: 1180px) {
+      .team-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 860px) {
+      .preset-checks,
+      .team-form-grid,
+      .sub-grid-2,
+      .sub-grid-3 { grid-template-columns: 1fr; }
+
+      .lane-row {
+        grid-template-columns: 36px 1fr;
+      }
+
+      .lane-row .lane-label { grid-row: span 2; align-self: start; padding-top: 10px; }
+
+      .brand-row {
+        grid-template-columns: 1fr 72px 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">B</div>
+      <div class="brand-text">
+        <div class="brand-name">BROOKS CREW CAST</div>
+        <div class="brand-sub">Broadcast Control</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Pages</div>
+      <a class="nav-item active" href="/control.html"><span class="ni">Live</span> Overlay Control</a>
+      <a class="nav-item" href="/design.html"><span class="ni">UI</span> Design Studio</a>
+      <a class="nav-item" href="/audio.html"><span class="ni">Mic</span> Audio Commentary</a>
+      <a class="nav-item" href="/water.html"><span class="ni">SPM</span> Water Spotter</a>
+      <div class="nav-label">OBS</div>
+      <a class="nav-item" href="/overlay.html" target="_blank"><span class="ni">OBS</span> Overlay Source <span class="nav-ext">↗</span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="user-row">
+        <div class="user-av" id="uAv">-</div>
+        <div>
+          <div class="user-name" id="uName">-</div>
+          <div class="user-role" id="uRole">-</div>
+        </div>
+      </div>
+      <button class="nav-item btn-danger" onclick="signOut()"><span class="ni">Out</span> Sign Out</button>
+      <div class="smedia-brand">
+        <span class="smedia-brand-txt">Brooks School Crew Broadcast</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Overlay Control</h1>
+        <div class="sub">Live race graphics, team presets, logo packages, and direct handoff into the design studio</div>
+      </div>
+      <div class="flex gap-10">
+        <div class="status" id="connSt"><div class="status-dot"></div> Connecting...</div>
+        <a class="btn btn-ghost btn-sm" href="/water.html">Water Spotter</a>
+        <a class="btn btn-ghost btn-sm" href="/design.html">Design Studio</a>
+        <a class="btn btn-ghost btn-sm" href="/overlay.html" target="_blank">Open Overlay</a>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div class="section">Quick Presets</div>
+      <div class="flex gap-8" style="flex-wrap:wrap; margin-bottom:10px;">
+        <button class="btn btn-ghost" onclick="preset('pre-race')">Pre-Race</button>
+        <button class="btn btn-ghost" onclick="preset('race-start')">Race Start</button>
+        <button class="btn btn-ghost" onclick="preset('race-running')">Race Running</button>
+        <button class="btn btn-ghost" onclick="preset('finish')">Finish</button>
+        <button class="btn btn-ghost" onclick="preset('post-race')">Post-Race</button>
+        <button class="btn btn-danger" onclick="preset('clear')">Clear All</button>
+      </div>
+
+      <div class="section">Preset Builder</div>
+      <div class="card" style="padding:0; overflow:hidden; margin-bottom:20px;">
+        <div id="presetEditorRows"></div>
+      </div>
+
+      <div class="section">Team Preset Library</div>
+      <div class="team-grid">
+        <div class="card">
+          <div class="card-title">Saved Team</div>
+          <div class="team-form-grid">
+            <div>
+              <div class="label">School Name</div>
+              <input class="input" id="teamName" type="text" placeholder="Brooks School">
+            </div>
+            <div>
+              <div class="label">Short Name</div>
+              <input class="input" id="teamShortName" type="text" placeholder="Brooks">
+            </div>
+            <div>
+              <div class="label">Primary Color</div>
+              <input class="input" id="teamPrimary" type="color" value="#004830" style="height:42px; padding:6px;">
+            </div>
+            <div>
+              <div class="label">Secondary Color</div>
+              <input class="input" id="teamSecondary" type="color" value="#000000" style="height:42px; padding:6px;">
+            </div>
+            <div>
+              <div class="label">Text Color</div>
+              <input class="input" id="teamTextColor" type="color" value="#FFFFFF" style="height:42px; padding:6px;">
+            </div>
+          </div>
+
+          <div class="asset-upload-wrap mt-16">
+            <label class="asset-uploader" id="teamLogoBox">
+              <span id="teamLogoFallback">+</span>
+              <input type="file" accept="image/*" onchange="teamLogoChange(this)">
+            </label>
+            <div class="asset-upload-copy">
+              Upload a school logo once, then re-use it in lane presets, school logo strips, and results.
+            </div>
+          </div>
+
+          <div class="component-actions mt-16">
+            <button class="btn btn-primary btn-sm" onclick="saveTeamPreset()">Save Team Preset</button>
+            <button class="btn btn-ghost btn-sm" onclick="newTeamPreset()">New Preset</button>
+            <button class="btn btn-danger btn-sm" id="deleteTeamBtn" onclick="deleteTeamPreset()" disabled>Delete</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Library</div>
+          <div class="team-list" id="teamPresetList"></div>
+        </div>
+      </div>
+
+      <div class="section">Live Components</div>
+      <div class="card component-shell">
+        <div class="el-row" id="row-eventHeader" onclick="toggleSub('eventHeader')">
+          <div class="el-icon">EV</div>
+          <div class="el-info">
+            <div class="el-name">Event Header</div>
+            <div class="el-desc">Race title and subtitle banner</div>
+          </div>
+          <span class="el-status" id="st-eventHeader">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-eventHeader" onchange="tog('eventHeader', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-eventHeader">
+          <div class="sub-grid-2" style="margin-bottom:10px;">
+            <div>
+              <div class="label">Race Title</div>
+              <input type="text" class="input" id="evTitle" placeholder="Men's Varsity 8+ - Finals">
+            </div>
+            <div>
+              <div class="label">Subtitle</div>
+              <input type="text" class="input" id="evSub" placeholder="Spring Invitational 2026">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="pushEvent()">Apply Event Header</button>
+        </div>
+
+        <div class="el-row" id="row-timer" onclick="toggleSub('timer')">
+          <div class="el-icon">TM</div>
+          <div class="el-info">
+            <div class="el-name">Race Timer</div>
+            <div class="el-desc">Turn the timer on and control it live</div>
+          </div>
+          <span class="el-status" id="st-timer">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-timer" onchange="tog('timer', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-timer">
+          <div class="timer-line">
+            <div class="timer-num" id="timerDisp">00:00.0</div>
+            <div class="component-actions">
+              <button class="btn btn-success btn-sm" id="tStart" onclick="tStart()">Start</button>
+              <button class="btn btn-ghost btn-sm" id="tStop" onclick="tStop()" disabled>Stop</button>
+              <button class="btn btn-ghost btn-sm" onclick="tReset()">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="el-row" id="row-countdown" onclick="toggleSub('countdown')">
+          <div class="el-icon">CD</div>
+          <div class="el-info">
+            <div class="el-name">Race Countdown</div>
+            <div class="el-desc">Pre-start countdown with transition in/out</div>
+          </div>
+          <span class="el-status" id="st-countdown">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-countdown" onchange="tog('countdown', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-countdown">
+          <div class="countdown-line">
+            <div class="countdown-num" id="countdownDisp">5:00</div>
+            <div style="width:120px;">
+              <div class="label">Duration (sec)</div>
+              <input type="number" class="input" id="countdownDur" min="5" value="300">
+            </div>
+            <div class="component-actions" style="align-self:flex-end;">
+              <button class="btn btn-success btn-sm" id="cStart" onclick="cStart()">Start</button>
+              <button class="btn btn-ghost btn-sm" id="cStop" onclick="cStop()" disabled>Stop</button>
+              <button class="btn btn-ghost btn-sm" onclick="cReset()">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="el-row" id="row-lanes" onclick="toggleSub('lanes')">
+          <div class="el-icon">LN</div>
+          <div class="el-info">
+            <div class="el-name">Lane Assignments</div>
+            <div class="el-desc">Apply saved team presets, colors, and logos per lane</div>
+          </div>
+          <span class="el-status" id="st-lanes">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-lanes" onchange="tog('lanes', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-lanes">
+          <div class="editor-note">Pick a saved team preset or override the school name, lane color, and logo manually.</div>
+          <div id="lanesEd"></div>
+          <div class="component-actions mt-12">
+            <button class="btn btn-ghost btn-sm" onclick="addLane()">Add Lane</button>
+            <button class="btn btn-primary btn-sm" onclick="pushLanes()">Push Lanes</button>
+          </div>
+        </div>
+
+        <div class="el-row" id="row-schoolLogos" onclick="toggleSub('schoolLogos')">
+          <div class="el-icon">SC</div>
+          <div class="el-info">
+            <div class="el-name">School Logo Strip</div>
+            <div class="el-desc">Upload or pull logos from the current lanes</div>
+          </div>
+          <span class="el-status" id="st-schoolLogos">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-schoolLogos" onchange="tog('schoolLogos', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-schoolLogos">
+          <div class="sub-grid-2" style="margin-bottom:10px;">
+            <div>
+              <div class="label">Section Title</div>
+              <input type="text" class="input" id="schoolLogosTitle" placeholder="Schools">
+            </div>
+          </div>
+          <div id="schoolLogosEd"></div>
+          <div class="component-actions mt-12">
+            <button class="btn btn-ghost btn-sm" onclick="loadSchoolLogosFromLanes()">Load Current Lanes</button>
+            <button class="btn btn-ghost btn-sm" onclick="addBrandItem('schoolLogos')">Add Logo</button>
+            <button class="btn btn-primary btn-sm" onclick="pushBrandCollection('schoolLogos')">Push School Logos</button>
+          </div>
+        </div>
+
+        <div class="el-row" id="row-sponsorLogos" onclick="toggleSub('sponsorLogos')">
+          <div class="el-icon">SP</div>
+          <div class="el-info">
+            <div class="el-name">Sponsor Logo Strip</div>
+            <div class="el-desc">Dedicated sponsor area for the live overlay</div>
+          </div>
+          <span class="el-status" id="st-sponsorLogos">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-sponsorLogos" onchange="tog('sponsorLogos', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-sponsorLogos">
+          <div class="sub-grid-2" style="margin-bottom:10px;">
+            <div>
+              <div class="label">Section Title</div>
+              <input type="text" class="input" id="sponsorLogosTitle" placeholder="Presented By">
+            </div>
+          </div>
+          <div id="sponsorLogosEd"></div>
+          <div class="component-actions mt-12">
+            <button class="btn btn-ghost btn-sm" onclick="addBrandItem('sponsorLogos')">Add Logo</button>
+            <button class="btn btn-primary btn-sm" onclick="pushBrandCollection('sponsorLogos')">Push Sponsor Logos</button>
+          </div>
+        </div>
+
+        <div class="el-row" id="row-results" onclick="toggleSub('results')">
+          <div class="el-icon">RS</div>
+          <div class="el-info">
+            <div class="el-name">Leaderboard</div>
+            <div class="el-desc">Results and finish times with auto-linked team logos</div>
+          </div>
+          <span class="el-status" id="st-results">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-results" onchange="tog('results', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-results">
+          <div class="results-note">Matching team presets and lane logos will be used automatically when possible.</div>
+          <table class="tbl" id="resTbl">
+            <thead>
+              <tr><th>#</th><th>School</th><th>Time</th><th>Gap</th><th>Lane</th></tr>
+            </thead>
+            <tbody id="resBdy"></tbody>
+          </table>
+          <div class="component-actions mt-12">
+            <button class="btn btn-ghost btn-sm" onclick="addRow()">Add Row</button>
+            <button class="btn btn-primary btn-sm" onclick="pushResults()">Push Results</button>
+          </div>
+        </div>
+
+        <div class="el-row" id="row-strokeRate" onclick="toggleSub('strokeRate')">
+          <div class="el-icon">SR</div>
+          <div class="el-info">
+            <div class="el-name">Stroke Rate</div>
+            <div class="el-desc">Live SPM callout</div>
+          </div>
+          <span class="el-status" id="st-strokeRate">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-strokeRate" onchange="tog('strokeRate', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-strokeRate">
+          <div class="editor-note"><strong>On the launch?</strong> Open <a href="/water.html" style="color:var(--gray);">Water Spotter</a> for quick phone-based SPM updates.</div>
+          <div class="sub-grid-3" style="margin-bottom:10px;">
+            <div>
+              <div class="label">SPM</div>
+              <input type="number" class="input" id="spmVal" min="10" max="60" placeholder="36">
+            </div>
+            <div style="grid-column: span 2;">
+              <div class="label">Label</div>
+              <input type="text" class="input" id="spmLbl" placeholder="Leading Boat">
+            </div>
+          </div>
+          <div class="component-actions">
+            <button class="btn btn-ghost btn-sm" onclick="nudgeSpm(-1)">-1</button>
+            <button class="btn btn-ghost btn-sm" onclick="nudgeSpm(1)">+1</button>
+            <button class="btn btn-primary btn-sm" onclick="pushSpm()">Push Stroke Rate</button>
+            <a class="btn btn-ghost btn-sm" href="/water.html">Open Water Spotter</a>
+          </div>
+        </div>
+
+        <div class="el-row" id="row-distance" onclick="toggleSub('distance')">
+          <div class="el-icon">DS</div>
+          <div class="el-info">
+            <div class="el-name">Distance Tracker</div>
+            <div class="el-desc">Progress bar for race distance</div>
+          </div>
+          <span class="el-status" id="st-distance">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-distance" onchange="tog('distance', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-distance">
+          <div class="sub-grid-2" style="margin-bottom:10px;">
+            <div>
+              <div class="label">Covered (m)</div>
+              <input type="number" class="input" id="dstCov" value="0" min="0">
+            </div>
+            <div>
+              <div class="label">Total (m)</div>
+              <input type="number" class="input" id="dstTot" value="2000" min="1">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="pushDist()">Push Distance</button>
+        </div>
+
+        <div class="el-row" id="row-lowerThird" onclick="toggleSub('lowerThird')">
+          <div class="el-icon">LT</div>
+          <div class="el-info">
+            <div class="el-name">Lower Third</div>
+            <div class="el-desc">Speaker or subject identification</div>
+          </div>
+          <span class="el-status" id="st-lowerThird">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-lowerThird" onchange="tog('lowerThird', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-lowerThird">
+          <div class="sub-grid-3" style="margin-bottom:10px;">
+            <div>
+              <div class="label">Name</div>
+              <input type="text" class="input" id="ltName" placeholder="Henry Stephens">
+            </div>
+            <div>
+              <div class="label">Title</div>
+              <input type="text" class="input" id="ltTitle" placeholder="Head Coach">
+            </div>
+            <div>
+              <div class="label">School</div>
+              <input type="text" class="input" id="ltSchool" placeholder="Brooks School">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="pushLT()">Push Lower Third</button>
+        </div>
+
+        <div class="el-row" id="row-watermark" onclick="toggleSub('watermark')">
+          <div class="el-icon">WM</div>
+          <div class="el-info">
+            <div class="el-name">School Watermark</div>
+            <div class="el-desc">Corner branding copy</div>
+          </div>
+          <span class="el-status" id="st-watermark">ON</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-watermark" onchange="tog('watermark', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-watermark">
+          <div class="sub-grid-2" style="margin-bottom:10px;">
+            <div>
+              <div class="label">Watermark Text</div>
+              <input type="text" class="input" id="wmText" placeholder="Brooks School Crew">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="pushWM()">Push Watermark</button>
+        </div>
+
+        <div class="el-row" id="row-conditions" onclick="toggleSub('conditions')">
+          <div class="el-icon">WX</div>
+          <div class="el-info">
+            <div class="el-name">Conditions</div>
+            <div class="el-desc">Wind and temperature panel</div>
+          </div>
+          <span class="el-status" id="st-conditions">OFF</span>
+          <label class="toggle" onclick="event.stopPropagation()"><input type="checkbox" id="tog-conditions" onchange="tog('conditions', this.checked)"><div class="toggle-bg"></div></label>
+        </div>
+        <div class="el-sub" id="sub-conditions">
+          <div class="sub-grid-3" style="margin-bottom:10px;">
+            <div>
+              <div class="label">Wind</div>
+              <input type="text" class="input" id="cWind" placeholder="NW 8 mph">
+            </div>
+            <div>
+              <div class="label">Air Temp</div>
+              <input type="text" class="input" id="cTemp" placeholder="65F">
+            </div>
+            <div>
+              <div class="label">Water Temp</div>
+              <input type="text" class="input" id="cWater" placeholder="58F">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="pushCond()">Push Conditions</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+const token = localStorage.getItem('crew_token');
+const user = JSON.parse(localStorage.getItem('crew_user') || 'null');
+if (!token || !user) {
+  location.href = `/?next=${encodeURIComponent(location.pathname + location.search)}`;
+}
+
+document.getElementById('uAv').textContent = (user?.name || user?.username || '?')[0].toUpperCase();
+document.getElementById('uName').textContent = user?.name || user?.username || '-';
+document.getElementById('uRole').textContent = user?.role || '-';
+
+function signOut() {
+  localStorage.clear();
+  location.href = '/';
+}
+
+const ALL_ELEMENTS = [
+  ['eventHeader', 'Event Header'],
+  ['timer', 'Race Timer'],
+  ['countdown', 'Countdown'],
+  ['lanes', 'Lane Assignments'],
+  ['schoolLogos', 'School Logo Strip'],
+  ['sponsorLogos', 'Sponsor Logo Strip'],
+  ['results', 'Leaderboard'],
+  ['strokeRate', 'Stroke Rate'],
+  ['distance', 'Distance Tracker'],
+  ['lowerThird', 'Lower Third'],
+  ['watermark', 'Watermark'],
+  ['conditions', 'Conditions']
+];
+
+const PRESET_DEFS = [
+  ['pre-race', 'PR', 'Pre-Race'],
+  ['race-start', 'RS', 'Race Start'],
+  ['race-running', 'RR', 'Race Running'],
+  ['finish', 'FN', 'Finish'],
+  ['post-race', 'PO', 'Post-Race']
+];
+
+const DEFAULT_RESULTS = [
+  { place: 1, school: 'Brooks School', time: '6:02.4', margin: '-', lane: 1, logo: null },
+  { place: 2, school: 'Phillips Exeter', time: '6:05.1', margin: '+2.7', lane: 2, logo: null },
+  { place: 3, school: 'Andover', time: '6:07.8', margin: '+5.4', lane: 3, logo: null }
+];
+
+let ws;
+let presetConfigs = {};
+let teamPresets = {};
+let activeTeamPresetId = null;
+
+let timerRunning = false;
+let timerStart = null;
+let timerElapsed = 0;
+let timerIv = null;
+
+let countdownRunning = false;
+let countdownDuration = 300;
+let countdownStart = null;
+let countdownIv = null;
+
+function buildPresetEditor() {
+  const container = document.getElementById('presetEditorRows');
+  container.innerHTML = PRESET_DEFS.map(([key, icon, label]) => `
+    <div class="el-row" onclick="toggleSub('preset-${key}')">
+      <div class="el-icon">${icon}</div>
+      <div class="el-info">
+        <div class="el-name">${label}</div>
+        <div class="el-desc">Choose which overlay components belong to this preset</div>
+      </div>
+      <span class="el-status" style="color:var(--accent);">EDIT</span>
+    </div>
+    <div class="el-sub" id="sub-preset-${key}">
+      <div class="preset-checks" id="pce-${key}"></div>
+      <button class="btn btn-primary btn-sm" onclick="savePreset('${key}')">Save Preset</button>
+    </div>
+  `).join('');
+}
+
+function populatePresetChecks(configs) {
+  PRESET_DEFS.forEach(([key]) => {
+    const holder = document.getElementById(`pce-${key}`);
+    const active = configs?.[key]?.elements || [];
+    holder.innerHTML = ALL_ELEMENTS.map(([elKey, label]) => (
+      `<label><input type="checkbox" data-el="${elKey}" ${active.includes(elKey) ? 'checked' : ''}> ${label}</label>`
+    )).join('');
+  });
+}
+
+function savePreset(name) {
+  const holder = document.getElementById(`pce-${name}`);
+  const elements = Array.from(holder.querySelectorAll('input:checked')).map(input => input.dataset.el);
+  presetConfigs[name] = { elements };
+  send({ type: 'preset-config', name, elements });
+  toast(`Saved ${name} preset`, 'ok');
+}
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' }));
+  ws.onclose = () => {
+    setStatus(false);
+    setTimeout(connect, 3000);
+  };
+  ws.onmessage = event => {
+    const message = JSON.parse(event.data);
+    onMessage(message);
+  };
+}
+
+function send(payload) {
+  if (ws?.readyState === 1) ws.send(JSON.stringify(payload));
+}
+
+function onMessage(message) {
+  if (message.type === 'auth-ok') {
+    setStatus(true);
+    toast('Connected to broadcast server', 'ok');
+  }
+  if (message.type === 'auth-fail') signOut();
+  if (message.type === 'state') {
+    if (message.presetConfigs) {
+      presetConfigs = message.presetConfigs;
+      populatePresetChecks(presetConfigs);
+    }
+    if (message.teamPresets) {
+      teamPresets = message.teamPresets;
+      renderTeamPresetList();
+      syncLanePresetOptions();
+    }
+    if (message.overlayState) applyState(message.overlayState);
+  }
+  if (message.type === 'toggle') syncRow(message.element, message.active);
+  if (message.type === 'timer-control') syncTimer(message);
+  if (message.type === 'countdown-control') syncCountdown(message);
+  if (message.type === 'preset-config') {
+    presetConfigs[message.name] = { elements: message.elements };
+    populatePresetChecks(presetConfigs);
+  }
+  if (message.type === 'team-presets') {
+    teamPresets = message.teamPresets || {};
+    renderTeamPresetList();
+    syncLanePresetOptions();
+  }
+}
+
+function setStatus(ok) {
+  const el = document.getElementById('connSt');
+  el.className = 'status ' + (ok ? 'live' : 'err');
+  el.innerHTML = `<div class="status-dot"></div> ${ok ? 'Live' : 'Reconnecting...'}`;
+}
+
+function applyState(state) {
+  Object.entries(state).forEach(([key, value]) => {
+    if (value && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, 'active')) {
+      syncRow(key, value.active);
+    }
+  });
+
+  if (state.eventHeader) {
+    document.getElementById('evTitle').value = state.eventHeader.text || '';
+    document.getElementById('evSub').value = state.eventHeader.subtitle || '';
+  }
+
+  if (state.timer) {
+    timerElapsed = state.timer.elapsed || 0;
+    if (state.timer.running && state.timer.startTime) {
+      timerRunning = true;
+      timerStart = state.timer.startTime;
+      startLocalTimer();
+    } else {
+      timerRunning = false;
+      clearInterval(timerIv);
+      updateTimerDisplay(timerElapsed);
+      document.getElementById('tStart').disabled = false;
+      document.getElementById('tStop').disabled = true;
+    }
+  }
+
+  if (state.countdown) {
+    countdownDuration = state.countdown.duration || 300;
+    document.getElementById('countdownDur').value = countdownDuration;
+    if (state.countdown.active && state.countdown.startTime) {
+      countdownRunning = true;
+      countdownStart = state.countdown.startTime;
+      startLocalCountdown();
+    } else {
+      countdownRunning = false;
+      clearInterval(countdownIv);
+      updateCountdownDisplay(countdownDuration);
+      document.getElementById('cStart').disabled = false;
+      document.getElementById('cStop').disabled = true;
+    }
+  }
+
+  fillResults(state.results?.data || DEFAULT_RESULTS);
+  fillLanes(state.lanes?.data || []);
+  fillBrandCollection('schoolLogos', state.schoolLogos || { title: 'Schools', items: [] });
+  fillBrandCollection('sponsorLogos', state.sponsorLogos || { title: 'Presented By', items: [] });
+
+  if (state.strokeRate) {
+    document.getElementById('spmVal').value = state.strokeRate.value || '';
+    document.getElementById('spmLbl').value = state.strokeRate.label || '';
+  }
+
+  if (state.distance) {
+    document.getElementById('dstCov').value = state.distance.covered || 0;
+    document.getElementById('dstTot').value = state.distance.total || 2000;
+  }
+
+  if (state.lowerThird) {
+    document.getElementById('ltName').value = state.lowerThird.name || '';
+    document.getElementById('ltTitle').value = state.lowerThird.title || '';
+    document.getElementById('ltSchool').value = state.lowerThird.school || '';
+  }
+
+  if (state.watermark) {
+    document.getElementById('wmText').value = state.watermark.text || '';
+  }
+
+  if (state.conditions) {
+    document.getElementById('cWind').value = state.conditions.wind || '';
+    document.getElementById('cTemp').value = state.conditions.temp || '';
+    document.getElementById('cWater').value = state.conditions.water || '';
+  }
+}
+
+function syncRow(element, active) {
+  const row = document.getElementById(`row-${element}`);
+  const status = document.getElementById(`st-${element}`);
+  const toggle = document.getElementById(`tog-${element}`);
+  if (row) row.classList.toggle('is-on', !!active);
+  if (status) status.textContent = active ? 'ON' : 'OFF';
+  if (toggle) toggle.checked = !!active;
+}
+
+function tog(element, active) {
+  syncRow(element, active);
+  send({ type: 'toggle', element, active });
+}
+
+function toggleSub(name) {
+  const sub = document.getElementById(`sub-${name}`);
+  if (sub) sub.classList.toggle('open');
+}
+
+function updateTimerDisplay(ms) {
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  const tenths = Math.floor((ms % 1000) / 100);
+  document.getElementById('timerDisp').textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${tenths}`;
+}
+
+function startLocalTimer() {
+  clearInterval(timerIv);
+  document.getElementById('tStart').disabled = true;
+  document.getElementById('tStop').disabled = false;
+  syncRow('timer', true);
+  timerIv = setInterval(() => {
+    if (!timerRunning) return;
+    updateTimerDisplay(Date.now() - timerStart);
+  }, 100);
+}
+
+function syncTimer(message) {
+  if (message.action === 'start') {
+    timerRunning = true;
+    timerStart = Date.now() - (message.elapsed || 0);
+    startLocalTimer();
+  } else if (message.action === 'stop') {
+    timerRunning = false;
+    timerElapsed = message.elapsed || 0;
+    clearInterval(timerIv);
+    updateTimerDisplay(timerElapsed);
+    document.getElementById('tStart').disabled = false;
+    document.getElementById('tStop').disabled = true;
+  } else if (message.action === 'reset') {
+    timerRunning = false;
+    timerElapsed = 0;
+    timerStart = null;
+    clearInterval(timerIv);
+    updateTimerDisplay(0);
+    document.getElementById('tStart').disabled = false;
+    document.getElementById('tStop').disabled = true;
+  }
+}
+
+function tStart() {
+  timerRunning = true;
+  timerStart = Date.now() - timerElapsed;
+  startLocalTimer();
+  send({ type: 'timer-control', action: 'start', elapsed: timerElapsed });
+}
+
+function tStop() {
+  timerRunning = false;
+  timerElapsed = Date.now() - timerStart;
+  clearInterval(timerIv);
+  updateTimerDisplay(timerElapsed);
+  send({ type: 'timer-control', action: 'stop', elapsed: timerElapsed });
+  document.getElementById('tStart').disabled = false;
+  document.getElementById('tStop').disabled = true;
+}
+
+function tReset() {
+  timerRunning = false;
+  timerElapsed = 0;
+  timerStart = null;
+  clearInterval(timerIv);
+  updateTimerDisplay(0);
+  send({ type: 'timer-control', action: 'reset' });
+  document.getElementById('tStart').disabled = false;
+  document.getElementById('tStop').disabled = true;
+}
+
+function updateCountdownDisplay(seconds) {
+  const safe = Math.max(0, seconds);
+  const mins = Math.floor(safe / 60);
+  const secs = Math.floor(safe % 60);
+  document.getElementById('countdownDisp').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+function startLocalCountdown() {
+  clearInterval(countdownIv);
+  document.getElementById('cStart').disabled = true;
+  document.getElementById('cStop').disabled = false;
+  syncRow('countdown', true);
+  countdownIv = setInterval(() => {
+    if (!countdownRunning) return;
+    const elapsed = Math.floor((Date.now() - countdownStart) / 1000);
+    const remaining = Math.max(0, countdownDuration - elapsed);
+    updateCountdownDisplay(remaining);
+    if (remaining <= 0) {
+      countdownRunning = false;
+      clearInterval(countdownIv);
+      document.getElementById('cStart').disabled = false;
+      document.getElementById('cStop').disabled = true;
+    }
+  }, 200);
+}
+
+function syncCountdown(message) {
+  countdownDuration = Number(message.duration) || countdownDuration;
+  document.getElementById('countdownDur').value = countdownDuration;
+  if (message.action === 'start') {
+    countdownRunning = true;
+    countdownStart = message.startTime || Date.now();
+    startLocalCountdown();
+  } else if (message.action === 'stop' || message.action === 'reset') {
+    countdownRunning = false;
+    clearInterval(countdownIv);
+    updateCountdownDisplay(countdownDuration);
+    document.getElementById('cStart').disabled = false;
+    document.getElementById('cStop').disabled = true;
+    if (message.action === 'reset') syncRow('countdown', false);
+  }
+}
+
+function cStart() {
+  countdownDuration = Number(document.getElementById('countdownDur').value) || 300;
+  countdownStart = Date.now();
+  countdownRunning = true;
+  startLocalCountdown();
+  send({ type: 'countdown-control', action: 'start', duration: countdownDuration });
+}
+
+function cStop() {
+  countdownRunning = false;
+  clearInterval(countdownIv);
+  updateCountdownDisplay(countdownDuration);
+  document.getElementById('cStart').disabled = false;
+  document.getElementById('cStop').disabled = true;
+  send({ type: 'countdown-control', action: 'stop', duration: countdownDuration });
+}
+
+function cReset() {
+  countdownRunning = false;
+  clearInterval(countdownIv);
+  countdownDuration = Number(document.getElementById('countdownDur').value) || 300;
+  updateCountdownDisplay(countdownDuration);
+  document.getElementById('cStart').disabled = false;
+  document.getElementById('cStop').disabled = true;
+  send({ type: 'countdown-control', action: 'reset', duration: countdownDuration });
+}
+
+function teamLogoChange(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = event => setTeamLogo(event.target.result);
+  reader.readAsDataURL(file);
+}
+
+function setTeamLogo(dataUrl) {
+  const box = document.getElementById('teamLogoBox');
+  box.dataset.logo = dataUrl || '';
+  box.innerHTML = `${dataUrl ? `<img src="${dataUrl}" alt="Team logo">` : '<span id="teamLogoFallback">+</span>'}<input type="file" accept="image/*" onchange="teamLogoChange(this)">`;
+}
+
+function newTeamPreset() {
+  activeTeamPresetId = null;
+  document.getElementById('teamName').value = '';
+  document.getElementById('teamShortName').value = '';
+  document.getElementById('teamPrimary').value = '#004830';
+  document.getElementById('teamSecondary').value = '#000000';
+  document.getElementById('teamTextColor').value = '#FFFFFF';
+  setTeamLogo('');
+  document.getElementById('deleteTeamBtn').disabled = true;
+  renderTeamPresetList();
+}
+
+function openTeamPreset(id) {
+  const preset = teamPresets[id];
+  if (!preset) return;
+  activeTeamPresetId = id;
+  document.getElementById('teamName').value = preset.name || '';
+  document.getElementById('teamShortName').value = preset.shortName || '';
+  document.getElementById('teamPrimary').value = preset.primaryColor || '#004830';
+  document.getElementById('teamSecondary').value = preset.secondaryColor || '#000000';
+  document.getElementById('teamTextColor').value = preset.textColor || '#FFFFFF';
+  setTeamLogo(preset.logo || '');
+  document.getElementById('deleteTeamBtn').disabled = false;
+  renderTeamPresetList();
+}
+
+function renderTeamPresetList() {
+  const container = document.getElementById('teamPresetList');
+  const presets = Object.values(teamPresets || {}).sort((a, b) => a.name.localeCompare(b.name));
+  if (!presets.length) {
+    container.innerHTML = '<div class="empty-copy">No saved teams yet.</div>';
+    return;
+  }
+
+  container.innerHTML = presets.map(preset => `
+    <div class="team-item ${preset.id === activeTeamPresetId ? 'active' : ''}" onclick="openTeamPreset('${preset.id}')">
+      <div class="team-chip" style="background:${preset.primaryColor || '#004830'};">
+        ${preset.logo ? `<img src="${preset.logo}" alt="${escapeHtml(preset.name)} logo">` : escapeHtml((preset.shortName || preset.name || '?').slice(0, 2))}
+      </div>
+      <div class="team-copy">
+        <strong>${escapeHtml(preset.name || '')}</strong>
+        <span>${escapeHtml(preset.shortName || '')}</span>
+      </div>
+      <div class="team-swatch-row">
+        <span class="team-swatch" style="background:${preset.primaryColor || '#004830'};"></span>
+        <span class="team-swatch" style="background:${preset.secondaryColor || '#000000'};"></span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function slugifyPresetId(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function saveTeamPreset() {
+  const name = document.getElementById('teamName').value.trim();
+  if (!name) {
+    toast('Team name is required', 'err');
+    return;
+  }
+  const shortName = document.getElementById('teamShortName').value.trim() || name;
+  const resolvedId = activeTeamPresetId || slugifyPresetId(name);
+  const preset = {
+    id: resolvedId,
+    name,
+    shortName,
+    primaryColor: document.getElementById('teamPrimary').value,
+    secondaryColor: document.getElementById('teamSecondary').value,
+    textColor: document.getElementById('teamTextColor').value,
+    logo: document.getElementById('teamLogoBox').dataset.logo || null
+  };
+  activeTeamPresetId = resolvedId;
+  send({ type: 'team-preset-save', preset });
+  document.getElementById('deleteTeamBtn').disabled = false;
+  renderTeamPresetList();
+  toast(`Saved ${name}`, 'ok');
+}
+
+function deleteTeamPreset() {
+  if (!activeTeamPresetId) return;
+  send({ type: 'team-preset-delete', id: activeTeamPresetId });
+  toast('Team preset deleted', 'ok');
+  newTeamPreset();
+}
+
+function renderTeamOptions(selectedId) {
+  const items = Object.values(teamPresets || {}).sort((a, b) => a.name.localeCompare(b.name));
+  return ['<option value="">Custom</option>']
+    .concat(items.map(item => `<option value="${item.id}" ${item.id === selectedId ? 'selected' : ''}>${escapeHtml(item.name)}</option>`))
+    .join('');
+}
+
+function syncLanePresetOptions() {
+  document.querySelectorAll('#lanesEd .lane-preset').forEach(select => {
+    const current = select.value;
+    select.innerHTML = renderTeamOptions(current);
+    if (current && teamPresets[current]) select.value = current;
+  });
+}
+
+function buildLaneRow(container, laneData) {
+  const row = document.createElement('div');
+  row.className = 'lane-row';
+  row.dataset.presetId = laneData.presetId || '';
+  row.dataset.logo = laneData.logo || '';
+  row.dataset.secondaryColor = laneData.accentColor || laneData.secondaryColor || '#000000';
+  row.dataset.textColor = laneData.textColor || '#FFFFFF';
+  row.innerHTML = `
+    <div class="lane-label">${laneData.lane || container.children.length + 1}</div>
+    <select class="lane-preset" onchange="lanePresetChange(this)">
+      ${renderTeamOptions(laneData.presetId || '')}
+    </select>
+    <input type="text" class="input lane-school" value="${escapeAttr(laneData.school || '')}" placeholder="School name">
+    <input type="color" class="input lane-color" value="${laneData.color || '#004830'}" style="height:42px; padding:6px;">
+    <label class="mini-upload">
+      ${laneData.logo ? `<img src="${laneData.logo}" alt="Lane logo">` : 'LG'}
+      <input type="file" accept="image/*" onchange="laneLogoChange(this)">
+    </label>
+  `;
+  container.appendChild(row);
+}
+
+function fillLanes(data) {
+  const container = document.getElementById('lanesEd');
+  container.innerHTML = '';
+  const rows = data?.length ? data : [
+    { lane: 1, school: 'Brooks School', color: '#004830', presetId: 'brooks-school', logo: null },
+    { lane: 2, school: 'Phillips Exeter', color: '#8B0000', presetId: 'phillips-exeter', logo: null },
+    { lane: 3, school: 'Andover', color: '#2E7D32', presetId: 'andover', logo: null }
+  ];
+  rows.forEach(item => buildLaneRow(container, item));
+  syncLanePresetOptions();
+}
+
+function addLane() {
+  buildLaneRow(document.getElementById('lanesEd'), {
+    lane: document.getElementById('lanesEd').children.length + 1,
+    school: '',
+    color: '#004830',
+    presetId: '',
+    logo: null
+  });
+}
+
+function lanePresetChange(select) {
+  const preset = teamPresets[select.value];
+  const row = select.closest('.lane-row');
+  row.dataset.presetId = select.value || '';
+  if (!preset) return;
+  row.querySelector('.lane-school').value = preset.name || '';
+  row.querySelector('.lane-color').value = preset.primaryColor || '#004830';
+  row.dataset.secondaryColor = preset.secondaryColor || '#000000';
+  row.dataset.textColor = preset.textColor || '#FFFFFF';
+  row.dataset.logo = preset.logo || '';
+  const label = row.querySelector('.mini-upload');
+  label.innerHTML = `${preset.logo ? `<img src="${preset.logo}" alt="Lane logo">` : 'LG'}<input type="file" accept="image/*" onchange="laneLogoChange(this)">`;
+}
+
+function laneLogoChange(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = event => {
+    const row = input.closest('.lane-row');
+    row.dataset.logo = event.target.result;
+    const label = row.querySelector('.mini-upload');
+    label.innerHTML = `<img src="${event.target.result}" alt="Lane logo"><input type="file" accept="image/*" onchange="laneLogoChange(this)">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function pushLanes() {
+  const rows = Array.from(document.querySelectorAll('#lanesEd .lane-row'));
+  const data = rows.map((row, index) => ({
+    lane: index + 1,
+    presetId: row.dataset.presetId || null,
+    school: row.querySelector('.lane-school').value,
+    color: row.querySelector('.lane-color').value,
+    accentColor: row.dataset.secondaryColor || '#000000',
+    textColor: row.dataset.textColor || '#FFFFFF',
+    logo: row.dataset.logo || null
+  }));
+  send({ type: 'update', element: 'lanes', data: { data } });
+  toast('Lane assignments pushed', 'ok');
+}
+
+function fillBrandCollection(key, payload) {
+  const titleInput = document.getElementById(`${key}Title`);
+  const holder = document.getElementById(`${key}Ed`);
+  titleInput.value = payload.title || '';
+  holder.innerHTML = '';
+  const items = payload.items?.length ? payload.items : [];
+  if (!items.length) {
+    holder.innerHTML = '<div class="empty-copy">No logos in this section yet.</div>';
+    return;
+  }
+  items.forEach(item => buildBrandRow(holder, item));
+}
+
+function buildBrandRow(container, item) {
+  if (container.querySelector('.empty-copy')) container.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'brand-row';
+  row.dataset.logo = item.logo || '';
+  row.innerHTML = `
+    <input type="text" class="input brand-name" value="${escapeAttr(item.name || '')}" placeholder="Name">
+    <label class="asset-uploader" style="width:72px;height:72px;border-radius:12px;">
+      ${item.logo ? `<img src="${item.logo}" alt="Brand logo">` : '<span>+</span>'}
+      <input type="file" accept="image/*" onchange="brandLogoChange(this)">
+    </label>
+    <button class="btn btn-danger btn-sm" type="button" onclick="removeBrandRow(this)">Remove</button>
+  `;
+  container.appendChild(row);
+}
+
+function addBrandItem(key) {
+  buildBrandRow(document.getElementById(`${key}Ed`), { name: '', logo: null });
+}
+
+function brandLogoChange(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = event => {
+    const row = input.closest('.brand-row');
+    row.dataset.logo = event.target.result;
+    const uploader = row.querySelector('.asset-uploader');
+    uploader.innerHTML = `<img src="${event.target.result}" alt="Brand logo"><input type="file" accept="image/*" onchange="brandLogoChange(this)">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeBrandRow(button) {
+  const parent = button.closest('.brand-row');
+  const holder = parent.parentElement;
+  parent.remove();
+  if (!holder.children.length) {
+    holder.innerHTML = '<div class="empty-copy">No logos in this section yet.</div>';
+  }
+}
+
+function collectBrandItems(key) {
+  return Array.from(document.querySelectorAll(`#${key}Ed .brand-row`)).map(row => ({
+    name: row.querySelector('.brand-name').value,
+    logo: row.dataset.logo || null
+  })).filter(item => item.name || item.logo);
+}
+
+function pushBrandCollection(key) {
+  const title = document.getElementById(`${key}Title`).value;
+  const items = collectBrandItems(key);
+  send({ type: 'update', element: key, data: { title, items } });
+  toast(`${key === 'schoolLogos' ? 'School' : 'Sponsor'} logos pushed`, 'ok');
+}
+
+function loadSchoolLogosFromLanes() {
+  const items = Array.from(document.querySelectorAll('#lanesEd .lane-row')).map(row => ({
+    name: row.querySelector('.lane-school').value,
+    logo: row.dataset.logo || null
+  })).filter(item => item.name || item.logo);
+  fillBrandCollection('schoolLogos', { title: document.getElementById('schoolLogosTitle').value || 'Schools', items });
+  toast('Loaded logos from current lanes', 'ok');
+}
+
+function fillResults(data) {
+  const body = document.getElementById('resBdy');
+  body.innerHTML = '';
+  (data || DEFAULT_RESULTS).forEach(result => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="number" value="${result.place || ''}" style="width:34px;"></td>
+      <td><input type="text" value="${escapeAttr(result.school || '')}"></td>
+      <td><input type="text" value="${escapeAttr(result.time || '')}" style="width:72px;"></td>
+      <td><input type="text" value="${escapeAttr(result.margin || '')}" style="width:52px;"></td>
+      <td><input type="number" value="${result.lane || ''}" style="width:40px;"></td>
+    `;
+    body.appendChild(row);
+  });
+}
+
+function addRow() {
+  const place = document.querySelectorAll('#resBdy tr').length + 1;
+  fillResults([
+    ...Array.from(document.querySelectorAll('#resBdy tr')).map(row => {
+      const inputs = row.querySelectorAll('input');
+      return {
+        place: Number(inputs[0].value) || 0,
+        school: inputs[1].value,
+        time: inputs[2].value,
+        margin: inputs[3].value,
+        lane: Number(inputs[4].value) || 0
+      };
+    }),
+    { place, school: '', time: '', margin: '', lane: place }
+  ]);
+}
+
+function resolveSchoolLogo(name, lane) {
+  const laneRow = Array.from(document.querySelectorAll('#lanesEd .lane-row')).find((row, index) => {
+    const laneMatch = Number(lane) === index + 1;
+    const schoolMatch = row.querySelector('.lane-school').value.trim().toLowerCase() === String(name || '').trim().toLowerCase();
+    return laneMatch || schoolMatch;
+  });
+  if (laneRow?.dataset.logo) return laneRow.dataset.logo;
+
+  const preset = Object.values(teamPresets).find(item => item.name.toLowerCase() === String(name || '').trim().toLowerCase());
+  return preset?.logo || null;
+}
+
+function pushResults() {
+  const rows = Array.from(document.querySelectorAll('#resBdy tr'));
+  const data = rows.map(row => {
+    const inputs = row.querySelectorAll('input');
+    const school = inputs[1].value;
+    const lane = Number(inputs[4].value) || 0;
+    return {
+      place: Number(inputs[0].value) || 0,
+      school,
+      time: inputs[2].value,
+      margin: inputs[3].value,
+      lane,
+      logo: resolveSchoolLogo(school, lane)
+    };
+  });
+  send({ type: 'update', element: 'results', data: { data } });
+  toast('Leaderboard pushed', 'ok');
+}
+
+function pushEvent() {
+  send({
+    type: 'update',
+    element: 'eventHeader',
+    data: {
+      text: document.getElementById('evTitle').value,
+      subtitle: document.getElementById('evSub').value
+    }
+  });
+  toast('Event header updated', 'ok');
+}
+
+function pushSpm() {
+  const value = clampSpm(document.getElementById('spmVal').value || 0);
+  document.getElementById('spmVal').value = value || '';
+  send({
+    type: 'update',
+    element: 'strokeRate',
+    data: {
+      value,
+      label: document.getElementById('spmLbl').value.trim() || 'Leading Boat'
+    }
+  });
+  toast('Stroke rate updated', 'ok');
+}
+
+function clampSpm(value) {
+  const numeric = Math.round(Number(value) || 0);
+  if (!numeric) return 0;
+  return Math.min(60, Math.max(10, numeric));
+}
+
+function nudgeSpm(delta) {
+  const current = clampSpm(document.getElementById('spmVal').value || 36) || 36;
+  document.getElementById('spmVal').value = clampSpm(current + delta);
+  pushSpm();
+}
+
+function pushDist() {
+  send({
+    type: 'update',
+    element: 'distance',
+    data: {
+      covered: Number(document.getElementById('dstCov').value) || 0,
+      total: Number(document.getElementById('dstTot').value) || 2000
+    }
+  });
+  toast('Distance updated', 'ok');
+}
+
+function pushLT() {
+  send({
+    type: 'update',
+    element: 'lowerThird',
+    data: {
+      name: document.getElementById('ltName').value,
+      title: document.getElementById('ltTitle').value,
+      school: document.getElementById('ltSchool').value
+    }
+  });
+  toast('Lower third updated', 'ok');
+}
+
+function pushWM() {
+  send({
+    type: 'update',
+    element: 'watermark',
+    data: { text: document.getElementById('wmText').value }
+  });
+  toast('Watermark updated', 'ok');
+}
+
+function pushCond() {
+  send({
+    type: 'update',
+    element: 'conditions',
+    data: {
+      wind: document.getElementById('cWind').value,
+      temp: document.getElementById('cTemp').value,
+      water: document.getElementById('cWater').value
+    }
+  });
+  toast('Conditions updated', 'ok');
+}
+
+function preset(name) {
+  send({ type: 'preset', preset: name });
+  toast(`Applied ${name.replace(/-/g, ' ')}`, 'ok');
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+function toast(message, type) {
+  const el = document.createElement('div');
+  el.className = `toast ${type || ''}`;
+  el.textContent = message;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+
+buildPresetEditor();
+newTeamPreset();
+fillResults(DEFAULT_RESULTS);
+fillLanes([]);
+fillBrandCollection('schoolLogos', { title: 'Schools', items: [] });
+fillBrandCollection('sponsorLogos', { title: 'Presented By', items: [] });
+updateTimerDisplay(0);
+updateCountdownDisplay(countdownDuration);
+connect();
+</script>
+</body>
+</html>

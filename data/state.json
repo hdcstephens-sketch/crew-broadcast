@@ -1,0 +1,309 @@
+{
+  "overlayState": {
+    "eventHeader": {
+      "active": false,
+      "text": "Men's Varsity 8+ - Finals",
+      "subtitle": "Spring Invitational 2026"
+    },
+    "timer": {
+      "active": false,
+      "running": false,
+      "startTime": null,
+      "elapsed": 0
+    },
+    "countdown": {
+      "active": false,
+      "duration": 300,
+      "startTime": null
+    },
+    "lanes": {
+      "active": false,
+      "data": [
+        {
+          "lane": 1,
+          "presetId": "brooks-school",
+          "school": "Brooks School",
+          "color": "#004830",
+          "accentColor": "#000000",
+          "textColor": "#FFFFFF",
+          "logo": null
+        },
+        {
+          "lane": 2,
+          "presetId": "phillips-exeter",
+          "school": "Phillips Exeter",
+          "color": "#8B0000",
+          "accentColor": "#F3F4F6",
+          "textColor": "#FFFFFF",
+          "logo": null
+        },
+        {
+          "lane": 3,
+          "presetId": "andover",
+          "school": "Andover",
+          "color": "#2E7D32",
+          "accentColor": "#0F172A",
+          "textColor": "#FFFFFF",
+          "logo": null
+        },
+        {
+          "lane": 4,
+          "presetId": "st-pauls",
+          "school": "St. Paul's",
+          "color": "#4A148C",
+          "accentColor": "#EDE9FE",
+          "textColor": "#FFFFFF",
+          "logo": null
+        },
+        {
+          "lane": 5,
+          "presetId": "groton",
+          "school": "Groton",
+          "color": "#E65100",
+          "accentColor": "#FFF7ED",
+          "textColor": "#FFFFFF",
+          "logo": null
+        },
+        {
+          "lane": 6,
+          "presetId": "middlesex",
+          "school": "Middlesex",
+          "color": "#880E4F",
+          "accentColor": "#FDF2F8",
+          "textColor": "#FFFFFF",
+          "logo": null
+        }
+      ]
+    },
+    "schoolLogos": {
+      "active": false,
+      "title": "Schools",
+      "items": [
+        {
+          "name": "Brooks School",
+          "logo": null
+        },
+        {
+          "name": "Phillips Exeter",
+          "logo": null
+        },
+        {
+          "name": "Andover",
+          "logo": null
+        },
+        {
+          "name": "St. Paul's",
+          "logo": null
+        }
+      ]
+    },
+    "sponsorLogos": {
+      "active": false,
+      "title": "Presented By",
+      "items": [
+        {
+          "name": "Brooks School",
+          "logo": null
+        },
+        {
+          "name": "S·Media",
+          "logo": null
+        }
+      ]
+    },
+    "splits": {
+      "active": false,
+      "data": [
+        {
+          "mark": "500m",
+          "time": ""
+        },
+        {
+          "mark": "1000m",
+          "time": ""
+        },
+        {
+          "mark": "1500m",
+          "time": ""
+        },
+        {
+          "mark": "Finish",
+          "time": ""
+        }
+      ]
+    },
+    "results": {
+      "active": false,
+      "data": [
+        {
+          "place": 1,
+          "school": "Brooks School",
+          "time": "6:02.4",
+          "margin": "-",
+          "lane": 1,
+          "logo": null
+        },
+        {
+          "place": 2,
+          "school": "Phillips Exeter",
+          "time": "6:05.1",
+          "margin": "+2.7",
+          "lane": 2,
+          "logo": null
+        },
+        {
+          "place": 3,
+          "school": "Andover",
+          "time": "6:07.8",
+          "margin": "+5.4",
+          "lane": 3,
+          "logo": null
+        }
+      ]
+    },
+    "strokeRate": {
+      "active": false,
+      "value": 36,
+      "label": "Leading Boat"
+    },
+    "distance": {
+      "active": false,
+      "covered": 0,
+      "total": 2000
+    },
+    "lowerThird": {
+      "active": false,
+      "name": "",
+      "title": "",
+      "school": ""
+    },
+    "watermark": {
+      "active": true,
+      "text": "Brooks School Crew"
+    },
+    "conditions": {
+      "active": false,
+      "wind": "NW 8 mph",
+      "temp": "65°F",
+      "water": "58°F"
+    }
+  },
+  "designConfig": {
+    "primaryColor": "#0E7A57",
+    "secondaryColor": "#050505",
+    "accentColor": "#9CA3AF",
+    "textColor": "#FFFFFF",
+    "fontFamily": "Rajdhani",
+    "animationStyle": "slide",
+    "animationDuration": 0.6,
+    "borderRadius": 10,
+    "opacity": 0.92,
+    "showShadows": true,
+    "gradientStyle": "brooks",
+    "elementLayout": {}
+  },
+  "presetConfigs": {
+    "pre-race": {
+      "elements": [
+        "eventHeader",
+        "lanes",
+        "schoolLogos",
+        "watermark"
+      ]
+    },
+    "race-start": {
+      "elements": [
+        "eventHeader",
+        "lanes",
+        "countdown",
+        "watermark"
+      ]
+    },
+    "race-running": {
+      "elements": [
+        "eventHeader",
+        "timer",
+        "strokeRate",
+        "distance",
+        "watermark"
+      ]
+    },
+    "finish": {
+      "elements": [
+        "eventHeader",
+        "timer",
+        "results",
+        "sponsorLogos",
+        "watermark"
+      ]
+    },
+    "post-race": {
+      "elements": [
+        "eventHeader",
+        "results",
+        "schoolLogos",
+        "sponsorLogos",
+        "watermark"
+      ]
+    },
+    "clear": {
+      "elements": []
+    }
+  },
+  "teamPresets": {
+    "brooks-school": {
+      "id": "brooks-school",
+      "name": "Brooks School",
+      "shortName": "Brooks",
+      "primaryColor": "#004830",
+      "secondaryColor": "#000000",
+      "textColor": "#FFFFFF",
+      "logo": null
+    },
+    "phillips-exeter": {
+      "id": "phillips-exeter",
+      "name": "Phillips Exeter",
+      "shortName": "Exeter",
+      "primaryColor": "#8B0000",
+      "secondaryColor": "#F3F4F6",
+      "textColor": "#FFFFFF",
+      "logo": null
+    },
+    "andover": {
+      "id": "andover",
+      "name": "Andover",
+      "shortName": "Andover",
+      "primaryColor": "#2E7D32",
+      "secondaryColor": "#0F172A",
+      "textColor": "#FFFFFF",
+      "logo": null
+    },
+    "st-pauls": {
+      "id": "st-pauls",
+      "name": "St. Paul's",
+      "shortName": "St. Paul's",
+      "primaryColor": "#4A148C",
+      "secondaryColor": "#EDE9FE",
+      "textColor": "#FFFFFF",
+      "logo": null
+    },
+    "groton": {
+      "id": "groton",
+      "name": "Groton",
+      "shortName": "Groton",
+      "primaryColor": "#E65100",
+      "secondaryColor": "#FFF7ED",
+      "textColor": "#FFFFFF",
+      "logo": null
+    },
+    "middlesex": {
+      "id": "middlesex",
+      "name": "Middlesex",
+      "shortName": "Middlesex",
+      "primaryColor": "#880E4F",
+      "secondaryColor": "#FDF2F8",
+      "textColor": "#FFFFFF",
+      "logo": null
+    }
+  }
+}

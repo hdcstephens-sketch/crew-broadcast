@@ -1,0 +1,16 @@
+{
+  "name": "crew-broadcast",
+  "version": "1.0.0",
+  "description": "Brooks School Crew Broadcast Control System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "npx nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "ws": "^8.14.2",
+    "uuid": "^9.0.0"
+  }
+}

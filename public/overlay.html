@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, initial-scale=1.0">
+  <title>OBS Overlay</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@500;700;800&family=Antonio:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/overlay.css">
+  <style>
+    :root {
+      --ov-accent: #004830;
+      --ov-alt: #D1D1D1;
+      --ov-text: #FFFFFF;
+      --ov-head-text: #FFFFFF;
+      --ov-font: 'Rajdhani';
+      --ov-bg: rgba(0, 0, 0, 0.92);
+      --ov-radius: 12px;
+      --ov-outline: rgba(255,255,255,0.08);
+      --ov-muted: rgba(255,255,255,0.58);
+    }
+  </style>
+</head>
+<body>
+<div id="overlay-root">
+  <div class="ov" id="ov-header">
+    <div class="ov-box ov-header-box">
+      <div class="ov-event-title" id="ov-et">MEN'S VARSITY 8+ FINAL</div>
+      <div class="ov-event-sub" id="ov-es">Spring Invitational 2026</div>
+    </div>
+  </div>
+
+  <div class="ov" id="ov-timer">
+    <div class="ov-box ov-timer-box">
+      <div class="ov-label">RACE TIME</div>
+      <div class="ov-timer-val"><span id="ov-tm">00:00</span><span class="ms" id="ov-ms">.0</span></div>
+    </div>
+  </div>
+
+  <div class="ov" id="ov-countdown">
+    <div class="ov-box ov-countdown-box">
+      <div class="ov-sub-label">Race Starts In</div>
+      <div class="ov-countdown-val" id="ov-cdv">5:00</div>
+    </div>
+  </div>
+
+  <div class="ov" id="ov-results">
+    <div class="ov-results-head">LEADERBOARD</div>
+    <div class="ov-box ov-results-body" id="ov-rb"></div>
+  </div>
+
+  <div class="ov" id="ov-lanes">
+    <div class="ov-box ov-lanes-row" id="ov-lr"></div>
+  </div>
+
+  <div class="ov" id="ov-school-logos">
+    <div class="ov-box ov-logo-strip">
+      <div class="ov-strip-title" id="ov-sct">Schools</div>
+      <div class="ov-logo-row" id="ov-scr"></div>
+    </div>
+  </div>
+
+  <div class="ov" id="ov-sponsor-logos">
+    <div class="ov-box ov-logo-strip">
+      <div class="ov-strip-title" id="ov-spt">Presented By</div>
+      <div class="ov-logo-row" id="ov-spr"></div>
+    </div>
+  </div>
+
+  <div class="ov" id="ov-spm">
+    <div class="ov-box ov-spm-box">
+      <div class="ov-label" id="ov-sl">STROKE RATE</div>
+      <div class="ov-spm-val" id="ov-sv">36</div>
+      <div class="ov-sub-label">spm</div>
+    </div>
+  </div>
+
+  <div class="ov" id="ov-dist">
+    <div class="ov-box ov-dist-box">
+      <div class="ov-dist-top">
+        <span class="ov-sub-label">Distance</span>
+        <span class="ov-dist-text" id="ov-dt">0 / 2000m</span>
+      </div>
+      <div class="ov-dist-track"><div class="ov-dist-fill" id="ov-df"></div></div>
+    </div>
+  </div>
+
+  <div class="ov" id="ov-lt">
+    <div class="ov-box ov-lt-box">
+      <div class="ov-lt-name" id="ov-ltn">Head Coach</div>
+      <div class="ov-lt-title" id="ov-ltt">Brooks School</div>
+      <div class="ov-lt-school" id="ov-lts">Broadcast Guest</div>
+    </div>
+  </div>
+
+  <div class="ov" id="ov-conditions">
+    <div class="ov-box ov-cond-box">
+      <div class="ov-cond-item"><div class="ov-sub-label">Wind</div><div class="ov-cond-val" id="ov-cw">NW 8 mph</div></div>
+      <div class="ov-cond-item"><div class="ov-sub-label">Air</div><div class="ov-cond-val" id="ov-ca">65F</div></div>
+      <div class="ov-cond-item"><div class="ov-sub-label">Water</div><div class="ov-cond-val" id="ov-cwa">58F</div></div>
+    </div>
+  </div>
+
+  <div class="ov" id="ov-watermark">
+    <div class="ov-box ov-watermark-box" id="ov-wt">BROOKS SCHOOL CREW</div>
+  </div>
+</div>
+
+<audio id="audio" autoplay playsinline></audio>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+'use strict';
+
+let cfg = {
+  primaryColor: '#004830',
+  secondaryColor: '#000000',
+  accentColor: '#D1D1D1',
+  textColor: '#FFFFFF',
+  fontFamily: 'Rajdhani',
+  animationStyle: 'slide',
+  animationDuration: 0.6,
+  borderRadius: 10,
+  opacity: 0.92,
+  elementLayout: {}
+};
+
+const EL = {
+  eventHeader: 'ov-header',
+  timer: 'ov-timer',
+  countdown: 'ov-countdown',
+  results: 'ov-results',
+  lanes: 'ov-lanes',
+  schoolLogos: 'ov-school-logos',
+  sponsorLogos: 'ov-sponsor-logos',
+  strokeRate: 'ov-spm',
+  distance: 'ov-dist',
+  lowerThird: 'ov-lt',
+  watermark: 'ov-watermark',
+  conditions: 'ov-conditions'
+};
+
+const LAYOUT_PRESETS = {
+  'ov-header': {
+    'top-center': { top: '0', left: '50%', right: '', bottom: '', transform: 'translateX(-50%)' },
+    'bottom-center': { top: '', left: '50%', right: '', bottom: '20px', transform: 'translateX(-50%)' }
+  },
+  'ov-timer': {
+    'top-left': { top: '24px', left: '28px', right: '', bottom: '', transform: '' },
+    'top-right': { top: '24px', right: '28px', left: '', bottom: '', transform: '' },
+    'bottom-left': { top: '', left: '28px', right: '', bottom: '96px', transform: '' }
+  },
+  'ov-countdown': {
+    center: { top: '50%', left: '50%', right: '', bottom: '', transform: 'translate(-50%, -50%)' },
+    'top-center': { top: '64px', left: '50%', right: '', bottom: '', transform: 'translateX(-50%)' }
+  },
+  'ov-results': {
+    right: { top: '92px', right: '28px', left: '', bottom: '', transform: '' },
+    left: { top: '92px', left: '28px', right: '', bottom: '', transform: '' }
+  },
+  'ov-lanes': {
+    'bottom-center': { top: '', left: '50%', right: '', bottom: '68px', transform: 'translateX(-50%)' },
+    'top-center': { top: '74px', left: '50%', right: '', bottom: '', transform: 'translateX(-50%)' }
+  },
+  'ov-school-logos': {
+    'top-left': { top: '100px', left: '28px', right: '', bottom: '', transform: '' },
+    'top-right': { top: '100px', right: '28px', left: '', bottom: '', transform: '' },
+    'bottom-left': { top: '', left: '28px', right: '', bottom: '122px', transform: '' }
+  },
+  'ov-sponsor-logos': {
+    'bottom-right': { top: '', left: '', right: '28px', bottom: '122px', transform: '' },
+    'bottom-left': { top: '', left: '28px', right: '', bottom: '122px', transform: '' },
+    'top-right': { top: '100px', left: '', right: '28px', bottom: '', transform: '' }
+  },
+  'ov-spm': {
+    'top-right': { top: '24px', right: '28px', left: '', bottom: '', transform: '' },
+    'top-left': { top: '24px', left: '28px', right: '', bottom: '', transform: '' }
+  },
+  'ov-dist': {
+    bottom: { top: '', left: '28px', right: '28px', bottom: '20px', transform: '' },
+    top: { top: '20px', left: '28px', right: '28px', bottom: '', transform: '' }
+  },
+  'ov-lt': {
+    'bottom-left': { top: '', left: '28px', right: '', bottom: '84px', transform: '' },
+    'bottom-right': { top: '', left: '', right: '28px', bottom: '84px', transform: '' }
+  },
+  'ov-conditions': {
+    'bottom-right': { top: '', left: '', right: '28px', bottom: '84px', transform: '' },
+    'bottom-left': { top: '', left: '28px', right: '', bottom: '84px', transform: '' }
+  },
+  'ov-watermark': {
+    'bottom-right': { top: '', left: '', right: '24px', bottom: '18px', transform: '' },
+    'bottom-left': { top: '', left: '24px', right: '', bottom: '18px', transform: '' }
+  }
+};
+
+function rgbaFromHex(hex, alpha) {
+  const clean = String(hex || '#000000').replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function contrastColor(hex) {
+  const clean = String(hex || '#000000').replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 160 ? '#111111' : '#FFFFFF';
+}
+
+function initials(name) {
+  const words = String(name || '').trim().split(/\s+/).filter(Boolean);
+  return (words[0]?.[0] || '') + (words[1]?.[0] || words[0]?.[1] || '');
+}
+
+function show(el) {
+  if (!el) return;
+  gsap.killTweensOf(el);
+  el.style.visibility = 'visible';
+  const duration = cfg.animationDuration || 0.6;
+  const style = cfg.animationStyle || 'slide';
+
+  if (style === 'fade') {
+    gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration, ease: 'power2.out', clearProps: 'x,y,scale,rotationX,skewX' });
+  } else if (style === 'scale') {
+    gsap.fromTo(el, { opacity: 0, scale: 0.88 }, { opacity: 1, scale: 1, duration, ease: 'back.out(1.4)', clearProps: 'x,y,scale,rotationX,skewX' });
+  } else if (style === 'elastic') {
+    gsap.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: duration * 1.15, ease: 'elastic.out(1,0.55)', clearProps: 'x,y,scale,rotationX,skewX' });
+  } else if (style === 'flip') {
+    gsap.fromTo(el, { opacity: 0, rotationX: -80, transformOrigin: 'top center' }, { opacity: 1, rotationX: 0, duration, ease: 'power3.out', clearProps: 'x,y,scale,rotationX,skewX' });
+  } else if (style === 'power') {
+    gsap.fromTo(el, { opacity: 0, x: -60, skewX: -10 }, { opacity: 1, x: 0, skewX: 0, duration: duration * 0.7, ease: 'power4.out', clearProps: 'x,y,scale,rotationX,skewX' });
+  } else {
+    gsap.fromTo(el, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration, ease: 'power3.out', clearProps: 'x,y,scale,rotationX,skewX' });
+  }
+}
+
+function hide(el) {
+  if (!el) return;
+  gsap.killTweensOf(el);
+  gsap.to(el, {
+    opacity: 0,
+    y: -8,
+    duration: Math.max(0.2, (cfg.animationDuration || 0.6) * 0.45),
+    ease: 'power2.in',
+    onComplete: () => {
+      el.style.visibility = 'hidden';
+      gsap.set(el, { clearProps: 'x,y,scale,rotationX,skewX' });
+    }
+  });
+}
+
+function applyContent(state) {
+  if (!state) return;
+
+  if (state.eventHeader) {
+    document.getElementById('ov-et').textContent = (state.eventHeader.text || '').toUpperCase();
+    document.getElementById('ov-es').textContent = state.eventHeader.subtitle || '';
+  }
+
+  if (state.results?.data) renderResults(state.results.data);
+  if (state.lanes?.data) renderLanes(state.lanes.data);
+  if (state.schoolLogos) renderLogoStrip('ov-sct', 'ov-scr', state.schoolLogos);
+  if (state.sponsorLogos) renderLogoStrip('ov-spt', 'ov-spr', state.sponsorLogos);
+
+  if (state.strokeRate) {
+    document.getElementById('ov-sv').textContent = state.strokeRate.value ?? '36';
+    document.getElementById('ov-sl').textContent = (state.strokeRate.label || 'Stroke Rate').toUpperCase();
+  }
+
+  if (state.distance) {
+    const covered = Number(state.distance.covered) || 0;
+    const total = Number(state.distance.total) || 2000;
+    document.getElementById('ov-dt').textContent = `${covered} / ${total}m`;
+    document.getElementById('ov-df').style.width = `${Math.min(100, (covered / total) * 100)}%`;
+  }
+
+  if (state.lowerThird) {
+    document.getElementById('ov-ltn').textContent = state.lowerThird.name || '';
+    document.getElementById('ov-ltt').textContent = state.lowerThird.title || '';
+    document.getElementById('ov-lts').textContent = state.lowerThird.school || '';
+  }
+
+  if (state.watermark) {
+    document.getElementById('ov-wt').textContent = (state.watermark.text || '').toUpperCase();
+  }
+
+  if (state.conditions) {
+    document.getElementById('ov-cw').textContent = state.conditions.wind || '';
+    document.getElementById('ov-ca').textContent = state.conditions.temp || '';
+    document.getElementById('ov-cwa').textContent = state.conditions.water || '';
+  }
+}
+
+function renderResults(rows) {
+  const body = document.getElementById('ov-rb');
+  body.innerHTML = '';
+  rows.forEach((row, index) => {
+    const node = document.createElement('div');
+    node.className = 'ov-result-row';
+    const logo = row.logo ? `<img src="${row.logo}" class="ov-result-logo" alt="">` : '';
+    node.innerHTML = `
+      <div class="ov-result-rank">${row.place ?? ''}</div>
+      ${logo}
+      <div class="ov-result-school">${row.school || ''}</div>
+      <div class="ov-result-time">${row.time || ''}</div>
+      <div class="ov-result-gap">${row.margin || ''}</div>
+    `;
+    body.appendChild(node);
+    gsap.fromTo(node, { opacity: 0, x: 12 }, { opacity: 1, x: 0, duration: 0.24, delay: index * 0.05, ease: 'power2.out' });
+  });
+}
+
+function renderLanes(lanes) {
+  const holder = document.getElementById('ov-lr');
+  holder.innerHTML = '';
+  lanes.forEach(lane => {
+    const node = document.createElement('div');
+    node.className = 'ov-lane';
+    const logo = lane.logo ? `<img src="${lane.logo}" class="ov-lane-logo" alt="">` : '';
+    node.innerHTML = `
+      <span class="ov-lane-num">${lane.lane}</span>
+      <span class="ov-lane-dot" style="background:${lane.color || cfg.primaryColor};"></span>
+      ${logo}
+      <span class="ov-lane-name">${lane.school || ''}</span>
+    `;
+    holder.appendChild(node);
+  });
+}
+
+function renderLogoStrip(titleId, rowId, payload) {
+  document.getElementById(titleId).textContent = payload.title || '';
+  const row = document.getElementById(rowId);
+  row.innerHTML = '';
+  (payload.items || []).forEach(item => {
+    const node = document.createElement('div');
+    node.className = 'ov-logo-cell';
+    node.innerHTML = item.logo
+      ? `<img src="${item.logo}" class="ov-logo-img" alt="${item.name || ''}">`
+      : `<span class="ov-logo-fallback">${initials(item.name || '') || 'LG'}</span>`;
+    row.appendChild(node);
+  });
+}
+
+function applyLayout(layouts) {
+  Object.keys(LAYOUT_PRESETS).forEach(elId => {
+    const node = document.getElementById(elId);
+    if (!node) return;
+    node.style.left = '';
+    node.style.right = '';
+    node.style.top = '';
+    node.style.bottom = '';
+    node.style.transform = '';
+
+    const layout = layouts?.[elId];
+    if (layout && typeof layout === 'object' && layout.mode === 'custom') {
+      node.style.left = `${layout.x * 100}%`;
+      node.style.top = `${layout.y * 100}%`;
+      node.style.transform = 'none';
+      return;
+    }
+
+    const preset = typeof layout === 'string' ? layout : Object.keys(LAYOUT_PRESETS[elId])[0];
+    const coords = LAYOUT_PRESETS[elId]?.[preset];
+    if (!coords) return;
+    Object.entries(coords).forEach(([key, value]) => {
+      node.style[key] = value;
+    });
+  });
+}
+
+function applyDesign(nextCfg) {
+  cfg = Object.assign({}, cfg, nextCfg || {});
+  const root = document.documentElement;
+  root.style.setProperty('--ov-accent', cfg.primaryColor || '#004830');
+  root.style.setProperty('--ov-alt', cfg.accentColor || '#D1D1D1');
+  root.style.setProperty('--ov-text', cfg.textColor || '#FFFFFF');
+  root.style.setProperty('--ov-head-text', contrastColor(cfg.primaryColor || '#004830'));
+  root.style.setProperty('--ov-font', `'${cfg.fontFamily || 'Rajdhani'}'`);
+  root.style.setProperty('--ov-bg', rgbaFromHex(cfg.secondaryColor || '#000000', cfg.opacity ?? 0.92));
+  root.style.setProperty('--ov-radius', `${cfg.borderRadius || 10}px`);
+  root.style.setProperty('--ov-outline', rgbaFromHex(cfg.textColor || '#FFFFFF', 0.1));
+  root.style.setProperty('--ov-muted', rgbaFromHex(cfg.textColor || '#FFFFFF', 0.62));
+  applyLayout(cfg.elementLayout || {});
+}
+
+let timerRunning = false;
+let timerStart = null;
+let timerFrame = null;
+
+function startTimer(elapsed) {
+  timerRunning = true;
+  timerStart = Date.now() - elapsed;
+  show(document.getElementById('ov-timer'));
+  cancelAnimationFrame(timerFrame);
+  (function tick() {
+    if (!timerRunning) return;
+    const ms = Date.now() - timerStart;
+    const mins = Math.floor(ms / 60000);
+    const secs = Math.floor((ms % 60000) / 1000);
+    const tenths = Math.floor((ms % 1000) / 100);
+    document.getElementById('ov-tm').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    document.getElementById('ov-ms').textContent = `.${tenths}`;
+    timerFrame = requestAnimationFrame(tick);
+  })();
+}
+
+let countdownRunning = false;
+let countdownDuration = 300;
+let countdownStart = null;
+
+function startCountdown(duration, startTime) {
+  countdownRunning = true;
+  countdownDuration = duration || countdownDuration || 300;
+  countdownStart = startTime || Date.now();
+  show(document.getElementById('ov-countdown'));
+  (function tick() {
+    if (!countdownRunning) return;
+    const remaining = Math.max(0, countdownDuration - (Date.now() - countdownStart) / 1000);
+    const mins = Math.floor(remaining / 60);
+    const secs = Math.floor(remaining % 60);
+    document.getElementById('ov-cdv').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+    if (remaining <= 0) {
+      countdownRunning = false;
+      hide(document.getElementById('ov-countdown'));
+      return;
+    }
+    requestAnimationFrame(tick);
+  })();
+}
+
+function stopCountdown(resetToDuration) {
+  countdownRunning = false;
+  if (resetToDuration) {
+    const mins = Math.floor(resetToDuration / 60);
+    const secs = Math.floor(resetToDuration % 60);
+    document.getElementById('ov-cdv').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+  }
+  hide(document.getElementById('ov-countdown'));
+}
+
+let ws;
+let audioPc = null;
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen = () => ws.send(JSON.stringify({ type: 'register', role: 'overlay' }));
+  ws.onclose = () => setTimeout(connect, 3000);
+  ws.onmessage = event => {
+    if (typeof event.data !== 'string') return;
+    handle(JSON.parse(event.data));
+  };
+}
+
+function handle(message) {
+  if (message.type === 'state') {
+    if (message.designConfig) applyDesign(message.designConfig);
+    const state = message.overlayState;
+    if (!state) return;
+    Object.keys(EL).forEach(key => {
+      const el = document.getElementById(EL[key]);
+      if (!el || !state[key]) return;
+      if (state[key].active) show(el); else hide(el);
+    });
+    applyContent(state);
+    if (state.timer?.running && state.timer?.startTime) startTimer(Date.now() - state.timer.startTime);
+    if (state.countdown?.active && state.countdown?.startTime) {
+      startCountdown(state.countdown.duration || 300, state.countdown.startTime);
+    }
+  } else if (message.type === 'toggle') {
+    const el = document.getElementById(EL[message.element]);
+    if (!el) return;
+    if (message.active) show(el); else hide(el);
+  } else if (message.type === 'update') {
+    if (message.element && message.data) applyContent({ [message.element]: message.data });
+  } else if (message.type === 'timer-control') {
+    if (message.action === 'start') {
+      const skew = message.serverTime ? Date.now() - message.serverTime : 0;
+      startTimer((message.elapsed || 0) + skew);
+    }
+    if (message.action === 'stop') {
+      timerRunning = false;
+      cancelAnimationFrame(timerFrame);
+    }
+    if (message.action === 'reset') {
+      timerRunning = false;
+      cancelAnimationFrame(timerFrame);
+      document.getElementById('ov-tm').textContent = '00:00';
+      document.getElementById('ov-ms').textContent = '.0';
+    }
+  } else if (message.type === 'countdown-control') {
+    if (message.action === 'start') startCountdown(message.duration || 300, message.startTime || Date.now());
+    if (message.action === 'stop') stopCountdown(message.duration || 300);
+    if (message.action === 'reset') stopCountdown(message.duration || 300);
+  } else if (message.type === 'design') {
+    if (message.config) applyDesign(message.config);
+  } else if (message.type === 'audio-offer') {
+    handleOffer(message.offer, message.from);
+  } else if (message.type === 'ice-candidate') {
+    if (audioPc) audioPc.addIceCandidate(new RTCIceCandidate(message.candidate)).catch(() => {});
+  } else if (message.type === 'broadcaster-left') {
+    if (audioPc) {
+      audioPc.close();
+      audioPc = null;
+    }
+    document.getElementById('audio').srcObject = null;
+  }
+}
+
+async function handleOffer(offer, fromId) {
+  if (audioPc) {
+    audioPc.close();
+    audioPc = null;
+  }
+
+  audioPc = new RTCPeerConnection({
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' }
+    ]
+  });
+
+  audioPc.ontrack = ({ streams }) => {
+    const audio = document.getElementById('audio');
+    audio.srcObject = streams[0];
+    audio.volume = 1;
+    const tryPlay = () => audio.play().catch(() => setTimeout(tryPlay, 500));
+    tryPlay();
+  };
+
+  audioPc.onicecandidate = ({ candidate }) => {
+    if (candidate && ws?.readyState === 1) {
+      ws.send(JSON.stringify({ type: 'ice-candidate', candidate, to: fromId }));
+    }
+  };
+
+  await audioPc.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await audioPc.createAnswer();
+  await audioPc.setLocalDescription(answer);
+  if (ws?.readyState === 1) {
+    ws.send(JSON.stringify({ type: 'audio-answer', answer, to: fromId }));
+  }
+}
+
+connect();
+</script>
+</body>
+</html>
