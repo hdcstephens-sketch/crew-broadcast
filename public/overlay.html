@@ -562,9 +562,12 @@ function showAlert(text, duration) {
   document.getElementById('ov-at').textContent = (text || '').toUpperCase();
   if (alertTimer) clearTimeout(alertTimer);
   gsap.killTweensOf(el);
-  gsap.fromTo(el, { opacity: 0, scale: 0.88 }, { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(1.6)' });
+  gsap.fromTo(el,
+    { opacity: 0, scale: 0.88, xPercent: -50, yPercent: -50 },
+    { opacity: 1, scale: 1,    xPercent: -50, yPercent: -50, duration: 0.35, ease: 'back.out(1.6)' }
+  );
   alertTimer = setTimeout(() => {
-    gsap.to(el, { opacity: 0, scale: 0.95, duration: 0.5, ease: 'power2.in' });
+    gsap.to(el, { opacity: 0, scale: 0.95, xPercent: -50, yPercent: -50, duration: 0.5, ease: 'power2.in' });
   }, Math.max(1, duration || 3) * 1000);
 }
 
