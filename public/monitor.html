@@ -169,17 +169,33 @@
 <div id="toasts"></div>
 
 <script>
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+];
+
 // ── state ─────────────────────────────────────────────────────────────
 let ws, pc = null;
 let audioCtx = null, analyser = null, meterRaf = null;
 let connState = 'waiting';
+let broadcasterPresent = false;
+let retryTimer = null;
 
 // ── websocket ─────────────────────────────────────────────────────────
 function wsConnect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}`);
   ws.onopen  = () => ws.send(JSON.stringify({ type: 'register', role: 'audio-monitor' }));
-  ws.onclose = () => { setWsStatus(false); setState('waiting'); setTimeout(wsConnect, 3000); };
+  ws.onclose = () => {
+    clearRetryTimer();
+    setWsStatus(false);
+    tearDown();
+    setState('waiting');
+    setTimeout(wsConnect, 3000);
+  };
   ws.onmessage = e => onWsMessage(JSON.parse(e.data));
 }
 
@@ -187,23 +203,27 @@ function onWsMessage(msg) {
   switch (msg.type) {
     case 'state':
       setWsStatus(true);
+      broadcasterPresent = Boolean(msg.activeBroadcaster);
       addLog('Connected to server');
-      // If broadcaster is already live when we connect, ask for audio immediately
-      if (msg.activeBroadcaster) {
-        addLog('Broadcaster already live — requesting audio…');
-        requestAudio();
+      if (broadcasterPresent) {
+        addLog('Broadcaster live — connecting…');
+        requestAudio(true);
       } else {
-        addLog('Waiting for broadcaster to go live…');
+        addLog('Waiting for broadcaster…');
       }
       break;
 
     case 'broadcaster-online':
+      broadcasterPresent = true;
       addLog('Broadcaster online — connecting…');
-      requestAudio();
+      requestAudio(true);
       break;
 
     case 'audio-offer':
-      handleOffer(msg.offer, msg.from);
+      handleOffer(msg.offer, msg.from).catch(err => {
+        addLog('Audio setup error: ' + err.message);
+        scheduleRequestAudio();
+      });
       break;
 
     case 'ice-candidate':
@@ -211,6 +231,8 @@ function onWsMessage(msg) {
       break;
 
     case 'broadcaster-left':
+      broadcasterPresent = false;
+      clearRetryTimer();
       tearDown();
       setState('waiting');
       addLog('Broadcaster went offline');
@@ -218,26 +240,43 @@ function onWsMessage(msg) {
   }
 }
 
-function requestAudio() {
-  if (ws?.readyState === 1) ws.send(JSON.stringify({ type: 'request-audio' }));
+function requestAudio(force = false) {
+  if (!broadcasterPresent || ws?.readyState !== 1) return;
+  if (!force && pc && (pc.connectionState === 'connecting' || pc.connectionState === 'connected')) return;
+  clearRetryTimer();
+  setState('connecting');
+  ws.send(JSON.stringify({ type: 'request-audio' }));
+}
+
+function scheduleRequestAudio(reason = 'Connection lost — retrying…') {
+  if (!broadcasterPresent) return;
+  clearRetryTimer();
+  tearDown();
+  addLog(reason);
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    requestAudio(true);
+  }, 1000);
+}
+
+function clearRetryTimer() {
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
 }
 
 // ── WebRTC receive ────────────────────────────────────────────────────
 async function handleOffer(offer, fromId) {
+  clearRetryTimer();
   tearDown();
   setState('connecting');
 
-  pc = new RTCPeerConnection({
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'turn:openrelay.metered.ca:80',   username: 'openrelayproject', credential: 'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:443',  username: 'openrelayproject', credential: 'openrelayproject' },
-      { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
-    ]
-  });
+  pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  const currentPc = pc;
 
   pc.ontrack = ({ streams }) => {
+    if (pc !== currentPc) return;
     const audio = document.getElementById('remoteAudio');
     audio.srcObject = streams[0];
     audio.volume = parseFloat(document.getElementById('volSlider').value);
@@ -255,16 +294,20 @@ async function handleOffer(offer, fromId) {
   };
 
   pc.onconnectionstatechange = () => {
-    const s = pc?.connectionState;
-    if (s === 'failed') {
-      tearDown();
-      setState('waiting');
-      addLog('Connection lost — waiting for broadcaster');
+    if (pc !== currentPc) return;
+    const state = pc.connectionState;
+    if (state === 'connected') {
+      clearRetryTimer();
+      return;
+    }
+    if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+      scheduleRequestAudio();
     }
   };
 
   pc.oniceconnectionstatechange = () => {
-    if (pc?.iceConnectionState === 'failed') pc.restartIce();
+    if (pc !== currentPc) return;
+    if (pc.iceConnectionState === 'failed') scheduleRequestAudio();
   };
 
   await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -274,7 +317,14 @@ async function handleOffer(offer, fromId) {
 }
 
 function tearDown() {
-  if (pc) { pc.close(); pc = null; }
+  if (pc) {
+    pc.ontrack = null;
+    pc.onicecandidate = null;
+    pc.onconnectionstatechange = null;
+    pc.oniceconnectionstatechange = null;
+    pc.close();
+    pc = null;
+  }
   stopMeter();
   if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
   analyser = null;
@@ -321,9 +371,9 @@ function setVol(v) {
 function setState(s) {
   connState = s;
   const states = {
-    waiting:    { icon: '🎧', label: 'WAITING',  text: 'WAITING FOR BROADCASTER', cls: ''          },
-    connecting: { icon: '📡', label: 'LINKING…', text: 'LINKING',                 cls: 'waiting'   },
-    receiving:  { icon: '🎧', label: 'LIVE',      text: 'RECEIVING AUDIO',          cls: 'receiving' },
+    waiting:    { icon: '🎧', label: 'WAITING',     text: 'WAITING FOR BROADCASTER', cls: ''          },
+    connecting: { icon: '📡', label: 'CONNECTING…', text: 'CONNECTING',              cls: 'waiting'   },
+    receiving:  { icon: '🎧', label: 'LIVE',         text: 'RECEIVING AUDIO',         cls: 'receiving' },
   };
   const { icon, label, text, cls } = states[s] || states.waiting;
   document.getElementById('orb').className = 'orb' + (cls ? ' ' + cls : '');

@@ -216,83 +216,88 @@ if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
   document.getElementById('httpsWarn').classList.add('show');
 }
 
-// ── constants ─────────────────────────────────────────────────────────
 const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'turn:openrelay.metered.ca:80',   username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443',  username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
   { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
 ];
 
 // ── state ─────────────────────────────────────────────────────────────
 let ws;
-
-// One PC for the OBS overlay (broadcast offer flow)
-let broadcastPc     = null;
-let broadcastPeerId = null;   // overlay's client ID, known after it answers
-let broadcastIceQ   = [];     // ICE candidates queued before overlay answers
-
-// One PC per boathouse monitor client
-const monitorPcs = new Map(); // clientId → RTCPeerConnection
-
-// Audio
+const listenerPcs = new Map();
 let rawStream = null, broadcastStream = null;
 let audioCtx = null, micSource = null, analyser = null, gainNode = null, destNode = null, meterRaf = null;
 let selectedMicId = '', selectedOutId = '';
 let earbackOn = false, isMuted = false, mode = 'idle';
+let authReady = false;
 
 // ── websocket ─────────────────────────────────────────────────────────
 function wsConnect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}`);
-  ws.onopen  = () => ws.send(JSON.stringify({ type: 'auth', token }));
-  ws.onclose = () => { setWsStatus(false); setTimeout(wsConnect, 3000); };
+  ws.onopen = () => {
+    authReady = false;
+    ws.send(JSON.stringify({ type: 'auth', token }));
+  };
+  ws.onclose = () => {
+    const wasLive = isLiveSession();
+    authReady = false;
+    setWsStatus(false);
+    if (wasLive) addLog('Server link lost — reconnecting…');
+    setTimeout(wsConnect, 3000);
+  };
   ws.onmessage = e => onWsMessage(JSON.parse(e.data));
 }
 
 function onWsMessage(msg) {
   switch (msg.type) {
     case 'auth-ok':
+      authReady = true;
       setWsStatus(true);
       refreshDevices();
-      addLog('Connected to server');
-      break;
-
-    case 'audio-answer':
-      if (monitorPcs.has(msg.from)) {
-        // Answer from a boathouse monitor client
-        monitorPcs.get(msg.from)
-          .setRemoteDescription(new RTCSessionDescription(msg.answer))
-          .then(() => addLog('Monitor linked ✓'))
-          .catch(err => addLog('Monitor error: ' + err.message));
-      } else if (broadcastPc && !broadcastPeerId) {
-        // Answer from the overlay (first responder to broadcast offer)
-        broadcastPeerId = msg.from;
-        flushBroadcastIce();
-        broadcastPc
-          .setRemoteDescription(new RTCSessionDescription(msg.answer))
-          .then(() => addLog('Overlay linked ✓'))
-          .catch(err => addLog('Overlay error: ' + err.message));
-      }
-      break;
-
-    case 'ice-candidate':
-      if (monitorPcs.has(msg.from)) {
-        monitorPcs.get(msg.from).addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(() => {});
-      } else if (broadcastPc) {
-        broadcastPc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(() => {});
-      }
+      addLog(isLiveSession() ? 'Server link restored' : 'Connected to server');
+      if (isLiveSession()) restoreLiveSession();
       break;
 
     case 'listener-request':
-      openMonitorPc(msg.from);
+      openListenerPc(msg.from).catch(err => addLog('Listener error: ' + err.message));
       break;
+
+    case 'audio-answer': {
+      const pc = listenerPcs.get(msg.from);
+      if (!pc) break;
+      pc.setRemoteDescription(new RTCSessionDescription(msg.answer))
+        .then(() => addLog('Listener linked ✓'))
+        .catch(err => {
+          addLog('Listener error: ' + err.message);
+          closeListenerPc(msg.from);
+        });
+      break;
+    }
+
+    case 'ice-candidate': {
+      const pc = listenerPcs.get(msg.from);
+      if (pc) pc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(() => {});
+      break;
+    }
   }
 }
 
 function wsSend(data) {
   if (ws?.readyState === 1) ws.send(JSON.stringify(data));
+}
+
+function isLiveSession() {
+  return Boolean(rawStream && broadcastStream && mode !== 'idle');
+}
+
+function restoreLiveSession() {
+  if (!authReady || !broadcastStream) return;
+  closeAllListenerPcs();
+  wsSend({ type: 'start-broadcast' });
+  addLog('Broadcast restored — waiting for listeners');
 }
 
 // ── microphone & audio graph ──────────────────────────────────────────
@@ -313,14 +318,14 @@ async function acquireMic() {
 
 function buildGraph(stream) {
   tearGraph();
-  audioCtx    = new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
   audioCtx.resume();
-  micSource   = audioCtx.createMediaStreamSource(stream);
-  analyser    = audioCtx.createAnalyser();
+  micSource = audioCtx.createMediaStreamSource(stream);
+  analyser  = audioCtx.createAnalyser();
   analyser.fftSize = 256;
-  gainNode    = audioCtx.createGain();
+  gainNode  = audioCtx.createGain();
   gainNode.gain.value = isMuted ? 0 : 1;
-  destNode    = audioCtx.createMediaStreamDestination();
+  destNode  = audioCtx.createMediaStreamDestination();
   micSource.connect(analyser);
   micSource.connect(gainNode);
   gainNode.connect(destNode);
@@ -358,35 +363,15 @@ function stopMeter() {
 async function goLive() {
   try {
     if (!rawStream) await acquireMic();
-    if (broadcastPc) return;
+    if (!broadcastStream) throw new Error('Microphone is not ready');
+    if (!authReady || ws?.readyState !== 1) throw new Error('Server connection is not ready');
+    if (mode !== 'idle') return;
 
     setMode('connecting');
-    broadcastPeerId = null;
-    broadcastIceQ   = [];
-
-    broadcastPc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    broadcastPc.addTrack(broadcastStream.getAudioTracks()[0], broadcastStream);
-
-    broadcastPc.onicecandidate = ({ candidate }) => {
-      if (!candidate) return;
-      if (broadcastPeerId) wsSend({ type: 'ice-candidate', candidate, to: broadcastPeerId });
-      else broadcastIceQ.push(candidate);
-    };
-
-    broadcastPc.onconnectionstatechange = () => {
-      const s = broadcastPc?.connectionState;
-      if (s === 'connected') { setMode(isMuted ? 'muted' : 'live'); }
-      if (s === 'failed')    { addLog('Overlay connection failed'); }
-    };
-
-    broadcastPc.oniceconnectionstatechange = () => {
-      if (broadcastPc?.iceConnectionState === 'failed') broadcastPc.restartIce();
-    };
-
-    const offer = await broadcastPc.createOffer({ offerToReceiveAudio: false });
-    await broadcastPc.setLocalDescription(offer);
-    wsSend({ type: 'audio-offer', offer });
-    addLog('Broadcast offer sent…');
+    closeAllListenerPcs();
+    wsSend({ type: 'start-broadcast' });
+    setMode(isMuted ? 'muted' : 'live');
+    addLog('Broadcast live ✓');
 
     document.getElementById('btnLive').disabled = true;
     document.getElementById('btnMute').disabled = false;
@@ -399,48 +384,54 @@ async function goLive() {
   }
 }
 
-function flushBroadcastIce() {
-  if (!broadcastPeerId) return;
-  broadcastIceQ.forEach(c => wsSend({ type: 'ice-candidate', candidate: c, to: broadcastPeerId }));
-  broadcastIceQ = [];
-}
+async function openListenerPc(listenerId) {
+  if (!broadcastStream || !authReady) return;
+  const track = broadcastStream.getAudioTracks()[0];
+  if (!track) return;
 
-// ── monitor client connections (one per boathouse device) ─────────────
-async function openMonitorPc(listenerId) {
-  if (!broadcastStream) { addLog('No stream yet — monitor request ignored'); return; }
-
-  // Clean up any stale connection for this listener
-  if (monitorPcs.has(listenerId)) {
-    monitorPcs.get(listenerId).close();
-    monitorPcs.delete(listenerId);
-  }
+  closeListenerPc(listenerId);
 
   const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-  monitorPcs.set(listenerId, pc);
-
-  pc.addTrack(broadcastStream.getAudioTracks()[0], broadcastStream);
+  listenerPcs.set(listenerId, pc);
+  pc.addTrack(track, broadcastStream);
 
   pc.onicecandidate = ({ candidate }) => {
     if (candidate) wsSend({ type: 'ice-candidate', candidate, to: listenerId });
   };
 
   pc.onconnectionstatechange = () => {
-    const s = pc.connectionState;
-    if (s === 'connected') addLog('Monitor connected ✓');
-    if (s === 'failed' || s === 'disconnected') {
-      pc.close();
-      monitorPcs.delete(listenerId);
+    if (listenerPcs.get(listenerId) !== pc) return;
+    const state = pc.connectionState;
+    if (state === 'connected') addLog('Listener connected ✓');
+    if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+      closeListenerPc(listenerId);
     }
   };
 
   pc.oniceconnectionstatechange = () => {
-    if (pc.iceConnectionState === 'failed') pc.restartIce();
+    if (listenerPcs.get(listenerId) !== pc) return;
+    if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
+      closeListenerPc(listenerId);
+    }
   };
 
   const offer = await pc.createOffer({ offerToReceiveAudio: false });
   await pc.setLocalDescription(offer);
   wsSend({ type: 'audio-offer', offer, to: listenerId });
-  addLog('Monitor offer sent…');
+}
+
+function closeListenerPc(listenerId) {
+  const pc = listenerPcs.get(listenerId);
+  if (!pc) return;
+  pc.onicecandidate = null;
+  pc.onconnectionstatechange = null;
+  pc.oniceconnectionstatechange = null;
+  pc.close();
+  listenerPcs.delete(listenerId);
+}
+
+function closeAllListenerPcs() {
+  [...listenerPcs.keys()].forEach(closeListenerPc);
 }
 
 // ── controls ──────────────────────────────────────────────────────────
@@ -459,15 +450,14 @@ function toggleMute() {
 }
 
 function releaseMic() {
-  if (broadcastPc) { broadcastPc.close(); broadcastPc = null; }
-  monitorPcs.forEach(pc => pc.close());
-  monitorPcs.clear();
+  closeAllListenerPcs();
+  if (authReady && ws?.readyState === 1) wsSend({ type: 'end-broadcast' });
 
   if (rawStream) { rawStream.getTracks().forEach(t => t.stop()); rawStream = null; }
 
   const mon = document.getElementById('localMonitor');
   mon.pause(); mon.srcObject = null;
-  earbackOn = false; broadcastPeerId = null; broadcastIceQ = []; isMuted = false;
+  earbackOn = false; isMuted = false;
 
   tearGraph();
   setMode('idle');
@@ -506,7 +496,6 @@ async function refreshDevices() {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
 
-    // Inputs
     const micSel  = document.getElementById('micSelect');
     const micPrev = micSel.value;
     micSel.innerHTML = '<option value="">Default Microphone</option>' +
@@ -515,7 +504,6 @@ async function refreshDevices() {
              .join('');
     if (micPrev) micSel.value = micPrev;
 
-    // Outputs
     const outSel  = document.getElementById('outSelect');
     const outNote = document.getElementById('outNote');
     const outPrev = outSel.value;
@@ -530,7 +518,7 @@ async function refreshDevices() {
       if (outPrev) outSel.value = outPrev;
     } else {
       outSel.disabled = true;
-      outNote.textContent = 'Output selection requires Chrome on desktop. On mobile, output follows the system (speaker/headphones/AirPods).';
+      outNote.textContent = 'Output selection requires Chrome on desktop. On mobile, output follows the system.';
     }
   } catch {}
 }
@@ -538,7 +526,7 @@ async function refreshDevices() {
 async function changeMic(id) {
   selectedMicId = id;
   if (!rawStream) return;
-  const wasLive = !!broadcastPc;
+  const wasLive = mode !== 'idle';
   releaseMic();
   try {
     await acquireMic();
@@ -561,7 +549,7 @@ function setMode(m) {
   mode = m;
   const map = {
     idle:       { icon: '🎙', label: 'TAP TO GO LIVE', state: 'IDLE',       cls: ''           },
-    connecting: { icon: '📡', label: 'LINKING…',       state: 'CONNECTING', cls: 'connecting' },
+    connecting: { icon: '📡', label: 'STARTING…',      state: 'CONNECTING', cls: 'connecting' },
     live:       { icon: '🎙', label: 'ON AIR',          state: 'LIVE',       cls: 'live'       },
     muted:      { icon: '🔇', label: 'MUTED',           state: 'MUTED',      cls: 'muted'      },
   };

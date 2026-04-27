@@ -250,7 +250,15 @@ function sanitizePresetId(input) {
 }
 
 function getStatePayload() {
-  return { type: 'state', overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, activeBroadcaster: !!activeAudioOffer };
+  return {
+    type: 'state',
+    overlayState,
+    designConfig,
+    presetConfigs,
+    teamPresets,
+    raceSchedule,
+    activeBroadcaster: Boolean(activeBroadcasterId && clients.has(activeBroadcasterId))
+  };
 }
 
 function saveAndBroadcastState() {
@@ -261,7 +269,7 @@ function saveAndBroadcastState() {
 }
 
 const clients = new Map();
-let activeAudioOffer = null;
+let activeBroadcasterId = null;
 
 app.use(express.json({ limit: '25mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -319,17 +327,7 @@ wss.on('connection', ws => {
   ws.on('pong', () => {}); // keep-alive acknowledged
 
   ws.on('message', (raw, isBinary) => {
-    if (isBinary) {
-      const client = clients.get(clientId);
-      if (client?.role === 'audio-broadcaster') {
-        clients.forEach(c => {
-          if (c.role === 'overlay' && c.ws.readyState === 1) {
-            c.ws.send(raw, { binary: true });
-          }
-        });
-      }
-      return;
-    }
+    if (isBinary) return;
 
     try {
       handleMessage(clientId, JSON.parse(raw));
@@ -340,8 +338,8 @@ wss.on('connection', ws => {
 
   ws.on('close', () => {
     const client = clients.get(clientId);
-    if (client?.role === 'audio-broadcaster') {
-      activeAudioOffer = null;
+    if (activeBroadcasterId === clientId || client?.role === 'audio-broadcaster') {
+      activeBroadcasterId = null;
       broadcast('overlay', { type: 'broadcaster-left' });
       broadcast('audio-monitor', { type: 'broadcaster-left' });
     }
@@ -374,11 +372,7 @@ function handleMessage(clientId, msg) {
         client.role = msg.role;
         client.authenticated = true;
         send(client, getStatePayload());
-        if (msg.role === 'overlay' && activeAudioOffer) {
-          send(client, { type: 'audio-offer', offer: activeAudioOffer.offer, from: activeAudioOffer.from });
-        }
-        // Tell monitor immediately if broadcaster is already live
-        if (msg.role === 'audio-monitor' && activeAudioOffer) {
+        if (activeBroadcasterId) {
           send(client, { type: 'broadcaster-online' });
         }
       }
@@ -544,25 +538,38 @@ function handleMessage(clientId, msg) {
       break;
     }
 
-    case 'audio-offer': {
+    case 'start-broadcast': {
       if (!client.authenticated) return;
-      if (msg.to) {
-        // Targeted offer from broadcaster → specific monitor client
-        const target = clients.get(msg.to);
-        if (target) send(target, { type: 'audio-offer', offer: msg.offer, from: clientId });
-      } else {
-        // Broadcast offer → OBS overlay + notify all monitor clients to request audio
-        client.role = 'audio-broadcaster';
-        activeAudioOffer = { offer: msg.offer, from: clientId };
-        broadcast('overlay', { type: 'audio-offer', offer: msg.offer, from: clientId });
-        broadcast('audio-monitor', { type: 'broadcaster-online' });
+      if (activeBroadcasterId && activeBroadcasterId !== clientId) {
+        const previous = clients.get(activeBroadcasterId);
+        if (previous) previous.role = 'controller';
       }
+      activeBroadcasterId = clientId;
+      client.role = 'audio-broadcaster';
+      broadcast('overlay', { type: 'broadcaster-online' });
+      broadcast('audio-monitor', { type: 'broadcaster-online' });
+      break;
+    }
+
+    case 'end-broadcast': {
+      if (client?.role !== 'audio-broadcaster' && activeBroadcasterId !== clientId) return;
+      client.role = 'controller';
+      activeBroadcasterId = null;
+      broadcast('overlay', { type: 'broadcaster-left' });
+      broadcast('audio-monitor', { type: 'broadcaster-left' });
+      break;
+    }
+
+    case 'audio-offer': {
+      if (!client.authenticated || !msg.to) return;
+      const target = clients.get(msg.to);
+      if (target) send(target, { type: 'audio-offer', offer: msg.offer, from: clientId });
       break;
     }
 
     case 'request-audio': {
-      // Monitor client asks broadcaster to open a dedicated connection
-      const broadcaster = [...clients.values()].find(c => c.role === 'audio-broadcaster');
+      if (!client.authenticated) return;
+      const broadcaster = activeBroadcasterId ? clients.get(activeBroadcasterId) : null;
       if (broadcaster) {
         send(broadcaster, { type: 'listener-request', from: clientId });
       }
@@ -584,8 +591,8 @@ function handleMessage(clientId, msg) {
     }
 
     case 'find-broadcaster': {
-      if (activeAudioOffer) {
-        send(client, { type: 'broadcaster-found', id: activeAudioOffer.from });
+      if (activeBroadcasterId) {
+        send(client, { type: 'broadcaster-found', id: activeBroadcasterId });
       }
       break;
     }

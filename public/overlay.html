@@ -445,14 +445,28 @@ function stopCountdown(resetToDuration) {
   hide(document.getElementById('ov-countdown'));
 }
 
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+];
+
 let ws;
 let audioPc = null;
+let broadcasterPresent = false;
+let audioRetryTimer = null;
 
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}`);
   ws.onopen = () => ws.send(JSON.stringify({ type: 'register', role: 'overlay' }));
-  ws.onclose = () => setTimeout(connect, 3000);
+  ws.onclose = () => {
+    clearAudioRetry();
+    closeAudioPc();
+    setTimeout(connect, 3000);
+  };
   ws.onmessage = event => {
     if (typeof event.data !== 'string') return;
     handle(JSON.parse(event.data));
@@ -462,6 +476,7 @@ function connect() {
 function handle(message) {
   if (message.type === 'state') {
     if (message.designConfig) applyDesign(message.designConfig);
+    broadcasterPresent = Boolean(message.activeBroadcaster);
     const state = message.overlayState;
     if (!state) return;
     Object.keys(EL).forEach(key => {
@@ -474,6 +489,7 @@ function handle(message) {
     if (state.countdown?.active && state.countdown?.startTime) {
       startCountdown(state.countdown.duration || 300, state.countdown.startTime);
     }
+    if (broadcasterPresent) requestAudio(true);
   } else if (message.type === 'toggle') {
     const el = document.getElementById(EL[message.element]);
     if (!el) return;
@@ -503,31 +519,50 @@ function handle(message) {
     if (message.config) applyDesign(message.config);
   } else if (message.type === 'alert') {
     showAlert(message.text, message.duration);
+  } else if (message.type === 'broadcaster-online') {
+    broadcasterPresent = true;
+    requestAudio(true);
   } else if (message.type === 'audio-offer') {
-    handleOffer(message.offer, message.from);
+    handleOffer(message.offer, message.from).catch(() => scheduleAudioRetry());
   } else if (message.type === 'ice-candidate') {
     if (audioPc) audioPc.addIceCandidate(new RTCIceCandidate(message.candidate)).catch(() => {});
   } else if (message.type === 'broadcaster-left') {
-    if (audioPc) {
-      audioPc.close();
-      audioPc = null;
-    }
-    document.getElementById('audio').srcObject = null;
+    broadcasterPresent = false;
+    clearAudioRetry();
+    closeAudioPc();
+  }
+}
+
+function requestAudio(force = false) {
+  if (!broadcasterPresent || ws?.readyState !== 1) return;
+  if (!force && audioPc && (audioPc.connectionState === 'connecting' || audioPc.connectionState === 'connected')) return;
+  clearAudioRetry();
+  ws.send(JSON.stringify({ type: 'request-audio' }));
+}
+
+function scheduleAudioRetry() {
+  if (!broadcasterPresent) return;
+  clearAudioRetry();
+  closeAudioPc();
+  audioRetryTimer = setTimeout(() => {
+    audioRetryTimer = null;
+    requestAudio(true);
+  }, 1000);
+}
+
+function clearAudioRetry() {
+  if (audioRetryTimer) {
+    clearTimeout(audioRetryTimer);
+    audioRetryTimer = null;
   }
 }
 
 async function handleOffer(offer, fromId) {
-  if (audioPc) {
-    audioPc.close();
-    audioPc = null;
-  }
+  clearAudioRetry();
+  closeAudioPc();
 
-  audioPc = new RTCPeerConnection({
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ]
-  });
+  audioPc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  const currentPc = audioPc;
 
   audioPc.ontrack = ({ streams }) => {
     const audio = document.getElementById('audio');
@@ -543,12 +578,43 @@ async function handleOffer(offer, fromId) {
     }
   };
 
+  audioPc.onconnectionstatechange = () => {
+    if (audioPc !== currentPc) return;
+    const state = audioPc.connectionState;
+    if (state === 'connected') {
+      clearAudioRetry();
+      return;
+    }
+    if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+      scheduleAudioRetry();
+    }
+  };
+
+  audioPc.oniceconnectionstatechange = () => {
+    if (audioPc !== currentPc) return;
+    if (audioPc.iceConnectionState === 'failed') scheduleAudioRetry();
+  };
+
   await audioPc.setRemoteDescription(new RTCSessionDescription(offer));
   const answer = await audioPc.createAnswer();
   await audioPc.setLocalDescription(answer);
   if (ws?.readyState === 1) {
     ws.send(JSON.stringify({ type: 'audio-answer', answer, to: fromId }));
   }
+}
+
+function closeAudioPc() {
+  if (audioPc) {
+    audioPc.ontrack = null;
+    audioPc.onicecandidate = null;
+    audioPc.onconnectionstatechange = null;
+    audioPc.oniceconnectionstatechange = null;
+    audioPc.close();
+    audioPc = null;
+  }
+  const audio = document.getElementById('audio');
+  audio.pause();
+  audio.srcObject = null;
 }
 
 function scaleOverlay() {
