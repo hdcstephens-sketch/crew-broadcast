@@ -311,6 +311,7 @@
   <div class="topbar-links">
     <span id="connLabel"><span class="status-dot" id="connDot"></span> Connecting</span>
     <a class="pill" href="/water.html">Water SPM</a>
+    <a class="pill" href="/audio.html">Commentary</a>
     <a class="pill" href="/overlay.html" target="_blank">Overlay ↗</a>
   </div>
 </div>
@@ -481,15 +482,24 @@
         <div class="sec-label">Distance Tracker</div>
         <div class="field-row" style="margin-bottom:8px;">
           <div>
-            <div class="field-label">Covered (m)</div>
-            <input class="quick-input" id="dstCov" type="number" value="0" style="margin:0;">
+            <div class="field-label">Covered (m) <span id="distAutoLabel" style="color:var(--accent);display:none;">AUTO</span></div>
+            <input class="quick-input" id="dstCov" type="number" value="0" style="margin:0;" oninput="stopDistAuto()">
           </div>
           <div>
             <div class="field-label">Total (m)</div>
-            <input class="quick-input" id="dstTot" type="number" value="2000" style="margin:0;">
+            <input class="quick-input" id="dstTot" type="number" value="1500" style="margin:0;">
           </div>
         </div>
-        <button class="action-btn" onclick="pushDist()">Push Distance</button>
+        <div class="field-row" style="margin-bottom:8px;">
+          <div>
+            <div class="field-label">Target Time (m:ss)</div>
+            <input class="quick-input" id="paceTime" value="5:05" style="margin:0;" placeholder="5:05">
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:8px;">
+            <button class="action-btn ghost" onclick="startDistAuto()" style="flex:1;">Auto from Timer</button>
+            <button class="action-btn" onclick="pushDist()" style="flex:1;">Push</button>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -650,13 +660,38 @@ function stopTimerLocal() {
   document.getElementById('tStop').disabled = true;
 }
 function syncTimer(msg) {
-  if (msg.action === 'start') { timerRunning = true; timerStart = Date.now() - (msg.elapsed || 0); runTimer(); }
-  else if (msg.action === 'stop') { timerElapsed = msg.elapsed || 0; stopTimerLocal(); updateTimerDisplay(timerElapsed); }
-  else if (msg.action === 'reset') { timerElapsed = 0; stopTimerLocal(); updateTimerDisplay(0); }
+  if (msg.action === 'start') { timerRunning = true; timerStart = Date.now() - (msg.elapsed || 0); runTimer(); startDistAuto(); }
+  else if (msg.action === 'stop') { timerElapsed = msg.elapsed || 0; stopTimerLocal(); updateTimerDisplay(timerElapsed); stopDistAuto(); }
+  else if (msg.action === 'reset') { timerElapsed = 0; stopTimerLocal(); updateTimerDisplay(0); stopDistAuto(); }
 }
-function tStart() { timerRunning = true; timerStart = Date.now() - timerElapsed; runTimer(); send({ type: 'timer-control', action: 'start', elapsed: timerElapsed }); }
-function tStop() { timerElapsed = Date.now() - timerStart; stopTimerLocal(); updateTimerDisplay(timerElapsed); send({ type: 'timer-control', action: 'stop', elapsed: timerElapsed }); }
-function tReset() { timerElapsed = 0; stopTimerLocal(); updateTimerDisplay(0); send({ type: 'timer-control', action: 'reset' }); }
+function tStart() { timerRunning = true; timerStart = Date.now() - timerElapsed; runTimer(); send({ type: 'timer-control', action: 'start', elapsed: timerElapsed }); startDistAuto(); }
+function tStop() { timerElapsed = Date.now() - timerStart; stopTimerLocal(); updateTimerDisplay(timerElapsed); send({ type: 'timer-control', action: 'stop', elapsed: timerElapsed }); stopDistAuto(); }
+function tReset() { timerElapsed = 0; stopTimerLocal(); updateTimerDisplay(0); send({ type: 'timer-control', action: 'reset' }); stopDistAuto(); document.getElementById('dstCov').value = 0; }
+
+// ── distance auto-estimate ──
+let distAutoIv = null;
+function parsePaceSeconds(str) {
+  const parts = String(str || '5:05').split(':');
+  return (parseInt(parts[0])||0)*60 + (parseInt(parts[1])||0);
+}
+function startDistAuto() {
+  if (distAutoIv) return;
+  document.getElementById('distAutoLabel').style.display = 'inline';
+  distAutoIv = setInterval(() => {
+    if (!timerRunning) return;
+    const total = Number(document.getElementById('dstTot').value) || 1500;
+    const paceS = parsePaceSeconds(document.getElementById('paceTime').value) || 305;
+    const elapsedS = (Date.now() - timerStart) / 1000;
+    const covered = Math.min(total, Math.round(elapsedS * (total / paceS)));
+    document.getElementById('dstCov').value = covered;
+    send({ type: 'update', element: 'distance', data: { covered, total } });
+  }, 2000);
+}
+function stopDistAuto() {
+  clearInterval(distAutoIv);
+  distAutoIv = null;
+  document.getElementById('distAutoLabel').style.display = 'none';
+}
 
 // ── countdown ──
 function updateCdDisplay(sec) {
