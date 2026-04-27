@@ -516,6 +516,14 @@ function handleMessage(clientId, msg) {
       break;
     }
 
+    case 'alert': {
+      if (!client.authenticated) return;
+      const alertText = String(msg.text || '').slice(0, 120);
+      const alertDuration = Math.min(15, Math.max(1, Number(msg.duration) || 3));
+      if (alertText) broadcast('overlay', { type: 'alert', text: alertText, duration: alertDuration });
+      break;
+    }
+
     case 'audio-offer': {
       if (!client.authenticated) return;
       client.role = 'audio-broadcaster';

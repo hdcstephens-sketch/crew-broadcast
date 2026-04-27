@@ -100,6 +100,8 @@
     </div>
   </div>
 
+  <div id="ov-alert"><div class="ov-alert-text" id="ov-at"></div></div>
+
   <div class="ov" id="ov-watermark">
     <div class="ov-box ov-watermark-box" id="ov-wt">BROOKS SCHOOL CREW</div>
   </div>
@@ -496,6 +498,8 @@ function handle(message) {
     if (message.action === 'reset') stopCountdown(message.duration || 300);
   } else if (message.type === 'design') {
     if (message.config) applyDesign(message.config);
+  } else if (message.type === 'alert') {
+    showAlert(message.text, message.duration);
   } else if (message.type === 'audio-offer') {
     handleOffer(message.offer, message.from);
   } else if (message.type === 'ice-candidate') {
@@ -551,6 +555,18 @@ function scaleOverlay() {
 }
 window.addEventListener('resize', scaleOverlay);
 scaleOverlay();
+
+let alertTimer = null;
+function showAlert(text, duration) {
+  const el = document.getElementById('ov-alert');
+  document.getElementById('ov-at').textContent = (text || '').toUpperCase();
+  if (alertTimer) clearTimeout(alertTimer);
+  gsap.killTweensOf(el);
+  gsap.fromTo(el, { opacity: 0, scale: 0.88 }, { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(1.6)' });
+  alertTimer = setTimeout(() => {
+    gsap.to(el, { opacity: 0, scale: 0.95, duration: 0.5, ease: 'power2.in' });
+  }, Math.max(1, duration || 3) * 1000);
+}
 
 connect();
 </script>

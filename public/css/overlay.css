@@ -435,6 +435,32 @@ body {
   bottom: 18px;
 }
 
+#ov-alert {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 88%;
+  text-align: center;
+  pointer-events: none;
+  visibility: visible;
+  opacity: 0;
+}
+
+.ov-alert-text {
+  font-family: var(--ov-font, 'Rajdhani'), sans-serif;
+  font-size: 110px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ov-accent, #004830);
+  padding: 24px 48px;
+  border-radius: var(--ov-radius, 12px);
+  line-height: 1.1;
+  display: inline-block;
+  text-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+
 .ov-watermark-box {
   padding: 8px 12px;
   font-size: 11px;

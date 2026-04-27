@@ -336,6 +336,22 @@
 
 <div class="page">
 
+  <!-- ── Flash Alert ── -->
+  <div>
+    <div class="sec-label">Flash Alert</div>
+    <div class="preset-grid" style="grid-template-columns:repeat(2,1fr); margin-bottom:8px;">
+      <button class="preset-btn" onclick="sendAlert('PHOTO FINISH',5)">📸 Photo Finish</button>
+      <button class="preset-btn" onclick="sendAlert('COURSE RECORD',5)">🏆 Course Record</button>
+      <button class="preset-btn" onclick="sendAlert('RACE COMPLETE',4)">✅ Race Complete</button>
+      <button class="preset-btn" onclick="sendAlert('FALSE START',4)">⚠️ False Start</button>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input class="quick-input" id="alertText" placeholder="Custom message…" style="margin:0; flex:1;">
+      <input class="quick-input" id="alertDur" type="number" value="4" min="1" max="15" style="margin:0; width:64px;" title="Seconds">
+      <button class="action-btn" onclick="sendCustomAlert()">Flash</button>
+    </div>
+  </div>
+
   <!-- ── Race Stage ── -->
   <div>
     <div class="sec-label">Race Stage</div>
@@ -413,6 +429,18 @@
       <span id="setupArrow">▼</span>
     </button>
     <div class="setup-body hidden" id="setupBody">
+
+      <!-- Race Schedule -->
+      <div>
+        <div class="sec-label">Race Schedule</div>
+        <div id="raceScheduleList" style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;"></div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <input class="quick-input" id="newRaceName" placeholder="Men's Varsity 8+ Final" style="margin:0; flex:2; min-width:140px;">
+          <input class="quick-input" id="newRaceSub" placeholder="Spring Invitational 2026" style="margin:0; flex:2; min-width:140px;">
+          <button class="action-btn ghost" onclick="addRace()">+ Add</button>
+        </div>
+        <p style="font-size:11px; color:var(--text2); margin-top:6px;">Tap a race to instantly load it into the Event Header.</p>
+      </div>
 
       <!-- School Logos -->
       <div>
@@ -958,9 +986,81 @@ function restoreBackupIfNeeded() {
   renderSchoolLogosGrid();
 }
 
+// ── flash alert ──
+function sendAlert(text, duration) {
+  send({ type: 'alert', text, duration: duration || 4 });
+  toast('Alert: ' + text, 'ok');
+}
+function sendCustomAlert() {
+  const text = document.getElementById('alertText').value.trim();
+  if (!text) return;
+  sendAlert(text, Number(document.getElementById('alertDur').value) || 4);
+  document.getElementById('alertText').value = '';
+}
+
+// ── race schedule ──
+let raceSchedule = JSON.parse(localStorage.getItem('crew_race_schedule') || '[]');
+
+function renderRaceSchedule() {
+  const el = document.getElementById('raceScheduleList');
+  if (!raceSchedule.length) {
+    el.innerHTML = '<div class="empty-msg">No races added yet.</div>';
+    return;
+  }
+  el.innerHTML = raceSchedule.map((race, i) => `
+    <div style="display:flex; align-items:center; gap:6px;">
+      <button class="action-btn ghost" style="flex:1; text-align:left; padding:9px 12px;" onclick="loadRace(${i})">
+        <span style="font-weight:700;">${escapeAttr(race.name)}</span>
+        ${race.sub ? `<span style="color:var(--text2); font-size:11px; margin-left:6px;">${escapeAttr(race.sub)}</span>` : ''}
+      </button>
+      <button class="action-btn ghost" style="flex:none; padding:7px 10px; color:var(--danger); font-size:16px;" onclick="removeRace(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function loadRace(i) {
+  const race = raceSchedule[i];
+  if (!race) return;
+  document.getElementById('evTitle').value = race.name;
+  document.getElementById('evSub').value = race.sub || '';
+  pushEvent();
+  toast('Loaded: ' + race.name, 'ok');
+}
+
+function addRace() {
+  const name = document.getElementById('newRaceName').value.trim();
+  if (!name) return;
+  raceSchedule.push({ name, sub: document.getElementById('newRaceSub').value.trim() });
+  localStorage.setItem('crew_race_schedule', JSON.stringify(raceSchedule));
+  document.getElementById('newRaceName').value = '';
+  document.getElementById('newRaceSub').value = '';
+  renderRaceSchedule();
+}
+
+function removeRace(i) {
+  raceSchedule.splice(i, 1);
+  localStorage.setItem('crew_race_schedule', JSON.stringify(raceSchedule));
+  renderRaceSchedule();
+}
+
+// ── keyboard shortcuts ──
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.code === 'Space') { e.preventDefault(); timerRunning ? tStop() : tStart(); }
+  if (e.code === 'KeyR') { e.preventDefault(); tReset(); }
+  if (e.code === 'Digit1') preset('pre-race');
+  if (e.code === 'Digit2') preset('race-start');
+  if (e.code === 'Digit3') preset('race-running');
+  if (e.code === 'Digit4') preset('finish');
+  if (e.code === 'Digit5') preset('post-race');
+  if (e.code === 'Digit0') preset('clear');
+});
+
 buildToggleGrid();
 fillResults(DEFAULT_RESULTS);
 fillLanes([]);
+renderRaceSchedule();
 connect();
 </script>
 </body>
