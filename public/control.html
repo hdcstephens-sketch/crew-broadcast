@@ -296,6 +296,24 @@
 
     .empty-msg { font-size: 12px; color: var(--text2); padding: 12px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
 
+    .logo-card {
+      background: var(--card2); border: 1px solid var(--line); border-radius: 12px;
+      padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+      cursor: pointer; position: relative; overflow: hidden; transition: 0.14s;
+    }
+    .logo-card:hover { border-color: var(--accent); }
+    .logo-card input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .logo-card-img {
+      width: 64px; height: 64px; border-radius: 10px; object-fit: contain;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700; color: var(--text2); overflow: hidden;
+    }
+    .logo-card-img img { width: 100%; height: 100%; object-fit: contain; }
+    .logo-card-name { font-size: 11px; font-weight: 600; color: var(--text2); text-align: center; line-height: 1.3; }
+    .logo-card.has-logo { border-color: rgba(0,168,107,0.3); }
+    .logo-card.has-logo .logo-card-name { color: var(--accent); }
+
     @media (max-width: 420px) {
       .live-grid { grid-template-columns: 1fr; }
       .preset-grid { grid-template-columns: repeat(2, 1fr); }
@@ -395,6 +413,13 @@
       <span id="setupArrow">▼</span>
     </button>
     <div class="setup-body hidden" id="setupBody">
+
+      <!-- School Logos -->
+      <div>
+        <div class="sec-label">School Logos</div>
+        <div id="schoolLogosGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px;"></div>
+        <p style="font-size:11px; color:var(--text2); margin-top:8px;">Logos are saved to each school's team preset and used automatically in lanes, results, and overlays.</p>
+      </div>
 
       <!-- Lanes -->
       <div>
@@ -584,13 +609,13 @@ function onMessage(msg) {
   if (msg.type === 'auth-ok') { setStatus(true); toast('Connected', 'ok'); }
   if (msg.type === 'auth-fail') { localStorage.clear(); location.href = '/'; }
   if (msg.type === 'state') {
-    if (msg.teamPresets) { teamPresets = msg.teamPresets; syncLaneSelects(); }
+    if (msg.teamPresets) { teamPresets = msg.teamPresets; syncLaneSelects(); renderSchoolLogosGrid(); }
     if (msg.overlayState) applyState(msg.overlayState);
   }
   if (msg.type === 'toggle') setToggle(msg.element, msg.active);
   if (msg.type === 'timer-control') syncTimer(msg);
   if (msg.type === 'countdown-control') syncCountdown(msg);
-  if (msg.type === 'team-presets') { teamPresets = msg.teamPresets || {}; syncLaneSelects(); }
+  if (msg.type === 'team-presets') { teamPresets = msg.teamPresets || {}; syncLaneSelects(); renderSchoolLogosGrid(); }
 }
 
 function setStatus(ok) {
@@ -793,6 +818,53 @@ function laneLogoChange(input) {
 }
 
 function syncLaneSelects() {}
+
+// ── school logos grid ──
+function renderSchoolLogosGrid() {
+  const grid = document.getElementById('schoolLogosGrid');
+  const presets = Object.values(teamPresets);
+  if (!presets.length) {
+    grid.innerHTML = '<div class="empty-msg" style="grid-column:1/-1;">No team presets saved yet. Add teams first.</div>';
+    return;
+  }
+  grid.innerHTML = '';
+  presets.sort((a, b) => a.name.localeCompare(b.name)).forEach(preset => {
+    const card = document.createElement('label');
+    card.className = 'logo-card' + (preset.logo ? ' has-logo' : '');
+    card.title = 'Click to upload logo for ' + preset.name;
+    const imgBox = document.createElement('div');
+    imgBox.className = 'logo-card-img';
+    if (preset.logo) {
+      imgBox.innerHTML = `<img src="${preset.logo}" alt="${escapeAttr(preset.name)}">`;
+    } else {
+      imgBox.textContent = (preset.shortName || preset.name || '').slice(0, 2).toUpperCase();
+    }
+    const nameEl = document.createElement('div');
+    nameEl.className = 'logo-card-name';
+    nameEl.textContent = preset.name;
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/png,image/jpeg,image/svg+xml,image/*';
+    fileInput.onchange = () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const logo = e.target.result;
+        const updated = { ...preset, logo };
+        teamPresets[preset.id] = updated;
+        send({ type: 'team-preset-save', preset: updated });
+        toast('Logo saved for ' + preset.name, 'ok');
+        renderSchoolLogosGrid();
+      };
+      reader.readAsDataURL(file);
+    };
+    card.appendChild(imgBox);
+    card.appendChild(nameEl);
+    card.appendChild(fileInput);
+    grid.appendChild(card);
+  });
+}
 
 function pushLanes() {
   const data = Array.from(document.querySelectorAll('#lanesEd .lane-row-simple')).map((row, i) => ({
