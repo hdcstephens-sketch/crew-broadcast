@@ -454,6 +454,13 @@
         <p style="font-size:11px; color:var(--text2); margin-top:6px;">Tap a race to instantly load it into the Event Header.</p>
       </div>
 
+      <!-- Scene Editor -->
+      <div>
+        <div class="sec-label">Scene Editor</div>
+        <div id="presetEditor" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <p style="font-size:11px;color:var(--text2);margin-top:6px;">Check which widgets appear when each scene preset is triggered. Changes save instantly.</p>
+      </div>
+
       <!-- School Logos -->
       <div>
         <div class="sec-label">School Logos</div>
@@ -594,6 +601,9 @@ const TOGGLES = [
   ['countdown', 'Countdown']
 ];
 
+const PRESET_KEYS = ['pre-race', 'race-start', 'race-running', 'finish', 'post-race'];
+const PRESET_LABELS = { 'pre-race': 'Pre-Race', 'race-start': 'Race Start', 'race-running': 'Race Running', 'finish': 'Finish', 'post-race': 'Post-Race' };
+
 const DEFAULT_RESULTS = [
   { place: 1, school: 'Brooks School', time: '6:02.4', margin: '-', lane: 1 },
   { place: 2, school: 'Phillips Exeter', time: '6:05.1', margin: '+2.7', lane: 2 },
@@ -608,6 +618,7 @@ let setupOpen = false;
 let firstStateReceived = false;
 let currentLanes = [];
 let finishTimes = [];
+let presetConfigs = {};
 
 // ── toggles grid ──
 function buildToggleGrid() {
@@ -653,12 +664,14 @@ function onMessage(msg) {
   if (msg.type === 'auth-fail') { localStorage.clear(); location.href = '/'; }
   if (msg.type === 'state') {
     if (msg.teamPresets) { teamPresets = msg.teamPresets; syncLaneSelects(); renderSchoolLogosGrid(); restoreBackupIfNeeded(); }
+    if (msg.presetConfigs) { presetConfigs = msg.presetConfigs; renderPresetEditor(); }
     if (msg.overlayState) applyState(msg.overlayState);
   }
   if (msg.type === 'toggle') setToggle(msg.element, msg.active);
   if (msg.type === 'timer-control') syncTimer(msg);
   if (msg.type === 'countdown-control') syncCountdown(msg);
   if (msg.type === 'team-presets') { teamPresets = msg.teamPresets || {}; syncLaneSelects(); renderSchoolLogosGrid(); saveBackup(); }
+  if (msg.type === 'preset-config') { if (presetConfigs[msg.name]) presetConfigs[msg.name] = { elements: msg.elements }; renderPresetEditor(); }
 }
 
 function setStatus(ok) {
@@ -1095,6 +1108,38 @@ function restoreBackupIfNeeded() {
   renderSchoolLogosGrid();
 }
 
+// ── preset scene editor ──
+function renderPresetEditor() {
+  const container = document.getElementById('presetEditor');
+  if (!container) return;
+  container.innerHTML = PRESET_KEYS.map(key => {
+    const activeEls = presetConfigs[key]?.elements || [];
+    return `
+      <div style="background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text2);margin-bottom:10px;">${PRESET_LABELS[key]}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          ${TOGGLES.map(([elKey, label]) => {
+            const on = activeEls.includes(elKey);
+            return `<label style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;border:1px solid ${on ? 'rgba(0,168,107,0.4)' : 'var(--line)'};background:${on ? 'rgba(0,168,107,0.08)' : 'transparent'};cursor:pointer;font-size:12px;font-weight:600;color:${on ? 'var(--accent)' : 'var(--text2)'};user-select:none;">
+              <input type="checkbox" ${on ? 'checked' : ''} onchange="togglePresetElement('${key}','${elKey}',this.checked)" style="accent-color:var(--accent);width:13px;height:13px;cursor:pointer;">
+              ${label}
+            </label>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function togglePresetElement(presetKey, elKey, checked) {
+  if (!presetConfigs[presetKey]) presetConfigs[presetKey] = { elements: [] };
+  const els = [...(presetConfigs[presetKey].elements || [])];
+  if (checked && !els.includes(elKey)) els.push(elKey);
+  if (!checked) { const idx = els.indexOf(elKey); if (idx !== -1) els.splice(idx, 1); }
+  presetConfigs[presetKey] = { elements: els };
+  send({ type: 'preset-config', name: presetKey, elements: els });
+  renderPresetEditor();
+}
+
 // ── flash alert ──
 function sendAlert(text, duration) {
   send({ type: 'alert', text, duration: duration || 4 });
@@ -1170,6 +1215,7 @@ buildToggleGrid();
 fillResults(DEFAULT_RESULTS);
 fillLanes([]);
 renderRaceSchedule();
+renderPresetEditor();
 connect();
 </script>
 </body>
