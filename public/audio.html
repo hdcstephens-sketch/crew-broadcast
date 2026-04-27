@@ -9,200 +9,121 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #060c09;
-      --card: #0f1510;
-      --card2: #161e18;
-      --accent: #00a86b;
+      --bg:         #060c09;
+      --card:       #0f1510;
+      --card2:      #161e18;
+      --accent:     #00a86b;
       --accent-dim: rgba(0,168,107,0.15);
-      --danger: #e53935;
+      --danger:     #e53935;
       --danger-dim: rgba(229,57,53,0.15);
-      --text: #f0f0f0;
-      --text2: #8a9a90;
-      --line: rgba(255,255,255,0.07);
-      --r: 16px;
+      --text:       #f0f0f0;
+      --text2:      #8a9a90;
+      --line:       rgba(255,255,255,0.07);
+      --r:          16px;
     }
 
     body {
-      background: var(--bg);
-      color: var(--text);
+      background: var(--bg); color: var(--text);
       font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 0 0 60px;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; padding-bottom: 60px;
     }
 
-    /* top bar */
+    /* ── top bar ── */
     .topbar {
-      width: 100%;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(6,12,9,0.96);
-      backdrop-filter: blur(12px);
+      width: 100%; position: sticky; top: 0; z-index: 50;
+      background: rgba(6,12,9,0.96); backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 12px 20px;
     }
-    .topbar-brand {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: var(--accent);
-    }
+    .topbar-brand { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); }
     .topbar-right { display: flex; align-items: center; gap: 10px; }
-    .pill {
-      font-size: 12px; font-weight: 600;
-      padding: 5px 12px; border-radius: 999px;
-      border: 1px solid var(--line); color: var(--text2);
-      text-decoration: none; background: var(--card);
-    }
+    .pill { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--text2); text-decoration: none; background: var(--card); }
     .pill:hover { border-color: var(--accent); color: var(--accent); }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; flex-shrink: 0; }
     .dot.live { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
     .dot.err  { background: var(--danger); }
     #wsLabel { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
 
-    /* main */
-    .main { width: 100%; max-width: 480px; padding: 28px 16px; display: flex; flex-direction: column; gap: 20px; }
+    /* ── layout ── */
+    .main { width: 100%; max-width: 480px; padding: 24px 16px; display: flex; flex-direction: column; gap: 18px; }
 
-    /* mic orb */
+    /* ── warn banner ── */
+    .warn-banner { display: none; padding: 12px 16px; background: rgba(229,57,53,0.1); border: 1px solid rgba(229,57,53,0.25); border-radius: 12px; font-size: 13px; color: #ef9a9a; }
+    .warn-banner.show { display: block; }
+
+    /* ── tabs ── */
+    .tab-bar { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+    .tab-btn { flex: 1; padding: 9px 0; border-radius: 9px; border: none; background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: 0.15s; letter-spacing: 0.04em; }
+    .tab-btn.active { background: var(--card2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    .tab-pane { display: none; flex-direction: column; gap: 18px; }
+    .tab-pane.active { display: flex; }
+
+    /* ── orb ── */
     .orb-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0; }
     .orb {
-      width: 160px; height: 160px;
-      border-radius: 50%;
-      border: 3px solid var(--line);
-      background: var(--card);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 4px;
-      cursor: pointer;
-      transition: 0.22s;
-      position: relative;
+      width: 160px; height: 160px; border-radius: 50%;
+      border: 3px solid var(--line); background: var(--card);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      cursor: pointer; transition: border-color 0.22s, background 0.22s, box-shadow 0.22s;
     }
     .orb:hover { border-color: rgba(0,168,107,0.4); }
-    .orb-icon { font-size: 44px; line-height: 1; }
-    .orb-label {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 13px; font-weight: 700;
-      letter-spacing: 0.12em; color: var(--text2);
-    }
-    .orb.live {
-      border-color: var(--accent);
-      background: rgba(0,168,107,0.08);
-      box-shadow: 0 0 0 14px rgba(0,168,107,0.07), 0 0 50px rgba(0,168,107,0.12);
-    }
+    .orb-icon  { font-size: 44px; line-height: 1; pointer-events: none; }
+    .orb-label { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--text2); pointer-events: none; }
+    .orb.live   { border-color: var(--accent); background: rgba(0,168,107,0.08); box-shadow: 0 0 0 14px rgba(0,168,107,0.07), 0 0 50px rgba(0,168,107,0.12); }
     .orb.live .orb-label { color: var(--accent); }
-    .orb.muted {
-      border-color: var(--danger);
-      background: rgba(229,57,53,0.08);
-      box-shadow: 0 0 0 14px rgba(229,57,53,0.06);
-    }
+    .orb.muted  { border-color: var(--danger); background: rgba(229,57,53,0.08); box-shadow: 0 0 0 14px rgba(229,57,53,0.06); }
     .orb.muted .orb-label { color: var(--danger); }
-    .orb.connecting { border-color: var(--accent); animation: pulse 1.2s ease infinite; }
-    @keyframes pulse {
-      0%,100% { box-shadow: 0 0 0 0 rgba(0,168,107,0.3); }
-      50%      { box-shadow: 0 0 0 24px rgba(0,168,107,0); }
-    }
+    .orb.connecting { border-color: var(--accent); animation: orbPulse 1.2s ease infinite; }
+    @keyframes orbPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,168,107,0.3); } 50% { box-shadow: 0 0 0 24px rgba(0,168,107,0); } }
+    .orb-state { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--text2); text-transform: uppercase; }
+    .orb-state.live  { color: var(--accent); }
+    .orb-state.muted { color: var(--danger); }
 
-    .orb-state-text {
-      font-size: 13px; font-weight: 700;
-      letter-spacing: 0.1em; color: var(--text2);
-      text-transform: uppercase;
-    }
-    .orb-state-text.live { color: var(--accent); }
-    .orb-state-text.muted { color: var(--danger); }
-
-    /* level meter */
+    /* ── level meter ── */
     .meter-wrap { width: 100%; display: flex; flex-direction: column; gap: 6px; }
-    .meter-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); }
-    .meter {
-      height: 10px; border-radius: 999px;
-      background: rgba(255,255,255,0.07);
-      overflow: hidden;
-    }
-    .meter-fill {
-      width: 0; height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #00a86b, #22c55e);
-      transition: width 0.07s linear;
-    }
+    .meter-row  { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); }
+    .meter      { height: 10px; border-radius: 999px; background: rgba(255,255,255,0.07); overflow: hidden; }
+    .meter-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #00a86b, #22c55e); transition: width 0.07s linear; }
 
-    /* card */
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--r);
-      padding: 16px;
-    }
-    .card-label {
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.16em; text-transform: uppercase;
-      color: var(--text2); margin-bottom: 10px;
-    }
+    /* ── card ── */
+    .card       { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; }
+    .card-label { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text2); margin-bottom: 10px; }
 
-    /* buttons */
-    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn {
-      flex: 1; min-width: 0;
-      padding: 11px 10px; border-radius: 12px;
-      border: 1px solid var(--line); background: var(--card2);
-      color: var(--text); font-size: 14px; font-weight: 600;
-      cursor: pointer; transition: 0.13s; text-align: center;
-    }
-    .btn:hover { border-color: var(--accent); }
+    /* ── buttons ── */
+    .btn-row { display: flex; gap: 8px; }
+    .btn { flex: 1; padding: 11px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--card2); color: var(--text); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; transition: 0.13s; }
+    .btn:hover   { border-color: var(--accent); }
     .btn:disabled { opacity: 0.3; pointer-events: none; }
-    .btn-go  { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .btn-go:hover { background: #00c07a; }
+    .btn-go   { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-go:hover { background: #00c07a; border-color: #00c07a; }
     .btn-warn { background: var(--danger-dim); border-color: rgba(229,57,53,0.4); color: #ef9a9a; }
     .btn-warn:hover { background: rgba(229,57,53,0.28); }
 
-    /* select */
-    .sel {
-      width: 100%; padding: 10px 12px;
-      background: var(--card2); border: 1px solid var(--line);
-      border-radius: 12px; color: var(--text);
-      font-size: 14px; font-family: inherit; outline: none;
-    }
+    /* ── select ── */
+    .sel { width: 100%; padding: 10px 12px; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; }
     .sel:focus { border-color: var(--accent); }
+    .sel:disabled { opacity: 0.4; }
 
-    /* monitor toggle */
-    .chip {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 8px 14px; border-radius: 999px;
-      border: 1px solid var(--line); background: var(--card2);
-      color: var(--text2); font-size: 12px; font-weight: 600;
-      cursor: pointer; transition: 0.15s;
-    }
+    /* ── chip ── */
+    .chip { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card2); color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.15s; user-select: none; }
     .chip.on { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
 
-    /* https warning */
-    .warn-banner {
-      display: none; padding: 12px 16px;
-      background: rgba(229,57,53,0.1); border: 1px solid rgba(229,57,53,0.25);
-      border-radius: 12px; font-size: 13px; color: #ef9a9a;
-    }
-    .warn-banner.show { display: block; }
+    /* ── note text ── */
+    .note { font-size: 11px; color: var(--text2); margin-top: 8px; line-height: 1.5; }
 
-    /* log */
+    /* ── log ── */
     .log { display: flex; flex-direction: column; gap: 6px; }
-    .log-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 12px; border-radius: 10px;
-      background: var(--card2); font-size: 12px;
-    }
+    .log-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--card2); font-size: 12px; }
     .log-time { font-size: 11px; color: var(--text2); white-space: nowrap; margin-left: 10px; }
 
-    /* toasts */
+    /* ── toasts ── */
     #toasts { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 999; }
-    .toast { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #fff; }
+    .toast { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #fff; animation: fadeIn 0.15s ease; }
     .toast.ok  { background: var(--accent); }
     .toast.err { background: var(--danger); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   </style>
 </head>
 <body>
@@ -212,200 +133,317 @@
   <div class="topbar-right">
     <span id="wsLabel"><span class="dot" id="wsDot"></span>Connecting</span>
     <a class="pill" href="/control.html">← Control</a>
-    <a class="pill" href="/overlay.html" target="_blank">Overlay ↗</a>
+    <a class="pill" href="/monitor.html" target="_blank">Monitor ↗</a>
   </div>
 </div>
 
 <div class="main">
 
   <div class="warn-banner" id="httpsWarn">
-    Microphone access requires HTTPS when not on localhost. Make sure you're on the secure Railway URL.
+    Microphone access requires HTTPS. Make sure you're on the secure URL, not http://.
   </div>
 
-  <!-- Orb -->
-  <div class="orb-wrap">
-    <div class="orb" id="orb" onclick="orbTap()">
-      <div class="orb-icon">🎙</div>
-      <div class="orb-label" id="orbLabel">TAP TO GO LIVE</div>
-    </div>
-    <div class="orb-state-text" id="orbState">IDLE</div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabBtn-input"  onclick="switchTab('input')">Input</button>
+    <button class="tab-btn"        id="tabBtn-output" onclick="switchTab('output')">Output</button>
+  </div>
 
-    <!-- Level meter -->
-    <div class="meter-wrap">
-      <div class="meter-row">
-        <span>Input level</span>
-        <span id="levelText">0%</span>
+  <!-- ═══ INPUT TAB ═══ -->
+  <div class="tab-pane active" id="tab-input">
+
+    <div class="orb-wrap">
+      <div class="orb" id="orb" onclick="orbTap()">
+        <div class="orb-icon">🎙</div>
+        <div class="orb-label" id="orbLabel">TAP TO GO LIVE</div>
       </div>
-      <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+      <div class="orb-state" id="orbState">IDLE</div>
+      <div class="meter-wrap">
+        <div class="meter-row"><span>Input level</span><span id="levelText">0%</span></div>
+        <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+      </div>
     </div>
-  </div>
 
-  <!-- Controls -->
-  <div class="btn-row">
-    <button class="btn btn-go" id="btnLive" onclick="goLive()">Go Live</button>
-    <button class="btn btn-warn" id="btnMute" onclick="toggleMute()" disabled>Mute</button>
-    <button class="btn" id="btnEnd" onclick="endMic()" disabled>Release Mic</button>
-  </div>
-
-  <!-- Mic select + monitor -->
-  <div class="card">
-    <div class="card-label">Microphone</div>
-    <select class="sel" id="deviceSelect" onchange="changeDevice(this.value)" style="margin-bottom:10px;">
-      <option value="">Default Microphone</option>
-    </select>
-    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-      <span class="chip" id="monitorChip" onclick="toggleMonitor()">🔇 Monitor Off</span>
-      <button class="btn" style="flex:none; padding:8px 14px; font-size:12px;" onclick="refreshDevices()">Refresh Devices</button>
+    <div class="btn-row">
+      <button class="btn btn-go"   id="btnLive" onclick="goLive()">Go Live</button>
+      <button class="btn btn-warn" id="btnMute" onclick="toggleMute()" disabled>Mute</button>
+      <button class="btn"          id="btnEnd"  onclick="releaseMic()" disabled>Release</button>
     </div>
-  </div>
 
-  <!-- Event log -->
-  <div class="card">
-    <div class="card-label">Event Log</div>
-    <div class="log" id="logList">
-      <div class="log-row"><span>Waiting for activity…</span></div>
+    <div class="card">
+      <div class="card-label">Microphone</div>
+      <select class="sel" id="micSelect" onchange="changeMic(this.value)" style="margin-bottom:10px;">
+        <option value="">Default Microphone</option>
+      </select>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <span class="chip" id="earbackChip" onclick="toggleEarback()">🔇 Earback Off</span>
+        <button class="btn" style="flex:none;padding:8px 14px;font-size:12px;" onclick="refreshDevices()">Refresh</button>
+      </div>
     </div>
-  </div>
 
-</div>
+    <div class="card">
+      <div class="card-label">Event Log</div>
+      <div class="log" id="logList">
+        <div class="log-row"><span>Waiting for activity…</span></div>
+      </div>
+    </div>
+
+  </div><!-- /tab-input -->
+
+  <!-- ═══ OUTPUT TAB ═══ -->
+  <div class="tab-pane" id="tab-output">
+
+    <div class="card">
+      <div class="card-label">Earback Output</div>
+      <select class="sel" id="outSelect" onchange="changeOut(this.value)" disabled>
+        <option value="">Default Output</option>
+      </select>
+      <p class="note" id="outNote">Routes your earback monitor to the selected speaker or headphone output.</p>
+    </div>
+
+  </div><!-- /tab-output -->
+
+</div><!-- /main -->
 
 <audio id="localMonitor" autoplay playsinline muted></audio>
 <div id="toasts"></div>
 
 <script>
+// ── auth guard ────────────────────────────────────────────────────────
 const token = localStorage.getItem('crew_token');
 const user  = JSON.parse(localStorage.getItem('crew_user') || 'null');
 if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
-
 if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
   document.getElementById('httpsWarn').classList.add('show');
 }
 
-let ws, pc = null, rawStream = null, broadcastStream = null;
-let selectedDeviceId = '', localMonitorOn = false, isMuted = false;
-let overlayPeerId = null, pendingIce = [];
-let audioCtx = null, micSource = null, analyser = null, gainNode = null, broadcastDest = null, meterRaf = null;
-let mode = 'idle';
+// ── constants ─────────────────────────────────────────────────────────
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' }
+];
 
-// ── websocket ──
-function connect() {
+// ── state ─────────────────────────────────────────────────────────────
+let ws;
+
+// One PC for the OBS overlay (broadcast offer flow)
+let broadcastPc     = null;
+let broadcastPeerId = null;   // overlay's client ID, known after it answers
+let broadcastIceQ   = [];     // ICE candidates queued before overlay answers
+
+// One PC per boathouse monitor client
+const monitorPcs = new Map(); // clientId → RTCPeerConnection
+
+// Audio
+let rawStream = null, broadcastStream = null;
+let audioCtx = null, micSource = null, analyser = null, gainNode = null, destNode = null, meterRaf = null;
+let selectedMicId = '', selectedOutId = '';
+let earbackOn = false, isMuted = false, mode = 'idle';
+
+// ── websocket ─────────────────────────────────────────────────────────
+function wsConnect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}`);
-  ws.onopen = () => { ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' })); };
-  ws.onclose = () => { setWs(false); setTimeout(connect, 3000); };
-  ws.onmessage = e => {
-    const msg = JSON.parse(e.data);
-    if (msg.type === 'auth-ok') { setWs(true); refreshDevices(); log('Connected to server'); }
-    if (msg.type === 'audio-answer' && pc) {
-      overlayPeerId = msg.from;
-      flushIce();
-      pc.setRemoteDescription(new RTCSessionDescription(msg.answer)).then(() => log('Overlay answered ✓')).catch(err => log('Answer error: ' + err.message));
-    }
-    if (msg.type === 'ice-candidate' && pc) {
-      if (!overlayPeerId) overlayPeerId = msg.from;
-      flushIce();
-      pc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(() => {});
-    }
-  };
+  ws.onopen  = () => ws.send(JSON.stringify({ type: 'auth', token }));
+  ws.onclose = () => { setWsStatus(false); setTimeout(wsConnect, 3000); };
+  ws.onmessage = e => onWsMessage(JSON.parse(e.data));
 }
 
-function setWs(ok) {
-  document.getElementById('wsDot').className = 'dot ' + (ok ? 'live' : 'err');
-  document.getElementById('wsLabel').innerHTML = `<span class="dot ${ok ? 'live' : 'err'}" id="wsDot"></span>${ok ? 'Live' : 'Reconnecting…'}`;
+function onWsMessage(msg) {
+  switch (msg.type) {
+    case 'auth-ok':
+      setWsStatus(true);
+      refreshDevices();
+      addLog('Connected to server');
+      break;
+
+    case 'audio-answer':
+      if (monitorPcs.has(msg.from)) {
+        // Answer from a boathouse monitor client
+        monitorPcs.get(msg.from)
+          .setRemoteDescription(new RTCSessionDescription(msg.answer))
+          .then(() => addLog('Monitor linked ✓'))
+          .catch(err => addLog('Monitor error: ' + err.message));
+      } else if (broadcastPc && !broadcastPeerId) {
+        // Answer from the overlay (first responder to broadcast offer)
+        broadcastPeerId = msg.from;
+        flushBroadcastIce();
+        broadcastPc
+          .setRemoteDescription(new RTCSessionDescription(msg.answer))
+          .then(() => addLog('Overlay linked ✓'))
+          .catch(err => addLog('Overlay error: ' + err.message));
+      }
+      break;
+
+    case 'ice-candidate':
+      if (monitorPcs.has(msg.from)) {
+        monitorPcs.get(msg.from).addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(() => {});
+      } else if (broadcastPc) {
+        broadcastPc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(() => {});
+      }
+      break;
+
+    case 'listener-request':
+      openMonitorPc(msg.from);
+      break;
+  }
 }
 
-// ── orb tap — toggle between idle/live ──
-function orbTap() {
-  if (mode === 'idle') goLive();
-  else if (mode === 'live' || mode === 'connecting') toggleMute();
+function wsSend(data) {
+  if (ws?.readyState === 1) ws.send(JSON.stringify(data));
 }
 
-// ── mic ──
-async function requestMic() {
+// ── microphone & audio graph ──────────────────────────────────────────
+async function acquireMic() {
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: {
-      echoCancellation: true, noiseSuppression: true, autoGainControl: true,
-      ...(selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : {})
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      ...(selectedMicId ? { deviceId: { exact: selectedMicId } } : {})
     }
   });
-  await buildAudioGraph(stream);
+  buildGraph(stream);
   rawStream = stream;
-  log('Mic ready: ' + (stream.getAudioTracks()[0]?.label || 'default'));
+  addLog('Mic: ' + (stream.getAudioTracks()[0]?.label || 'default'));
   refreshDevices();
 }
 
-async function buildAudioGraph(stream) {
-  tearAudioGraph();
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  await audioCtx.resume();
-  micSource = audioCtx.createMediaStreamSource(stream);
-  analyser  = audioCtx.createAnalyser();
+function buildGraph(stream) {
+  tearGraph();
+  audioCtx    = new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx.resume();
+  micSource   = audioCtx.createMediaStreamSource(stream);
+  analyser    = audioCtx.createAnalyser();
   analyser.fftSize = 256;
-  gainNode  = audioCtx.createGain();
-  gainNode.gain.value = 1;
-  broadcastDest = audioCtx.createMediaStreamDestination();
+  gainNode    = audioCtx.createGain();
+  gainNode.gain.value = isMuted ? 0 : 1;
+  destNode    = audioCtx.createMediaStreamDestination();
   micSource.connect(analyser);
   micSource.connect(gainNode);
-  gainNode.connect(broadcastDest);
-  broadcastStream = broadcastDest.stream;
-  drawMeter();
+  gainNode.connect(destNode);
+  broadcastStream = destNode.stream;
+  startMeter();
 }
 
-function tearAudioGraph() {
-  if (meterRaf) { cancelAnimationFrame(meterRaf); meterRaf = null; }
+function tearGraph() {
+  stopMeter();
   if (audioCtx) audioCtx.close().catch(() => {});
-  audioCtx = micSource = analyser = gainNode = broadcastDest = broadcastStream = null;
+  audioCtx = micSource = analyser = gainNode = destNode = null;
+  broadcastStream = null;
   document.getElementById('meterFill').style.width = '0%';
   document.getElementById('levelText').textContent = '0%';
 }
 
-function drawMeter() {
+function startMeter() {
   if (!analyser) return;
-  const data = new Uint8Array(analyser.frequencyBinCount);
-  (function tick() {
-    analyser.getByteFrequencyData(data);
-    const pct = Math.round(data.reduce((a, v) => Math.max(a, v), 0) / 255 * 100);
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+  const tick = () => {
+    analyser.getByteFrequencyData(buf);
+    const pct = Math.round(buf.reduce((a, v) => Math.max(a, v), 0) / 255 * 100);
     document.getElementById('meterFill').style.width = pct + '%';
     document.getElementById('levelText').textContent = pct + '%';
     meterRaf = requestAnimationFrame(tick);
-  })();
+  };
+  tick();
 }
 
-// ── go live ──
+function stopMeter() {
+  if (meterRaf) { cancelAnimationFrame(meterRaf); meterRaf = null; }
+}
+
+// ── go live ───────────────────────────────────────────────────────────
 async function goLive() {
   try {
-    if (!rawStream) await requestMic();
-    if (pc) return;
+    if (!rawStream) await acquireMic();
+    if (broadcastPc) return;
+
     setMode('connecting');
-    overlayPeerId = null;
-    pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] });
-    const track = broadcastStream?.getAudioTracks()?.[0];
-    if (!track) throw new Error('No audio track');
-    pc.addTrack(track, broadcastStream);
-    pc.onicecandidate = ({ candidate }) => {
+    broadcastPeerId = null;
+    broadcastIceQ   = [];
+
+    broadcastPc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    broadcastPc.addTrack(broadcastStream.getAudioTracks()[0], broadcastStream);
+
+    broadcastPc.onicecandidate = ({ candidate }) => {
       if (!candidate) return;
-      if (overlayPeerId && ws?.readyState === 1) ws.send(JSON.stringify({ type: 'ice-candidate', candidate, to: overlayPeerId }));
-      else pendingIce.push(candidate);
+      if (broadcastPeerId) wsSend({ type: 'ice-candidate', candidate, to: broadcastPeerId });
+      else broadcastIceQ.push(candidate);
     };
-    pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'connected') { setMode(isMuted ? 'muted' : 'live'); log('Overlay linked ✓'); }
-      if (pc.connectionState === 'failed') log('Connection failed');
+
+    broadcastPc.onconnectionstatechange = () => {
+      const s = broadcastPc?.connectionState;
+      if (s === 'connected') { setMode(isMuted ? 'muted' : 'live'); }
+      if (s === 'failed')    { addLog('Overlay connection failed'); }
     };
-    pc.oniceconnectionstatechange = () => {
-      if (pc.iceConnectionState === 'failed') pc.restartIce();
+
+    broadcastPc.oniceconnectionstatechange = () => {
+      if (broadcastPc?.iceConnectionState === 'failed') broadcastPc.restartIce();
     };
-    const offer = await pc.createOffer({ offerToReceiveAudio: false });
-    await pc.setLocalDescription(offer);
-    ws.send(JSON.stringify({ type: 'audio-offer', offer }));
-    log('Offer sent to overlay…');
+
+    const offer = await broadcastPc.createOffer({ offerToReceiveAudio: false });
+    await broadcastPc.setLocalDescription(offer);
+    wsSend({ type: 'audio-offer', offer });
+    addLog('Broadcast offer sent…');
+
     document.getElementById('btnLive').disabled = true;
     document.getElementById('btnMute').disabled = false;
-    document.getElementById('btnEnd').disabled = false;
+    document.getElementById('btnEnd').disabled  = false;
+
   } catch (err) {
     setMode('idle');
-    log('Error: ' + err.message);
-    toast('Mic error: ' + err.message, 'err');
+    addLog('Error: ' + err.message);
+    toast(err.message, 'err');
   }
+}
+
+function flushBroadcastIce() {
+  if (!broadcastPeerId) return;
+  broadcastIceQ.forEach(c => wsSend({ type: 'ice-candidate', candidate: c, to: broadcastPeerId }));
+  broadcastIceQ = [];
+}
+
+// ── monitor client connections (one per boathouse device) ─────────────
+async function openMonitorPc(listenerId) {
+  if (!broadcastStream) { addLog('No stream yet — monitor request ignored'); return; }
+
+  // Clean up any stale connection for this listener
+  if (monitorPcs.has(listenerId)) {
+    monitorPcs.get(listenerId).close();
+    monitorPcs.delete(listenerId);
+  }
+
+  const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  monitorPcs.set(listenerId, pc);
+
+  pc.addTrack(broadcastStream.getAudioTracks()[0], broadcastStream);
+
+  pc.onicecandidate = ({ candidate }) => {
+    if (candidate) wsSend({ type: 'ice-candidate', candidate, to: listenerId });
+  };
+
+  pc.onconnectionstatechange = () => {
+    const s = pc.connectionState;
+    if (s === 'connected') addLog('Monitor connected ✓');
+    if (s === 'failed' || s === 'disconnected') {
+      pc.close();
+      monitorPcs.delete(listenerId);
+    }
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    if (pc.iceConnectionState === 'failed') pc.restartIce();
+  };
+
+  const offer = await pc.createOffer({ offerToReceiveAudio: false });
+  await pc.setLocalDescription(offer);
+  wsSend({ type: 'audio-offer', offer, to: listenerId });
+  addLog('Monitor offer sent…');
+}
+
+// ── controls ──────────────────────────────────────────────────────────
+function orbTap() {
+  if (mode === 'idle') goLive();
+  else if (mode === 'live' || mode === 'muted') toggleMute();
 }
 
 function toggleMute() {
@@ -414,108 +452,159 @@ function toggleMute() {
   gainNode.gain.value = isMuted ? 0 : 1;
   setMode(isMuted ? 'muted' : 'live');
   document.getElementById('btnMute').textContent = isMuted ? 'Unmute' : 'Mute';
-  log(isMuted ? 'Muted' : 'Unmuted');
+  addLog(isMuted ? 'Muted' : 'Unmuted');
 }
 
-function endMic() {
-  if (pc) { pc.close(); pc = null; }
+function releaseMic() {
+  if (broadcastPc) { broadcastPc.close(); broadcastPc = null; }
+  monitorPcs.forEach(pc => pc.close());
+  monitorPcs.clear();
+
   if (rawStream) { rawStream.getTracks().forEach(t => t.stop()); rawStream = null; }
+
   const mon = document.getElementById('localMonitor');
   mon.pause(); mon.srcObject = null;
-  localMonitorOn = false;
-  overlayPeerId = null; pendingIce = []; isMuted = false;
-  tearAudioGraph();
+  earbackOn = false; broadcastPeerId = null; broadcastIceQ = []; isMuted = false;
+
+  tearGraph();
   setMode('idle');
+
   document.getElementById('btnLive').disabled = false;
   document.getElementById('btnMute').disabled = true;
   document.getElementById('btnMute').textContent = 'Mute';
-  document.getElementById('btnEnd').disabled = true;
-  document.getElementById('monitorChip').textContent = '🔇 Monitor Off';
-  document.getElementById('monitorChip').classList.remove('on');
-  log('Mic released');
+  document.getElementById('btnEnd').disabled  = true;
+  document.getElementById('earbackChip').textContent = '🔇 Earback Off';
+  document.getElementById('earbackChip').classList.remove('on');
+  addLog('Mic released');
 }
 
-function setMode(m) {
-  mode = m;
-  const orb = document.getElementById('orb');
-  const label = document.getElementById('orbLabel');
-  const state = document.getElementById('orbState');
-  orb.className = 'orb ' + (m === 'idle' ? '' : m);
-  const map = {
-    idle:       ['🎙', 'TAP TO GO LIVE', 'IDLE',       ''],
-    connecting: ['📡', 'LINKING…',       'LINKING',    ''],
-    live:       ['🎙', 'ON AIR',         'LIVE',       'live'],
-    muted:      ['🔇', 'MUTED',          'MUTED',      'muted']
-  };
-  const [icon, lb, st, cls] = map[m] || map.idle;
-  orb.querySelector('.orb-icon').textContent = icon;
-  label.textContent = lb;
-  state.textContent = st;
-  state.className = 'orb-state-text ' + cls;
-}
-
-function toggleMonitor() {
+async function toggleEarback() {
   if (!rawStream) { toast('Go live first', 'err'); return; }
-  localMonitorOn = !localMonitorOn;
+  earbackOn = !earbackOn;
   const mon = document.getElementById('localMonitor');
   mon.srcObject = rawStream;
-  mon.muted = !localMonitorOn;
-  if (localMonitorOn) mon.play().catch(() => {});
-  else mon.pause();
-  const chip = document.getElementById('monitorChip');
-  chip.textContent = localMonitorOn ? '🔊 Monitor On' : '🔇 Monitor Off';
-  chip.classList.toggle('on', localMonitorOn);
+  if (earbackOn) {
+    if (typeof mon.setSinkId === 'function' && selectedOutId) {
+      await mon.setSinkId(selectedOutId).catch(() => {});
+    }
+    mon.muted = false;
+    mon.play().catch(() => {});
+  } else {
+    mon.muted = true;
+    mon.pause();
+  }
+  const chip = document.getElementById('earbackChip');
+  chip.textContent = earbackOn ? '🔊 Earback On' : '🔇 Earback Off';
+  chip.classList.toggle('on', earbackOn);
 }
 
+// ── devices ───────────────────────────────────────────────────────────
 async function refreshDevices() {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
-    const sel = document.getElementById('deviceSelect');
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">Default Microphone</option>' +
+
+    // Inputs
+    const micSel  = document.getElementById('micSelect');
+    const micPrev = micSel.value;
+    micSel.innerHTML = '<option value="">Default Microphone</option>' +
       devices.filter(d => d.kind === 'audioinput')
              .map(d => `<option value="${d.deviceId}">${d.label || 'Microphone'}</option>`)
              .join('');
-    if (cur) sel.value = cur;
+    if (micPrev) micSel.value = micPrev;
+
+    // Outputs
+    const outSel  = document.getElementById('outSelect');
+    const outNote = document.getElementById('outNote');
+    const outPrev = outSel.value;
+    const outputs = devices.filter(d => d.kind === 'audiooutput');
+    const canSink = typeof document.createElement('audio').setSinkId === 'function';
+
+    if (outputs.length && canSink) {
+      outSel.disabled = false;
+      outNote.textContent = 'Routes your earback to the selected speaker or headphone output.';
+      outSel.innerHTML = '<option value="">Default Output</option>' +
+        outputs.map(d => `<option value="${d.deviceId}">${d.label || 'Speaker'}</option>`).join('');
+      if (outPrev) outSel.value = outPrev;
+    } else {
+      outSel.disabled = true;
+      outNote.textContent = 'Output selection requires Chrome on desktop. On mobile, output follows the system (speaker/headphones/AirPods).';
+    }
   } catch {}
 }
 
-async function changeDevice(id) {
-  selectedDeviceId = id;
+async function changeMic(id) {
+  selectedMicId = id;
   if (!rawStream) return;
-  const wasLive = !!pc;
-  await endMic();
+  const wasLive = !!broadcastPc;
+  releaseMic();
   try {
-    await requestMic();
+    await acquireMic();
     if (wasLive) await goLive();
-  } catch (err) { toast('Device change failed', 'err'); }
+  } catch { toast('Device change failed', 'err'); }
 }
 
-function flushIce() {
-  if (!overlayPeerId || ws?.readyState !== 1) return;
-  pendingIce.forEach(c => ws.send(JSON.stringify({ type: 'ice-candidate', candidate: c, to: overlayPeerId })));
-  pendingIce = [];
+async function changeOut(id) {
+  selectedOutId = id;
+  if (earbackOn) {
+    const mon = document.getElementById('localMonitor');
+    if (typeof mon.setSinkId === 'function') await mon.setSinkId(id || '').catch(() => {});
+  }
+  const label = document.getElementById('outSelect').selectedOptions[0]?.text || 'Default';
+  addLog('Output → ' + label);
 }
 
-function log(msg) {
+// ── UI helpers ────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  const map = {
+    idle:       { icon: '🎙', label: 'TAP TO GO LIVE', state: 'IDLE',       cls: ''           },
+    connecting: { icon: '📡', label: 'LINKING…',       state: 'CONNECTING', cls: 'connecting' },
+    live:       { icon: '🎙', label: 'ON AIR',          state: 'LIVE',       cls: 'live'       },
+    muted:      { icon: '🔇', label: 'MUTED',           state: 'MUTED',      cls: 'muted'      },
+  };
+  const { icon, label, state, cls } = map[m] || map.idle;
+  document.getElementById('orb').className       = 'orb' + (cls ? ' ' + cls : '');
+  document.getElementById('orb').querySelector('.orb-icon').textContent = icon;
+  document.getElementById('orbLabel').textContent = label;
+  const stEl = document.getElementById('orbState');
+  stEl.textContent = state;
+  stEl.className   = 'orb-state' + (cls === 'live' || cls === 'muted' ? ' ' + cls : '');
+}
+
+function setWsStatus(ok) {
+  document.getElementById('wsDot').className = 'dot ' + (ok ? 'live' : 'err');
+  document.getElementById('wsLabel').innerHTML =
+    `<span class="dot ${ok ? 'live' : 'err'}" id="wsDot"></span>${ok ? 'Live' : 'Reconnecting…'}`;
+}
+
+function switchTab(t) {
+  ['input', 'output'].forEach(id => {
+    document.getElementById('tab-' + id).classList.toggle('active', id === t);
+    document.getElementById('tabBtn-' + id).classList.toggle('active', id === t);
+  });
+}
+
+function addLog(msg) {
   const list = document.getElementById('logList');
-  if (list.children.length === 1 && list.children[0].querySelector('span')?.textContent === 'Waiting for activity…') list.innerHTML = '';
+  if (list.children.length === 1 && list.firstElementChild.querySelector('span')?.textContent === 'Waiting for activity…') {
+    list.innerHTML = '';
+  }
   const row = document.createElement('div');
   row.className = 'log-row';
   row.innerHTML = `<span>${msg}</span><span class="log-time">${new Date().toLocaleTimeString()}</span>`;
   list.prepend(row);
-  while (list.children.length > 8) list.removeChild(list.lastChild);
+  while (list.children.length > 10) list.removeChild(list.lastChild);
 }
 
-function toast(msg, type) {
+function toast(msg, type = '') {
   const el = document.createElement('div');
-  el.className = 'toast ' + (type || '');
+  el.className = 'toast' + (type ? ' ' + type : '');
   el.textContent = msg;
   document.getElementById('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 2500);
+  setTimeout(() => el.remove(), 3000);
 }
 
-connect();
+wsConnect();
 </script>
 </body>
 </html>

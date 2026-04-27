@@ -209,7 +209,8 @@ function getDefaultStore() {
     overlayState: defaultOverlayState(),
     designConfig: { ...DEFAULT_DESIGN_CONFIG },
     presetConfigs: { ...DEFAULT_PRESET_CONFIGS },
-    teamPresets: { ...DEFAULT_TEAM_PRESETS }
+    teamPresets: { ...DEFAULT_TEAM_PRESETS },
+    raceSchedule: []
   };
 }
 
@@ -223,7 +224,8 @@ function loadStore() {
       overlayState: deepMerge(defaults.overlayState, parsed.overlayState),
       designConfig: deepMerge(defaults.designConfig, parsed.designConfig),
       presetConfigs: deepMerge(defaults.presetConfigs, parsed.presetConfigs),
-      teamPresets: deepMerge(defaults.teamPresets, parsed.teamPresets)
+      teamPresets: deepMerge(defaults.teamPresets, parsed.teamPresets),
+      raceSchedule: Array.isArray(parsed.raceSchedule) ? parsed.raceSchedule : []
     };
   } catch (error) {
     console.error('Failed to load persisted state, using defaults.', error);
@@ -231,10 +233,10 @@ function loadStore() {
   }
 }
 
-let { overlayState, designConfig, presetConfigs, teamPresets } = loadStore();
+let { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule } = loadStore();
 
 function persistStore() {
-  const data = { overlayState, designConfig, presetConfigs, teamPresets };
+  const data = { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule };
   fs.mkdirSync(STORE_DIR, { recursive: true });
   fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2));
 }
@@ -248,7 +250,7 @@ function sanitizePresetId(input) {
 }
 
 function getStatePayload() {
-  return { type: 'state', overlayState, designConfig, presetConfigs, teamPresets };
+  return { type: 'state', overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, activeBroadcaster: !!activeAudioOffer };
 }
 
 function saveAndBroadcastState() {
@@ -373,11 +375,11 @@ function handleMessage(clientId, msg) {
         client.authenticated = true;
         send(client, getStatePayload());
         if (msg.role === 'overlay' && activeAudioOffer) {
-          send(client, {
-            type: 'audio-offer',
-            offer: activeAudioOffer.offer,
-            from: activeAudioOffer.from
-          });
+          send(client, { type: 'audio-offer', offer: activeAudioOffer.offer, from: activeAudioOffer.from });
+        }
+        // Tell monitor immediately if broadcaster is already live
+        if (msg.role === 'audio-monitor' && activeAudioOffer) {
+          send(client, { type: 'broadcaster-online' });
         }
       }
       break;
@@ -522,6 +524,18 @@ function handleMessage(clientId, msg) {
       break;
     }
 
+    case 'race-schedule-save': {
+      if (!client.authenticated) return;
+      if (!Array.isArray(msg.schedule)) return;
+      raceSchedule = msg.schedule.slice(0, 100).map(r => ({
+        name: String(r.name || '').slice(0, 120),
+        sub: String(r.sub || '').slice(0, 120)
+      }));
+      persistStore();
+      broadcast('controller', { type: 'race-schedule', schedule: raceSchedule });
+      break;
+    }
+
     case 'alert': {
       if (!client.authenticated) return;
       const alertText = String(msg.text || '').slice(0, 120);
@@ -532,10 +546,26 @@ function handleMessage(clientId, msg) {
 
     case 'audio-offer': {
       if (!client.authenticated) return;
-      client.role = 'audio-broadcaster';
-      activeAudioOffer = { offer: msg.offer, from: clientId };
-      broadcast('overlay', { type: 'audio-offer', offer: msg.offer, from: clientId });
-      broadcast('audio-monitor', { type: 'audio-offer', offer: msg.offer, from: clientId });
+      if (msg.to) {
+        // Targeted offer from broadcaster → specific monitor client
+        const target = clients.get(msg.to);
+        if (target) send(target, { type: 'audio-offer', offer: msg.offer, from: clientId });
+      } else {
+        // Broadcast offer → OBS overlay + notify all monitor clients to request audio
+        client.role = 'audio-broadcaster';
+        activeAudioOffer = { offer: msg.offer, from: clientId };
+        broadcast('overlay', { type: 'audio-offer', offer: msg.offer, from: clientId });
+        broadcast('audio-monitor', { type: 'broadcaster-online' });
+      }
+      break;
+    }
+
+    case 'request-audio': {
+      // Monitor client asks broadcaster to open a dedicated connection
+      const broadcaster = [...clients.values()].find(c => c.role === 'audio-broadcaster');
+      if (broadcaster) {
+        send(broadcaster, { type: 'listener-request', from: clientId });
+      }
       break;
     }
 

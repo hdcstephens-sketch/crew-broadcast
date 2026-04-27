@@ -333,6 +333,7 @@
     <span id="connLabel"><span class="status-dot" id="connDot"></span> Connecting</span>
     <a class="pill" href="/water.html">Water SPM</a>
     <a class="pill" href="/audio.html">Commentary</a>
+    <a class="pill" href="/monitor.html" target="_blank">Audio Monitor ↗</a>
     <a class="pill" href="/overlay.html" target="_blank">Overlay ↗</a>
   </div>
 </div>
@@ -668,12 +669,14 @@ function onMessage(msg) {
     if (msg.teamPresets) { teamPresets = msg.teamPresets; syncLaneSelects(); renderSchoolLogosGrid(); restoreBackupIfNeeded(); }
     if (msg.presetConfigs) { presetConfigs = msg.presetConfigs; renderPresetEditor(); }
     if (msg.overlayState) applyState(msg.overlayState);
+    if (Array.isArray(msg.raceSchedule)) { raceSchedule = msg.raceSchedule; renderRaceSchedule(); }
   }
   if (msg.type === 'toggle') setToggle(msg.element, msg.active);
   if (msg.type === 'timer-control') syncTimer(msg);
   if (msg.type === 'countdown-control') syncCountdown(msg);
   if (msg.type === 'team-presets') { teamPresets = msg.teamPresets || {}; syncLaneSelects(); renderSchoolLogosGrid(); saveBackup(); }
   if (msg.type === 'preset-config') { if (presetConfigs[msg.name]) presetConfigs[msg.name] = { elements: msg.elements }; renderPresetEditor(); }
+  if (msg.type === 'race-schedule') { raceSchedule = msg.schedule || []; renderRaceSchedule(); }
 }
 
 function setStatus(ok) {
@@ -1155,7 +1158,11 @@ function sendCustomAlert() {
 }
 
 // ── race schedule ──
-let raceSchedule = JSON.parse(localStorage.getItem('crew_race_schedule') || '[]');
+let raceSchedule = [];
+
+function saveRaceSchedule() {
+  send({ type: 'race-schedule-save', schedule: raceSchedule });
+}
 
 function renderRaceSchedule() {
   const el = document.getElementById('raceScheduleList');
@@ -1187,7 +1194,7 @@ function addRace() {
   const name = document.getElementById('newRaceName').value.trim();
   if (!name) return;
   raceSchedule.push({ name, sub: document.getElementById('newRaceSub').value.trim() });
-  localStorage.setItem('crew_race_schedule', JSON.stringify(raceSchedule));
+  saveRaceSchedule();
   document.getElementById('newRaceName').value = '';
   document.getElementById('newRaceSub').value = '';
   renderRaceSchedule();
@@ -1195,7 +1202,7 @@ function addRace() {
 
 function removeRace(i) {
   raceSchedule.splice(i, 1);
-  localStorage.setItem('crew_race_schedule', JSON.stringify(raceSchedule));
+  saveRaceSchedule();
   renderRaceSchedule();
 }
 
@@ -1216,7 +1223,6 @@ document.addEventListener('keydown', e => {
 buildToggleGrid();
 fillResults(DEFAULT_RESULTS);
 fillLanes([]);
-renderRaceSchedule();
 renderPresetEditor();
 connect();
 </script>

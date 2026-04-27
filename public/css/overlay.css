@@ -16,6 +16,8 @@ body {
   justify-content: center;
   user-select: none;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
 }
 
 #overlay-root {
@@ -25,6 +27,7 @@ body {
   flex-shrink: 0;
   transform-origin: center center;
   pointer-events: none;
+  will-change: transform;
 }
 
 .ov {
@@ -43,8 +46,6 @@ body {
   color: var(--ov-text, #FFFFFF);
   border: 1px solid var(--ov-outline, rgba(255,255,255,0.08));
   border-radius: var(--ov-radius, 12px);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .ov-label {

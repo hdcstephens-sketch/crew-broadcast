@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CREW — Audio Monitor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:         #060c09;
+      --card:       #0f1510;
+      --card2:      #161e18;
+      --accent:     #00a86b;
+      --accent-dim: rgba(0,168,107,0.15);
+      --danger:     #e53935;
+      --text:       #f0f0f0;
+      --text2:      #8a9a90;
+      --line:       rgba(255,255,255,0.07);
+      --r:          16px;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; padding-bottom: 60px;
+    }
+
+    /* ── top bar ── */
+    .topbar {
+      width: 100%; position: sticky; top: 0; z-index: 50;
+      background: rgba(6,12,9,0.96); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px;
+    }
+    .topbar-brand { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); }
+    .pill { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--text2); text-decoration: none; background: var(--card); }
+    .pill:hover { border-color: var(--accent); color: var(--accent); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; flex-shrink: 0; display: inline-block; }
+    .dot.live { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .dot.err  { background: var(--danger); }
+    #wsLabel { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+
+    /* ── layout ── */
+    .main { width: 100%; max-width: 480px; padding: 24px 16px; display: flex; flex-direction: column; gap: 18px; }
+
+    /* ── orb ── */
+    .orb-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0; }
+    .orb {
+      width: 160px; height: 160px; border-radius: 50%;
+      border: 3px solid var(--line); background: var(--card);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      transition: border-color 0.22s, background 0.22s, box-shadow 0.22s;
+    }
+    .orb-icon  { font-size: 44px; line-height: 1; }
+    .orb-label { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--text2); }
+    .orb.waiting  { border-color: rgba(0,168,107,0.3); animation: orbPulse 1.6s ease infinite; }
+    .orb.receiving { border-color: var(--accent); background: rgba(0,168,107,0.08); box-shadow: 0 0 0 14px rgba(0,168,107,0.07), 0 0 50px rgba(0,168,107,0.12); }
+    .orb.receiving .orb-label { color: var(--accent); }
+    @keyframes orbPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,168,107,0.3); } 50% { box-shadow: 0 0 0 20px rgba(0,168,107,0); } }
+    .orb-state { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--text2); text-transform: uppercase; }
+    .orb-state.live { color: var(--accent); }
+
+    /* ── level meter ── */
+    .meter-wrap { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+    .meter-row  { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); }
+    .meter      { height: 10px; border-radius: 999px; background: rgba(255,255,255,0.07); overflow: hidden; }
+    .meter-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #00a86b, #22c55e); transition: width 0.07s linear; }
+
+    /* ── card ── */
+    .card       { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; }
+    .card-label { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text2); margin-bottom: 10px; }
+
+    /* ── volume slider ── */
+    input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+    /* ── setup steps ── */
+    .steps { display: flex; flex-direction: column; gap: 10px; }
+    .step  { display: flex; gap: 10px; align-items: flex-start; }
+    .step-num {
+      min-width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent-dim); border: 1px solid rgba(0,168,107,0.3);
+      color: var(--accent); font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 2px; flex-shrink: 0;
+    }
+    .step-text { font-size: 13px; color: var(--text2); line-height: 1.55; }
+    .step-text strong { color: var(--text); }
+
+    /* ── log ── */
+    .log { display: flex; flex-direction: column; gap: 6px; }
+    .log-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--card2); font-size: 12px; }
+    .log-time { font-size: 11px; color: var(--text2); white-space: nowrap; margin-left: 10px; }
+
+    /* ── toasts ── */
+    #toasts { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 999; }
+    .toast { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #fff; animation: fadeIn 0.15s ease; }
+    .toast.ok  { background: var(--accent); }
+    .toast.err { background: var(--danger); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">AUDIO MONITOR</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span id="wsLabel"><span class="dot" id="wsDot"></span>Connecting</span>
+    <a class="pill" href="/control.html">← Control</a>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="orb-wrap">
+    <div class="orb" id="orb">
+      <div class="orb-icon">🎧</div>
+      <div class="orb-label" id="orbLabel">WAITING</div>
+    </div>
+    <div class="orb-state" id="orbState">WAITING FOR BROADCASTER</div>
+    <div class="meter-wrap">
+      <div class="meter-row"><span>Received level</span><span id="levelText">0%</span></div>
+      <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Volume</div>
+    <input type="range" id="volSlider" min="0" max="1" step="0.01" value="1" oninput="setVol(this.value)">
+  </div>
+
+  <div class="card">
+    <div class="card-label">Audio Hijack Setup</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Open this page in <strong>Google Chrome</strong> on the boathouse Mac — Safari won't work for Audio Hijack capture.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">In Audio Hijack, create a new session. Add an <strong>Application</strong> source block and select <strong>Google Chrome</strong>.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Wire the output to your recorder, stream encoder, or speakers block and hit <strong>Start Capturing</strong>.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">When the phone on the water hits Go Live, audio will appear here automatically — no action needed on this page.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-text">Keep this tab <strong>visible in Chrome</strong> (don't minimize the window) to prevent the browser from throttling audio.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Event Log</div>
+    <div class="log" id="logList">
+      <div class="log-row"><span>Waiting for activity…</span></div>
+    </div>
+  </div>
+
+</div>
+
+<audio id="remoteAudio" autoplay playsinline></audio>
+<div id="toasts"></div>
+
+<script>
+// ── state ─────────────────────────────────────────────────────────────
+let ws, pc = null;
+let audioCtx = null, analyser = null, meterRaf = null;
+let connState = 'waiting';
+
+// ── websocket ─────────────────────────────────────────────────────────
+function wsConnect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen  = () => ws.send(JSON.stringify({ type: 'register', role: 'audio-monitor' }));
+  ws.onclose = () => { setWsStatus(false); setState('waiting'); setTimeout(wsConnect, 3000); };
+  ws.onmessage = e => onWsMessage(JSON.parse(e.data));
+}
+
+function onWsMessage(msg) {
+  switch (msg.type) {
+    case 'state':
+      setWsStatus(true);
+      addLog('Connected to server');
+      // If broadcaster is already live when we connect, ask for audio immediately
+      if (msg.activeBroadcaster) {
+        addLog('Broadcaster already live — requesting audio…');
+        requestAudio();
+      } else {
+        addLog('Waiting for broadcaster to go live…');
+      }
+      break;
+
+    case 'broadcaster-online':
+      addLog('Broadcaster online — connecting…');
+      requestAudio();
+      break;
+
+    case 'audio-offer':
+      handleOffer(msg.offer, msg.from);
+      break;
+
+    case 'ice-candidate':
+      if (pc) pc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(() => {});
+      break;
+
+    case 'broadcaster-left':
+      tearDown();
+      setState('waiting');
+      addLog('Broadcaster went offline');
+      break;
+  }
+}
+
+function requestAudio() {
+  if (ws?.readyState === 1) ws.send(JSON.stringify({ type: 'request-audio' }));
+}
+
+// ── WebRTC receive ────────────────────────────────────────────────────
+async function handleOffer(offer, fromId) {
+  tearDown();
+  setState('connecting');
+
+  pc = new RTCPeerConnection({
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }]
+  });
+
+  pc.ontrack = ({ streams }) => {
+    const audio = document.getElementById('remoteAudio');
+    audio.srcObject = streams[0];
+    audio.volume = parseFloat(document.getElementById('volSlider').value);
+    const tryPlay = () => audio.play().catch(() => setTimeout(tryPlay, 600));
+    tryPlay();
+    buildMeter(streams[0]);
+    setState('receiving');
+    addLog('Audio stream live ✓');
+  };
+
+  pc.onicecandidate = ({ candidate }) => {
+    if (candidate && ws?.readyState === 1) {
+      ws.send(JSON.stringify({ type: 'ice-candidate', candidate, to: fromId }));
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    const s = pc?.connectionState;
+    if (s === 'failed') {
+      tearDown();
+      setState('waiting');
+      addLog('Connection lost — waiting for broadcaster');
+    }
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    if (pc?.iceConnectionState === 'failed') pc.restartIce();
+  };
+
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  ws.send(JSON.stringify({ type: 'audio-answer', answer, to: fromId }));
+}
+
+function tearDown() {
+  if (pc) { pc.close(); pc = null; }
+  stopMeter();
+  if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
+  analyser = null;
+  const audio = document.getElementById('remoteAudio');
+  audio.pause();
+  audio.srcObject = null;
+  document.getElementById('meterFill').style.width = '0%';
+  document.getElementById('levelText').textContent = '0%';
+}
+
+// ── meter ─────────────────────────────────────────────────────────────
+function buildMeter(stream) {
+  if (audioCtx) audioCtx.close().catch(() => {});
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 256;
+  audioCtx.createMediaStreamSource(stream).connect(analyser);
+  startMeter();
+}
+
+function startMeter() {
+  if (!analyser) return;
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+  const tick = () => {
+    analyser.getByteFrequencyData(buf);
+    const pct = Math.round(buf.reduce((a, v) => Math.max(a, v), 0) / 255 * 100);
+    document.getElementById('meterFill').style.width = pct + '%';
+    document.getElementById('levelText').textContent = pct + '%';
+    meterRaf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function stopMeter() {
+  if (meterRaf) { cancelAnimationFrame(meterRaf); meterRaf = null; }
+}
+
+function setVol(v) {
+  const audio = document.getElementById('remoteAudio');
+  if (audio.srcObject) audio.volume = parseFloat(v);
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────
+function setState(s) {
+  connState = s;
+  const states = {
+    waiting:    { icon: '🎧', label: 'WAITING',  text: 'WAITING FOR BROADCASTER', cls: ''          },
+    connecting: { icon: '📡', label: 'LINKING…', text: 'LINKING',                 cls: 'waiting'   },
+    receiving:  { icon: '🎧', label: 'LIVE',      text: 'RECEIVING AUDIO',          cls: 'receiving' },
+  };
+  const { icon, label, text, cls } = states[s] || states.waiting;
+  document.getElementById('orb').className = 'orb' + (cls ? ' ' + cls : '');
+  document.getElementById('orb').querySelector('.orb-icon').textContent = icon;
+  document.getElementById('orbLabel').textContent = label;
+  const stEl = document.getElementById('orbState');
+  stEl.textContent = text;
+  stEl.className   = 'orb-state' + (cls === 'receiving' ? ' live' : '');
+}
+
+function setWsStatus(ok) {
+  document.getElementById('wsDot').className = 'dot ' + (ok ? 'live' : 'err');
+  document.getElementById('wsLabel').innerHTML =
+    `<span class="dot ${ok ? 'live' : 'err'}" id="wsDot"></span>${ok ? 'Live' : 'Reconnecting…'}`;
+}
+
+function addLog(msg) {
+  const list = document.getElementById('logList');
+  if (list.children.length === 1 && list.firstElementChild.querySelector('span')?.textContent === 'Waiting for activity…') {
+    list.innerHTML = '';
+  }
+  const row = document.createElement('div');
+  row.className = 'log-row';
+  row.innerHTML = `<span>${msg}</span><span class="log-time">${new Date().toLocaleTimeString()}</span>`;
+  list.prepend(row);
+  while (list.children.length > 12) list.removeChild(list.lastChild);
+}
+
+wsConnect();
+</script>
+</body>
+</html>
