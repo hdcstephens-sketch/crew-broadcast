@@ -609,13 +609,13 @@ function onMessage(msg) {
   if (msg.type === 'auth-ok') { setStatus(true); toast('Connected', 'ok'); }
   if (msg.type === 'auth-fail') { localStorage.clear(); location.href = '/'; }
   if (msg.type === 'state') {
-    if (msg.teamPresets) { teamPresets = msg.teamPresets; syncLaneSelects(); renderSchoolLogosGrid(); }
+    if (msg.teamPresets) { teamPresets = msg.teamPresets; syncLaneSelects(); renderSchoolLogosGrid(); restoreBackupIfNeeded(); }
     if (msg.overlayState) applyState(msg.overlayState);
   }
   if (msg.type === 'toggle') setToggle(msg.element, msg.active);
   if (msg.type === 'timer-control') syncTimer(msg);
   if (msg.type === 'countdown-control') syncCountdown(msg);
-  if (msg.type === 'team-presets') { teamPresets = msg.teamPresets || {}; syncLaneSelects(); renderSchoolLogosGrid(); }
+  if (msg.type === 'team-presets') { teamPresets = msg.teamPresets || {}; syncLaneSelects(); renderSchoolLogosGrid(); saveBackup(); }
 }
 
 function setStatus(ok) {
@@ -854,6 +854,7 @@ function renderSchoolLogosGrid() {
         const updated = { ...preset, logo };
         teamPresets[preset.id] = updated;
         send({ type: 'team-preset-save', preset: updated });
+        saveBackup();
         toast('Logo saved for ' + preset.name, 'ok');
         renderSchoolLogosGrid();
       };
@@ -925,6 +926,36 @@ function toast(msg, type) {
   el.textContent = msg;
   document.getElementById('toasts').appendChild(el);
   setTimeout(() => el.remove(), 2200);
+}
+
+// ── local backup ──
+const BACKUP_KEY = 'crew_local_backup';
+
+function saveBackup() {
+  try {
+    localStorage.setItem(BACKUP_KEY, JSON.stringify({ teamPresets, ts: Date.now() }));
+  } catch(e) {}
+}
+
+function loadBackup() {
+  try { return JSON.parse(localStorage.getItem(BACKUP_KEY) || 'null'); } catch(e) { return null; }
+}
+
+function restoreBackupIfNeeded() {
+  const backup = loadBackup();
+  if (!backup?.teamPresets) return;
+  const serverHasLogos = Object.values(teamPresets).some(p => p.logo);
+  if (serverHasLogos) return; // server already has data, don't overwrite
+  const backupHasLogos = Object.values(backup.teamPresets).some(p => p.logo);
+  if (!backupHasLogos) return;
+  const ageMin = Math.round((Date.now() - backup.ts) / 60000);
+  const ok = confirm(`Local backup found (${ageMin} min ago) with saved logos. Restore to server?`);
+  if (!ok) return;
+  Object.values(backup.teamPresets).forEach(preset => {
+    if (preset.logo) { teamPresets[preset.id] = preset; send({ type: 'team-preset-save', preset }); }
+  });
+  toast('Logos restored from local backup', 'ok');
+  renderSchoolLogosGrid();
 }
 
 buildToggleGrid();
