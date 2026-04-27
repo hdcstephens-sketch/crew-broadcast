@@ -325,7 +325,10 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-brand">BROOKS CREW</div>
+  <div class="topbar-brand" style="display:flex;align-items:center;gap:9px;">
+    <img src="/images/brooks-logo.png" alt="" style="height:30px;width:30px;border-radius:7px;object-fit:cover;flex-shrink:0;">
+    BROOKS CREW
+  </div>
   <div class="topbar-links">
     <span id="connLabel"><span class="status-dot" id="connDot"></span> Connecting</span>
     <a class="pill" href="/water.html">Water SPM</a>
@@ -596,7 +599,6 @@ const TOGGLES = [
   ['lowerThird', 'Lower Third'],
   ['conditions', 'Conditions'],
   ['schoolLogos', 'School Logos'],
-  ['sponsorLogos', 'Sponsors'],
   ['watermark', 'Watermark'],
   ['countdown', 'Countdown']
 ];

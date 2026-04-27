@@ -24,6 +24,7 @@
 <div id="overlay-root">
   <div class="ov" id="ov-header">
     <div class="ov-box ov-header-box">
+      <img src="/images/brooks-logo.png" alt="Brooks School Crew" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-bottom:6px;">
       <div class="ov-event-title" id="ov-et">MEN'S VARSITY 8+ FINAL</div>
       <div class="ov-event-sub" id="ov-es">Spring Invitational 2026</div>
     </div>
@@ -56,13 +57,6 @@
     <div class="ov-box ov-logo-strip">
       <div class="ov-strip-title" id="ov-sct">Schools</div>
       <div class="ov-logo-row" id="ov-scr"></div>
-    </div>
-  </div>
-
-  <div class="ov" id="ov-sponsor-logos">
-    <div class="ov-box ov-logo-strip">
-      <div class="ov-strip-title" id="ov-spt">Presented By</div>
-      <div class="ov-logo-row" id="ov-spr"></div>
     </div>
   </div>
 
@@ -132,7 +126,6 @@ const EL = {
   results: 'ov-results',
   lanes: 'ov-lanes',
   schoolLogos: 'ov-school-logos',
-  sponsorLogos: 'ov-sponsor-logos',
   strokeRate: 'ov-spm',
   distance: 'ov-dist',
   lowerThird: 'ov-lt',
@@ -264,7 +257,6 @@ function applyContent(state) {
   if (state.results?.data) renderResults(state.results.data);
   if (state.lanes?.data) renderLanes(state.lanes.data);
   if (state.schoolLogos) renderLogoStrip('ov-sct', 'ov-scr', state.schoolLogos);
-  if (state.sponsorLogos) renderLogoStrip('ov-spt', 'ov-spr', state.sponsorLogos);
 
   if (state.strokeRate) {
     document.getElementById('ov-sv').textContent = state.strokeRate.value ?? '36';

@@ -18,6 +18,7 @@ const STORE_FILE = path.join(STORE_DIR, 'state.json');
 const USERS = {
   coach: { password: 'crew2024', role: 'coach', name: 'Head Coach' },
   admin: { password: 'admin123', role: 'admin', name: 'Administrator' },
+
   staff: { password: 'staff456', role: 'staff', name: 'Staff' }
 };
 
@@ -29,7 +30,7 @@ const DEFAULT_TEAM_PRESETS = {
     primaryColor: '#004830',
     secondaryColor: '#000000',
     textColor: '#FFFFFF',
-    logo: null
+    logo: '/images/brooks-logo.png'
   },
   'phillips-exeter': {
     id: 'phillips-exeter',
@@ -112,14 +113,6 @@ function defaultOverlayState() {
         logo: team.logo || null
       }))
     },
-    sponsorLogos: {
-      active: false,
-      title: 'Presented By',
-      items: [
-        { name: 'Brooks School', logo: null },
-        { name: 'S·Media', logo: null }
-      ]
-    },
     splits: {
       active: false,
       data: [
@@ -170,8 +163,8 @@ const DEFAULT_PRESET_CONFIGS = {
   'pre-race': { elements: ['eventHeader', 'lanes', 'schoolLogos', 'watermark'] },
   'race-start': { elements: ['eventHeader', 'lanes', 'countdown', 'watermark'] },
   'race-running': { elements: ['eventHeader', 'timer', 'strokeRate', 'distance', 'watermark'] },
-  finish: { elements: ['eventHeader', 'timer', 'results', 'sponsorLogos', 'watermark'] },
-  'post-race': { elements: ['eventHeader', 'results', 'schoolLogos', 'sponsorLogos', 'watermark'] },
+  finish: { elements: ['eventHeader', 'timer', 'results', 'watermark'] },
+  'post-race': { elements: ['eventHeader', 'results', 'schoolLogos', 'watermark'] },
   clear: { elements: [] }
 };
 
