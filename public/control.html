@@ -593,6 +593,7 @@ let teamPresets = {};
 let timerRunning = false, timerStart = null, timerElapsed = 0, timerIv = null;
 let countdownRunning = false, countdownDuration = 300, countdownStart = null, countdownIv = null;
 let setupOpen = false;
+let firstStateReceived = false;
 
 // ── toggles grid ──
 function buildToggleGrid() {
@@ -652,32 +653,12 @@ function setStatus(ok) {
 }
 
 function applyState(state) {
+  // Always sync toggle ON/OFF states — needed for multi-device accuracy
   TOGGLES.forEach(([key]) => {
     if (state[key]?.active !== undefined) setToggle(key, state[key].active);
   });
-  if (state.eventHeader) {
-    document.getElementById('evTitle').value = state.eventHeader.text || '';
-    document.getElementById('evSub').value = state.eventHeader.subtitle || '';
-  }
-  if (state.strokeRate) {
-    document.getElementById('spmVal').value = state.strokeRate.value || 36;
-    document.getElementById('spmLbl').value = state.strokeRate.label || '';
-  }
-  if (state.distance) {
-    document.getElementById('dstCov').value = state.distance.covered || 0;
-    document.getElementById('dstTot').value = state.distance.total || 2000;
-  }
-  if (state.lowerThird) {
-    document.getElementById('ltName').value = state.lowerThird.name || '';
-    document.getElementById('ltTitle').value = state.lowerThird.title || '';
-    document.getElementById('ltSchool').value = state.lowerThird.school || '';
-  }
-  if (state.watermark) document.getElementById('wmText').value = state.watermark.text || '';
-  if (state.conditions) {
-    document.getElementById('cWind').value = state.conditions.wind || '';
-    document.getElementById('cTemp').value = state.conditions.temp || '';
-    document.getElementById('cWater').value = state.conditions.water || '';
-  }
+
+  // Always sync live clocks — they must stay accurate across reconnects
   if (state.timer) {
     timerElapsed = state.timer.elapsed || 0;
     if (state.timer.running && state.timer.startTime) {
@@ -690,6 +671,34 @@ function applyState(state) {
     if (state.countdown.active && state.countdown.startTime) {
       countdownStart = state.countdown.startTime; countdownRunning = true; runCountdown();
     } else { stopCountdownLocal(); updateCdDisplay(countdownDuration); }
+  }
+
+  // Only fill form fields on the very first state load — never overwrite on reconnect
+  if (firstStateReceived) return;
+  firstStateReceived = true;
+
+  if (state.eventHeader) {
+    document.getElementById('evTitle').value = state.eventHeader.text || '';
+    document.getElementById('evSub').value = state.eventHeader.subtitle || '';
+  }
+  if (state.strokeRate) {
+    document.getElementById('spmVal').value = state.strokeRate.value || 36;
+    document.getElementById('spmLbl').value = state.strokeRate.label || '';
+  }
+  if (state.distance) {
+    document.getElementById('dstCov').value = state.distance.covered || 0;
+    document.getElementById('dstTot').value = state.distance.total || 1500;
+  }
+  if (state.lowerThird) {
+    document.getElementById('ltName').value = state.lowerThird.name || '';
+    document.getElementById('ltTitle').value = state.lowerThird.title || '';
+    document.getElementById('ltSchool').value = state.lowerThird.school || '';
+  }
+  if (state.watermark) document.getElementById('wmText').value = state.watermark.text || '';
+  if (state.conditions) {
+    document.getElementById('cWind').value = state.conditions.wind || '';
+    document.getElementById('cTemp').value = state.conditions.temp || '';
+    document.getElementById('cWater').value = state.conditions.water || '';
   }
   fillResults(state.results?.data || DEFAULT_RESULTS);
   fillLanes(state.lanes?.data || []);

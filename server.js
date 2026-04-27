@@ -305,10 +305,23 @@ function requireAuth(req, res, next) {
   }
 }
 
+// Keep WebSocket connections alive through Railway's proxy timeout
+const WS_PING_INTERVAL = 25000;
+const wsHeartbeat = setInterval(() => {
+  clients.forEach(({ ws }) => {
+    if (ws.readyState === 1) ws.ping();
+  });
+}, WS_PING_INTERVAL);
+
+wss.on('close', () => clearInterval(wsHeartbeat));
+
+app.get('/api/ping', (_req, res) => res.json({ ok: true, ts: Date.now() }));
+
 wss.on('connection', ws => {
   const clientId = uuidv4();
   clients.set(clientId, { ws, role: null, authenticated: false });
   ws.send(JSON.stringify({ type: 'connected', clientId }));
+  ws.on('pong', () => {}); // keep-alive acknowledged
 
   ws.on('message', (raw, isBinary) => {
     if (isBinary) {
@@ -586,7 +599,7 @@ function applyPreset(preset) {
     overlayState.countdown.startTime = null;
   }
 
-  if (preset === 'race-running') {
+  if (preset === 'race-running' && !overlayState.timer.running) {
     overlayState.timer.active = true;
     overlayState.timer.running = true;
     overlayState.timer.startTime = Date.now();
