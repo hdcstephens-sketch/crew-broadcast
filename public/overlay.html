@@ -544,6 +544,14 @@ async function handleOffer(offer, fromId) {
   }
 }
 
+function scaleOverlay() {
+  const root = document.getElementById('overlay-root');
+  const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  root.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', scaleOverlay);
+scaleOverlay();
+
 connect();
 </script>
 </body>
