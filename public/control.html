@@ -395,6 +395,18 @@
     </div>
   </div>
 
+  <!-- ── Finish Times ── -->
+  <div>
+    <div class="sec-label">Finish Times</div>
+    <div class="live-card" style="padding:12px 16px;">
+      <div id="finishRows" style="display:flex;flex-direction:column;"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn" onclick="clearFinishTimes()">Clear</button>
+        <button class="btn btn-go" onclick="pushFinishResults()" style="flex:2;">Push to Overlay</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Event Header Quick Edit ── -->
   <div>
     <div class="sec-label">Event Header</div>
@@ -594,6 +606,8 @@ let timerRunning = false, timerStart = null, timerElapsed = 0, timerIv = null;
 let countdownRunning = false, countdownDuration = 300, countdownStart = null, countdownIv = null;
 let setupOpen = false;
 let firstStateReceived = false;
+let currentLanes = [];
+let finishTimes = [];
 
 // ── toggles grid ──
 function buildToggleGrid() {
@@ -819,7 +833,9 @@ function fillLanes(data) {
     { lane: 2, school: 'Phillips Exeter', color: '#8B0000' },
     { lane: 3, school: 'Andover', color: '#2E7D32' }
   ];
+  currentLanes = rows;
   rows.forEach(item => buildLaneRow(c, item));
+  buildFinishRows();
 }
 
 function buildLaneRow(c, item) {
@@ -855,6 +871,90 @@ function laneLogoChange(input) {
 }
 
 function syncLaneSelects() {}
+
+// ── finish times ──
+function buildFinishRows() {
+  const container = document.getElementById('finishRows');
+  if (!container) return;
+  if (!currentLanes.length) {
+    container.innerHTML = '<div class="empty-msg">Set lane assignments in Setup first.</div>';
+    return;
+  }
+  container.innerHTML = currentLanes.map((lane, i) => {
+    const existing = finishTimes.find(f => f.laneIndex === i);
+    const timeStr = existing ? msToTimeStr(existing.ms) : '—';
+    const timeColor = existing ? 'var(--accent)' : 'var(--text2)';
+    const btn = existing
+      ? `<button class="btn btn-stop" style="flex:none;padding:5px 10px;font-size:12px;" onclick="unmarkFinish(${i})">✕</button>`
+      : `<button class="btn btn-go" style="flex:none;padding:5px 10px;font-size:12px;" onclick="markFinish(${i})">Mark</button>`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;${i>0?'border-top:1px solid var(--line);':''}">
+      <div style="width:22px;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text2);text-align:center;">${lane.lane}</div>
+      <div style="flex:1;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeAttr(lane.school||'Lane '+lane.lane)}</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;min-width:64px;text-align:right;color:${timeColor};">${timeStr}</div>
+      ${btn}
+    </div>`;
+  }).join('');
+}
+
+function markFinish(i) {
+  if (!timerRunning && timerElapsed === 0) { toast('Start the timer first', 'err'); return; }
+  const ms = timerRunning ? (Date.now() - timerStart) : timerElapsed;
+  const lane = currentLanes[i];
+  if (!lane) return;
+  finishTimes = finishTimes.filter(f => f.laneIndex !== i);
+  finishTimes.push({ laneIndex: i, lane: lane.lane, school: lane.school, logo: lane.logo || null, ms });
+  buildFinishRows();
+  pushFinishResults();
+}
+
+function unmarkFinish(i) {
+  finishTimes = finishTimes.filter(f => f.laneIndex !== i);
+  buildFinishRows();
+  if (finishTimes.length) pushFinishResults();
+}
+
+function clearFinishTimes() {
+  finishTimes = [];
+  buildFinishRows();
+  toast('Finish times cleared', 'ok');
+}
+
+function msToTimeStr(ms) {
+  const m = Math.floor(ms / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  const t = Math.floor((ms % 1000) / 100);
+  return `${m}:${String(s).padStart(2,'0')}.${t}`;
+}
+
+function formatGap(ms) {
+  if (ms === 0) return '—';
+  const totalS = ms / 1000;
+  if (totalS < 60) return `+${totalS.toFixed(1)}`;
+  const m = Math.floor(totalS / 60);
+  const rem = (totalS % 60).toFixed(1);
+  return `+${m}:${parseFloat(rem) < 10 ? '0' + rem : rem}`;
+}
+
+function pushFinishResults() {
+  if (!finishTimes.length) return;
+  const sorted = [...finishTimes].sort((a, b) => a.ms - b.ms);
+  const winMs = sorted[0].ms;
+  const data = sorted.map((f, i) => ({
+    place: i + 1,
+    school: f.school,
+    time: msToTimeStr(f.ms),
+    margin: i === 0 ? '—' : formatGap(f.ms - winMs),
+    lane: f.lane,
+    logo: f.logo || null
+  }));
+  send({ type: 'update', element: 'results', data: { data } });
+  if (!document.getElementById('tog-results')?.classList.contains('is-on')) {
+    setToggle('results', true);
+    send({ type: 'toggle', element: 'results', active: true });
+  }
+  fillResults(data);
+  toast(`${data.length} finish time${data.length > 1 ? 's' : ''} pushed`, 'ok');
+}
 
 // ── school logos grid ──
 function renderSchoolLogosGrid() {
