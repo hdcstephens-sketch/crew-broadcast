@@ -316,11 +316,11 @@ async function goLive() {
     setMode('connecting');
     wsSend({ type: 'start-broadcast', mimeType });
 
-    recorder = new MediaRecorder(destNode.stream, { mimeType, audioBitsPerSecond: 32000 });
+    recorder = new MediaRecorder(destNode.stream, { mimeType, audioBitsPerSecond: 16000 });
     recorder.ondataavailable = e => { if (e.data.size > 0 && ws?.readyState === 1) ws.send(e.data); };
     recorder.onstart = () => { setMode(isMuted ? 'muted' : 'live'); addLog('Streaming live ✓'); };
     recorder.onerror = e => { addLog('Recorder error: ' + (e.error?.message || 'unknown')); releaseMic(); };
-    recorder.start(250);
+    recorder.start(500);
 
     document.getElementById('btnLive').disabled = true;
     document.getElementById('btnMute').disabled = false;
