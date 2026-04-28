@@ -75,6 +75,16 @@
     /* ── volume slider ── */
     input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
 
+    /* ── select ── */
+    .sel { width: 100%; padding: 10px 12px; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; appearance: none; -webkit-appearance: none; }
+    .sel:focus { border-color: var(--accent); }
+    .sel:disabled { opacity: 0.4; }
+    .sel-wrap { position: relative; }
+    .sel-wrap::after { content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text2); pointer-events: none; font-size: 12px; }
+    .note { font-size: 11px; color: var(--text2); margin-top: 10px; line-height: 1.55; }
+    .btn-sm { margin-top: 10px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card2); color: var(--text2); font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
     /* ── setup steps ── */
     .steps { display: flex; flex-direction: column; gap: 10px; }
     .step  { display: flex; gap: 10px; align-items: flex-start; }
@@ -131,27 +141,38 @@
   </div>
 
   <div class="card">
+    <div class="card-label">Output Device</div>
+    <div class="sel-wrap">
+      <select class="sel" id="outSelect" onchange="changeOutput(this.value)" disabled>
+        <option value="">Default Output</option>
+      </select>
+    </div>
+    <p class="note" id="outNote">Loading devices…</p>
+    <button class="btn-sm" onclick="refreshOutputDevices()">Refresh Devices</button>
+  </div>
+
+  <div class="card">
     <div class="card-label">Audio Hijack Setup</div>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <div class="step-text">Open this page in <strong>Google Chrome</strong> on the boathouse Mac — Safari won't work for Audio Hijack capture.</div>
+        <div class="step-text">Install <strong>BlackHole 2ch</strong> (free at existential.audio) — this creates a virtual audio cable on your Mac that any app can read from.</div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div class="step-text">In Audio Hijack, create a new session. Add an <strong>Application</strong> source block and select <strong>Google Chrome</strong>.</div>
+        <div class="step-text">Click <strong>Refresh Devices</strong> above, then select <strong>BlackHole 2ch</strong> in the Output Device dropdown. Audio now routes directly to BlackHole — not through Chrome.</div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <div class="step-text">Wire the output to your recorder, stream encoder, or speakers block and hit <strong>Start Capturing</strong>.</div>
+        <div class="step-text">In Audio Hijack, create a session. Add an <strong>Audio Device</strong> source block and select <strong>BlackHole 2ch</strong>.</div>
       </div>
       <div class="step">
         <div class="step-num">4</div>
-        <div class="step-text">When the phone on the water hits Go Live, audio will appear here automatically — no action needed on this page.</div>
+        <div class="step-text">Wire the output to your recorder, encoder, or speakers and hit <strong>Start Capturing</strong>. Audio appears automatically when the phone goes live.</div>
       </div>
       <div class="step">
         <div class="step-num">5</div>
-        <div class="step-text">Keep this tab <strong>visible in Chrome</strong> (don't minimize the window) to prevent the browser from throttling audio.</div>
+        <div class="step-text">Keep this tab <strong>visible in Chrome</strong> (don't minimize) to prevent the browser throttling audio.</div>
       </div>
     </div>
   </div>
@@ -194,6 +215,7 @@ function onWsMessage(msg) {
     case 'state':
       setWsStatus(true);
       addLog('Connected to server');
+      refreshOutputDevices();
       if (msg.activeBroadcaster) {
         activeMimeType = msg.activeMimeType || 'audio/webm;codecs=opus';
         addLog('Broadcaster already live — connecting…');
@@ -313,6 +335,55 @@ function stopMeter() {
 
 function setVol(v) {
   document.getElementById('remoteAudio').volume = parseFloat(v);
+}
+
+// ── output device selection ───────────────────────────────────────────
+let selectedOutId = '';
+
+async function refreshOutputDevices() {
+  const sel  = document.getElementById('outSelect');
+  const note = document.getElementById('outNote');
+
+  const canSink = typeof document.createElement('audio').setSinkId === 'function';
+  if (!canSink) {
+    sel.disabled = true;
+    note.textContent = 'Output selection requires Chrome on desktop. Safari does not support this.';
+    return;
+  }
+
+  try {
+    // Need mic permission first to get labelled device list
+    await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => s.getTracks().forEach(t => t.stop())).catch(() => {});
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const outputs = devices.filter(d => d.kind === 'audiooutput');
+
+    if (!outputs.length) {
+      note.textContent = 'No output devices found. Try refreshing.';
+      return;
+    }
+
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Default Output</option>' +
+      outputs.map(d => `<option value="${d.deviceId}">${d.label || 'Speaker'}</option>`).join('');
+    sel.disabled = false;
+    if (prev) sel.value = prev;
+
+    note.textContent = 'Select BlackHole 2ch (or Loopback) to route audio directly to Audio Hijack without going through Chrome\'s main output.';
+  } catch (e) {
+    note.textContent = 'Could not enumerate devices: ' + e.message;
+  }
+}
+
+async function changeOutput(deviceId) {
+  selectedOutId = deviceId;
+  const audioEl = document.getElementById('remoteAudio');
+  try {
+    await audioEl.setSinkId(deviceId || '');
+    const label = document.getElementById('outSelect').selectedOptions[0]?.text || 'Default';
+    addLog('Output → ' + label);
+  } catch (e) {
+    addLog('Output change failed: ' + e.message);
+  }
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────
