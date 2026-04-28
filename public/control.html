@@ -237,6 +237,11 @@
     }
     .tog-card.is-on .tog-switch { background: var(--accent); }
     .tog-card.is-on .tog-switch::after { transform: translateX(16px); }
+    .tog-apply-btn {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+      padding: 4px 9px; border-radius: 6px; border: none; cursor: pointer;
+      white-space: nowrap; transition: 0.12s; flex-shrink: 0;
+    }
 
     /* ── setup accordion ── */
     .setup-toggle {
@@ -605,10 +610,10 @@
       <div style="font-size:14px; font-weight:700; color:var(--text);">Overlay Preview</div>
       <button onclick="closePreview()" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
     </div>
-    <div id="previewContainer" style="width:100%; overflow:hidden; border-radius:12px; background:#000; border:1px solid var(--line);">
-      <iframe id="previewFrame" src="/overlay.html" style="width:1920px; height:1080px; border:none; transform-origin:0 0; display:block;" scrolling="no"></iframe>
+    <div id="previewContainer" style="width:100%; aspect-ratio:16/9; position:relative; overflow:hidden; border-radius:12px; background:#000; border:1px solid var(--line);">
+      <iframe id="previewFrame" src="/overlay.html" style="position:absolute;top:0;left:0;width:1920px;height:1080px;border:none;transform-origin:0 0;display:block;" scrolling="no"></iframe>
     </div>
-    <p style="font-size:11px; color:var(--text2); margin-top:8px; text-align:center;">Live overlay — tap Save first to apply your widget changes.</p>
+    <p style="font-size:11px; color:var(--text2); margin-top:8px; text-align:center;">Live overlay — 16:9 preview.</p>
   </div>
 </div>
 
@@ -655,7 +660,10 @@ function buildToggleGrid() {
         <div class="tog-card-name">${label}</div>
         <div class="tog-card-status" id="st-${key}">OFF</div>
       </div>
-      <div class="tog-switch" id="sw-${key}"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button class="tog-apply-btn" id="apply-${key}" style="display:none;" onclick="event.stopPropagation();applyWidget('${key}')"></button>
+        <div class="tog-switch" id="sw-${key}"></div>
+      </div>
     </div>
   `).join('');
 }
@@ -668,11 +676,46 @@ function setToggle(key, active) {
 }
 
 let overlayIsUp = false;
+let serverWidgetState = {};
 
 function toggleEl(key) {
   const card = document.getElementById(`tog-${key}`);
   const active = !card.classList.contains('is-on');
   setToggle(key, active);
+  updateApplyBtn(key);
+}
+
+function setServerWidget(key, active) {
+  serverWidgetState[key] = !!active;
+  updateApplyBtn(key);
+}
+
+function updateApplyBtn(key) {
+  const btn = document.getElementById(`apply-${key}`);
+  if (!btn) return;
+  const localOn = document.getElementById(`tog-${key}`)?.classList.contains('is-on') || false;
+  const serverOn = serverWidgetState[key] || false;
+  if (localOn === serverOn) {
+    btn.style.display = 'none';
+  } else if (localOn) {
+    btn.textContent = 'Put Up';
+    btn.style.background = 'var(--accent)';
+    btn.style.color = '#fff';
+    btn.style.display = '';
+  } else {
+    btn.textContent = 'Take Off';
+    btn.style.background = 'var(--danger)';
+    btn.style.color = '#fff';
+    btn.style.display = '';
+  }
+}
+
+function applyWidget(key) {
+  const active = document.getElementById(`tog-${key}`)?.classList.contains('is-on') || false;
+  send({ type: 'toggle', element: key, active });
+  setServerWidget(key, active);
+  const anyActive = TOGGLES.some(([k]) => serverWidgetState[k]);
+  setOverlayLive(anyActive);
 }
 
 function setOverlayLive(live) {
@@ -689,13 +732,17 @@ function setOverlayLive(live) {
 }
 
 function overlayMainAction() {
+  const sending = !overlayIsUp;
   const widgets = {};
   TOGGLES.forEach(([key]) => {
     const card = document.getElementById(`tog-${key}`);
-    widgets[key] = !overlayIsUp && (card?.classList.contains('is-on') || false);
+    const active = sending && (card?.classList.contains('is-on') || false);
+    widgets[key] = active;
+    serverWidgetState[key] = active;
+    updateApplyBtn(key);
   });
   send({ type: 'save-widgets', widgets });
-  setOverlayLive(!overlayIsUp);
+  setOverlayLive(sending);
 }
 
 function openPreview() {
@@ -709,9 +756,7 @@ function scalePreviewFrame() {
   const container = document.getElementById('previewContainer');
   const frame = document.getElementById('previewFrame');
   if (!container || !frame) return;
-  const scale = container.offsetWidth / 1920;
-  frame.style.transform = `scale(${scale})`;
-  container.style.height = Math.round(1080 * scale) + 'px';
+  frame.style.transform = `scale(${container.offsetWidth / 1920})`;
 }
 window.addEventListener('resize', scalePreviewFrame);
 
@@ -734,7 +779,7 @@ function onMessage(msg) {
     if (msg.overlayState) applyState(msg.overlayState);
     if (Array.isArray(msg.raceSchedule)) { raceSchedule = msg.raceSchedule; renderRaceSchedule(); }
   }
-  if (msg.type === 'toggle') setToggle(msg.element, msg.active);
+  if (msg.type === 'toggle') { setToggle(msg.element, msg.active); setServerWidget(msg.element, msg.active); }
   if (msg.type === 'timer-control') syncTimer(msg);
   if (msg.type === 'countdown-control') syncCountdown(msg);
   if (msg.type === 'team-presets') { teamPresets = msg.teamPresets || {}; syncLaneSelects(); renderSchoolLogosGrid(); saveBackup(); }
@@ -749,10 +794,13 @@ function setStatus(ok) {
 function applyState(state) {
   // Always sync toggle ON/OFF states — needed for multi-device accuracy
   TOGGLES.forEach(([key]) => {
-    if (state[key]?.active !== undefined) setToggle(key, state[key].active);
+    if (state[key]?.active !== undefined) {
+      setToggle(key, state[key].active);
+      setServerWidget(key, state[key].active);
+    }
   });
   // sync Send Up / Take Down button
-  const anyActive = TOGGLES.some(([key]) => document.getElementById(`tog-${key}`)?.classList.contains('is-on'));
+  const anyActive = TOGGLES.some(([key]) => serverWidgetState[key]);
   setOverlayLive(anyActive);
 
   // Always sync live clocks — they must stay accurate across reconnects
