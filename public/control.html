@@ -320,6 +320,34 @@
       .tog-grid { grid-template-columns: 1fr; }
       .field-row, .field-row.col3 { grid-template-columns: 1fr; }
     }
+
+    /* ── import modal ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .modal-box { background: var(--card); border: 1px solid var(--line); border-radius: 18px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+    .modal-head h3 { font-size: 15px; font-weight: 700; }
+    .modal-close { background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px; }
+    .modal-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+    .upload-zone { border: 2px dashed rgba(0,168,107,0.35); border-radius: 14px; padding: 36px 20px; text-align: center; cursor: pointer; transition: 0.15s; background: var(--card2); }
+    .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(0,168,107,0.05); }
+    .upload-zone .uz-icon { font-size: 36px; margin-bottom: 8px; }
+    .upload-zone p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+    .upload-preview { width: 100%; border-radius: 10px; max-height: 200px; object-fit: contain; background: #000; display: none; }
+    .ocr-progress { background: var(--card2); border-radius: 10px; padding: 12px 14px; font-size: 12px; color: var(--text2); }
+    .ocr-bar-wrap { height: 6px; background: rgba(255,255,255,0.07); border-radius: 999px; margin-top: 8px; overflow: hidden; }
+    .ocr-bar { height: 100%; background: var(--accent); border-radius: inherit; transition: width 0.2s; width: 0%; }
+    .parsed-race { background: var(--card2); border-radius: 12px; padding: 12px 14px; border: 1px solid var(--line); }
+    .parsed-race-name { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+    .parsed-race-sub { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+    .parsed-lanes { display: flex; flex-direction: column; gap: 4px; }
+    .parsed-lane { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+    .lane-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-dim); border: 1px solid rgba(0,168,107,0.3); color: var(--accent); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .delete-race { background: none; border: none; color: var(--danger); font-size: 16px; cursor: pointer; margin-left: auto; opacity: 0.6; }
+    .delete-race:hover { opacity: 1; }
+    .import-btn { background: var(--accent); border: none; color: #fff; font-size: 14px; font-weight: 700; padding: 12px; border-radius: 12px; cursor: pointer; font-family: inherit; }
+    .import-btn:hover { background: #00c07a; }
+    .import-btn:disabled { opacity: 0.4; pointer-events: none; }
+    .no-races-msg { font-size: 13px; color: var(--text2); text-align: center; padding: 12px 0; }
   </style>
 </head>
 <body>
@@ -454,6 +482,7 @@
           <input class="quick-input" id="newRaceName" placeholder="Men's Varsity 8+ Final" style="margin:0; flex:2; min-width:140px;">
           <input class="quick-input" id="newRaceSub" placeholder="Spring Invitational 2026" style="margin:0; flex:2; min-width:140px;">
           <button class="action-btn ghost" onclick="addRace()">+ Add</button>
+          <button class="action-btn ghost" onclick="openImport()" style="white-space:nowrap;">📸 Import Photo</button>
         </div>
         <p style="font-size:11px; color:var(--text2); margin-top:6px;">Tap a race to instantly load it into the Event Header.</p>
       </div>
@@ -1225,6 +1254,252 @@ fillResults(DEFAULT_RESULTS);
 fillLanes([]);
 renderPresetEditor();
 connect();
+</script>
+
+<!-- ── Import Schedule Modal ── -->
+<div class="modal-overlay" id="importModal" style="display:none;" onclick="if(event.target===this)closeImport()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Import Schedule from Photo</h3>
+      <button class="modal-close" onclick="closeImport()">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- Step 1: upload -->
+      <div id="imp-step1">
+        <div class="upload-zone" id="uploadZone"
+          onclick="document.getElementById('scheduleFileInput').click()"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="event.preventDefault();this.classList.remove('drag');handleImgDrop(event)">
+          <div class="uz-icon">📸</div>
+          <strong style="font-size:14px;">Tap to choose a photo</strong>
+          <p>or drag & drop — photo of printed schedule, screenshot, anything</p>
+        </div>
+        <img id="uploadPreview" class="upload-preview">
+        <input type="file" id="scheduleFileInput" accept="image/*" style="display:none" onchange="loadImgFile(this.files[0])">
+      </div>
+
+      <!-- Step 2: OCR progress -->
+      <div id="imp-step2" style="display:none;">
+        <div class="ocr-progress">
+          <div id="ocrStatusText">Reading image…</div>
+          <div class="ocr-bar-wrap"><div class="ocr-bar" id="ocrBar"></div></div>
+        </div>
+      </div>
+
+      <!-- Step 3: review -->
+      <div id="imp-step3" style="display:none;">
+        <div style="font-size:12px; color:var(--text2); margin-bottom:4px;">Review detected races — delete any you don't want, then hit Import.</div>
+        <div id="parsedList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <div id="noRacesMsg" class="no-races-msg" style="display:none;">No races detected. Try a clearer photo or add races manually.</div>
+        <button class="import-btn" id="importConfirmBtn" onclick="confirmImport()">Import to Schedule</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+// ── schedule import ───────────────────────────────────────────────────
+let parsedRaces = [];
+let importImgFile = null;
+
+function openImport() {
+  document.getElementById('importModal').style.display = 'flex';
+  resetImport();
+}
+
+function closeImport() {
+  document.getElementById('importModal').style.display = 'none';
+}
+
+function resetImport() {
+  parsedRaces = [];
+  importImgFile = null;
+  show('imp-step1'); hide('imp-step2'); hide('imp-step3');
+  document.getElementById('uploadPreview').style.display = 'none';
+  document.getElementById('scheduleFileInput').value = '';
+  document.getElementById('ocrBar').style.width = '0%';
+}
+
+function handleImgDrop(e) {
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) loadImgFile(file);
+}
+
+function loadImgFile(file) {
+  if (!file) return;
+  importImgFile = file;
+  const url = URL.createObjectURL(file);
+  const prev = document.getElementById('uploadPreview');
+  prev.src = url;
+  prev.style.display = 'block';
+  runOCR(file);
+}
+
+async function runOCR(file) {
+  hide('imp-step1'); show('imp-step2');
+  try {
+    const result = await Tesseract.recognize(file, 'eng', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          document.getElementById('ocrBar').style.width = (m.progress * 100).toFixed(0) + '%';
+          document.getElementById('ocrStatusText').textContent = 'Reading image… ' + (m.progress * 100).toFixed(0) + '%';
+        }
+      }
+    });
+    const text = result.data.text;
+    parsedRaces = parseScheduleText(text);
+    renderParsedPreview();
+    hide('imp-step2'); show('imp-step3');
+  } catch (err) {
+    hide('imp-step2'); show('imp-step1');
+    toast('Could not read image: ' + err.message, 'err');
+  }
+}
+
+// ── parser ────────────────────────────────────────────────────────────
+const KNOWN_SCHOOLS = [
+  'brooks','exeter','andover','groton','st paul','saint paul','middlesex',
+  'deerfield','concord','noble','taft','kent','loomis','hotchkiss','choate',
+  'milton','tabor','worcester','belmont hill','rivers','boston college'
+];
+
+function parseScheduleText(raw) {
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+  const races = [];
+  let current = null;
+
+  const isRaceName = l =>
+    /varsity|j\.?v\.?|junior varsity|novice|freshman|frosh|lightweight|4\+|8\+|2x|4x|1x|2-|pair|four|eight|sculls?/i.test(l) ||
+    /final|heat\s*\d|semi|repechage|time trial/i.test(l) ||
+    /^(race|event|event\s+no\.?)\s*\d+/i.test(l);
+
+  const lanePatterns = [
+    { re: /^lane\s*(\d)\s*[-:]\s*(.+)/i,    li: 1, si: 2 },
+    { re: /^(\d)\s*[-:.]\s+([a-z].{2,})/i,  li: 1, si: 2 },
+    { re: /^(\d)\s+([A-Z][a-z].{2,})/,      li: 1, si: 2 },
+    { re: /(.{3,})\s+[-–]\s+lane\s*(\d)/i,  li: 2, si: 1 },
+    { re: /(.{3,})\s+\(lane\s*(\d)\)/i,     li: 2, si: 1 },
+  ];
+
+  const extractLane = l => {
+    for (const { re, li, si } of lanePatterns) {
+      const m = l.match(re);
+      if (m) {
+        const lane = parseInt(m[li]);
+        const school = m[si].trim().replace(/[.,;]+$/, '');
+        if (lane >= 1 && lane <= 8 && school.length > 1) return { lane, school };
+      }
+    }
+    return null;
+  };
+
+  const looksLikeSchool = l =>
+    KNOWN_SCHOOLS.some(s => l.toLowerCase().includes(s)) ||
+    /school|academy|prep|college/i.test(l);
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const laneMatch = extractLane(line);
+
+    if (laneMatch) {
+      if (!current) current = { name: 'Race ' + (races.length + 1), sub: '', lanes: [] };
+      if (!current.lanes.find(x => x.lane === laneMatch.lane)) {
+        current.lanes.push(laneMatch);
+      }
+      continue;
+    }
+
+    if (isRaceName(line)) {
+      if (current && (current.lanes.length || isRaceName(current.name))) races.push(current);
+      const sub = (i + 1 < lines.length && !isRaceName(lines[i+1]) && !extractLane(lines[i+1])) ? lines[++i] : '';
+      current = { name: cleanRaceName(line), sub: cleanSub(sub), lanes: [] };
+      continue;
+    }
+
+    // Bare list of school names (no lane numbers) — assign sequentially
+    if (looksLikeSchool(line) && current && current.lanes.length < 8) {
+      const nextLane = current.lanes.length + 1;
+      current.lanes.push({ lane: nextLane, school: line.replace(/[.,;]+$/, '') });
+    }
+  }
+
+  if (current && (current.lanes.length || races.length === 0)) races.push(current);
+  return races.filter(r => r.name);
+}
+
+function cleanRaceName(s) {
+  return s.replace(/^(race|event)\s*\d+\s*[-:.]?\s*/i, '')
+          .replace(/^\d+\s*[-:.]?\s*/, '')
+          .trim() || s.trim();
+}
+
+function cleanSub(s) {
+  if (!s) return '';
+  if (/^\d{1,2}:\d{2}/.test(s)) return s; // time → use as sub
+  if (s.length > 60) return '';
+  return s;
+}
+
+// ── preview ───────────────────────────────────────────────────────────
+function renderParsedPreview() {
+  const list = document.getElementById('parsedList');
+  const none = document.getElementById('noRacesMsg');
+  const btn  = document.getElementById('importConfirmBtn');
+
+  if (!parsedRaces.length) {
+    list.innerHTML = ''; none.style.display = 'block'; btn.disabled = true;
+    return;
+  }
+  none.style.display = 'none'; btn.disabled = false;
+  list.innerHTML = parsedRaces.map((race, i) => `
+    <div class="parsed-race" id="pr-${i}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+        <div>
+          <div class="parsed-race-name">${esc(race.name)}</div>
+          ${race.sub ? `<div class="parsed-race-sub">${esc(race.sub)}</div>` : ''}
+        </div>
+        <button class="delete-race" onclick="deleteParsedRace(${i})">×</button>
+      </div>
+      ${race.lanes.length ? `
+        <div class="parsed-lanes">
+          ${race.lanes.sort((a,b)=>a.lane-b.lane).map(l => `
+            <div class="parsed-lane">
+              <div class="lane-num">${l.lane}</div>
+              <span>${esc(l.school)}</span>
+            </div>`).join('')}
+        </div>` : '<div style="font-size:11px;color:var(--text2);margin-top:4px;">No lane assignments detected</div>'}
+    </div>
+  `).join('');
+}
+
+function deleteParsedRace(i) {
+  parsedRaces.splice(i, 1);
+  renderParsedPreview();
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function confirmImport() {
+  if (!parsedRaces.length) return;
+  let added = 0;
+  for (const race of parsedRaces) {
+    if (!raceSchedule.find(r => r.name === race.name)) {
+      raceSchedule.push({ name: race.name, sub: race.sub, lanes: race.lanes });
+      added++;
+    }
+  }
+  saveRaceSchedule();
+  renderRaceSchedule();
+  closeImport();
+  toast(`Imported ${added} race${added !== 1 ? 's' : ''}`, 'ok');
+}
+
+function show(id) { document.getElementById(id).style.display = ''; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
 </script>
 </body>
 </html>
