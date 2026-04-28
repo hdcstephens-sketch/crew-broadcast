@@ -257,7 +257,8 @@ function getStatePayload() {
     presetConfigs,
     teamPresets,
     raceSchedule,
-    activeBroadcaster: Boolean(activeBroadcasterId && clients.has(activeBroadcasterId))
+    activeBroadcaster: Boolean(activeBroadcasterId && clients.has(activeBroadcasterId)),
+    activeMimeType
   };
 }
 
@@ -270,6 +271,8 @@ function saveAndBroadcastState() {
 
 const clients = new Map();
 let activeBroadcasterId = null;
+let audioInitChunk = null;
+let activeMimeType = 'audio/webm;codecs=opus';
 
 app.use(express.json({ limit: '25mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -327,7 +330,15 @@ wss.on('connection', ws => {
   ws.on('pong', () => {}); // keep-alive acknowledged
 
   ws.on('message', (raw, isBinary) => {
-    if (isBinary) return;
+    if (isBinary) {
+      const client = clients.get(clientId);
+      if (client?.role !== 'audio-broadcaster') return;
+      if (!audioInitChunk) audioInitChunk = raw; // save init segment for late joiners
+      clients.forEach(({ ws: cws, role }) => {
+        if (role === 'audio-monitor' && cws.readyState === 1) cws.send(raw);
+      });
+      return;
+    }
 
     try {
       handleMessage(clientId, JSON.parse(raw));
@@ -340,6 +351,7 @@ wss.on('connection', ws => {
     const client = clients.get(clientId);
     if (activeBroadcasterId === clientId || client?.role === 'audio-broadcaster') {
       activeBroadcasterId = null;
+      audioInitChunk = null;
       broadcast('overlay', { type: 'broadcaster-left' });
       broadcast('audio-monitor', { type: 'broadcaster-left' });
     }
@@ -373,7 +385,10 @@ function handleMessage(clientId, msg) {
         client.authenticated = true;
         send(client, getStatePayload());
         if (activeBroadcasterId) {
-          send(client, { type: 'broadcaster-online' });
+          send(client, { type: 'broadcaster-online', mimeType: activeMimeType });
+          if (msg.role === 'audio-monitor' && audioInitChunk) {
+            client.ws.send(audioInitChunk); // send init segment so late joiners can decode
+          }
         }
       }
       break;
@@ -557,8 +572,10 @@ function handleMessage(clientId, msg) {
       }
       activeBroadcasterId = clientId;
       client.role = 'audio-broadcaster';
+      activeMimeType = msg.mimeType || 'audio/webm;codecs=opus';
+      audioInitChunk = null; // clear stale init chunk from previous session
       broadcast('overlay', { type: 'broadcaster-online' });
-      broadcast('audio-monitor', { type: 'broadcaster-online' });
+      broadcast('audio-monitor', { type: 'broadcaster-online', mimeType: activeMimeType });
       break;
     }
 
@@ -566,6 +583,7 @@ function handleMessage(clientId, msg) {
       if (client?.role !== 'audio-broadcaster' && activeBroadcasterId !== clientId) return;
       client.role = 'controller';
       activeBroadcasterId = null;
+      audioInitChunk = null;
       broadcast('overlay', { type: 'broadcaster-left' });
       broadcast('audio-monitor', { type: 'broadcaster-left' });
       break;
