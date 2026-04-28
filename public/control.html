@@ -384,19 +384,6 @@
     </div>
   </div>
 
-  <!-- ── Race Stage ── -->
-  <div>
-    <div class="sec-label">Race Stage</div>
-    <div class="preset-grid">
-      <button class="preset-btn" onclick="preset('pre-race')">Pre-Race</button>
-      <button class="preset-btn" onclick="preset('race-start')">Race Start</button>
-      <button class="preset-btn" onclick="preset('race-running')">Race Running</button>
-      <button class="preset-btn" onclick="preset('finish')">Finish</button>
-      <button class="preset-btn" onclick="preset('post-race')">Post-Race</button>
-      <button class="preset-btn danger" onclick="preset('clear')">Clear All</button>
-    </div>
-  </div>
-
   <!-- ── Live Controls ── -->
   <div>
     <div class="sec-label">Live Controls</div>
@@ -449,13 +436,11 @@
   <!-- ── Element Toggles ── -->
   <div>
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-      <div class="sec-label" style="margin:0;">Show / Hide</div>
-      <div style="display:flex; gap:8px;">
-        <button class="action-btn ghost" onclick="openPreview()" style="padding:7px 14px;">Preview</button>
-        <button class="action-btn" id="saveWidgetsBtn" onclick="saveWidgets()" style="padding:7px 14px; opacity:0.4; pointer-events:none;">Saved ✓</button>
-      </div>
+      <div class="sec-label" style="margin:0;">Overlay</div>
+      <button class="action-btn ghost" onclick="openPreview()" style="padding:5px 12px; font-size:11px;">Preview</button>
     </div>
     <div class="tog-grid" id="togGrid"></div>
+    <button id="overlayMainBtn" onclick="overlayMainAction()" style="width:100%; margin-top:10px; padding:16px; border-radius:var(--r); border:none; background:var(--accent); color:#fff; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; letter-spacing:0.04em; transition:background 0.15s;">Send Up ↑</button>
   </div>
 
   <!-- ── Countdown quick row ── -->
@@ -646,9 +631,6 @@ const TOGGLES = [
   ['countdown', 'Countdown']
 ];
 
-const PRESET_KEYS = ['pre-race', 'race-start', 'race-running', 'finish', 'post-race'];
-const PRESET_LABELS = { 'pre-race': 'Pre-Race', 'race-start': 'Race Start', 'race-running': 'Race Running', 'finish': 'Finish', 'post-race': 'Post-Race' };
-
 const DEFAULT_RESULTS = [
   { place: 1, school: 'Brooks School', time: '6:02.4', margin: '-', lane: 1 },
   { place: 2, school: 'Phillips Exeter', time: '6:05.1', margin: '+2.7', lane: 2 },
@@ -685,37 +667,35 @@ function setToggle(key, active) {
   if (st) st.textContent = active ? 'ON' : 'OFF';
 }
 
-let widgetsDirty = false;
+let overlayIsUp = false;
 
 function toggleEl(key) {
   const card = document.getElementById(`tog-${key}`);
   const active = !card.classList.contains('is-on');
   setToggle(key, active);
-  markWidgetsDirty();
 }
 
-function markWidgetsDirty() {
-  widgetsDirty = true;
-  const btn = document.getElementById('saveWidgetsBtn');
+function setOverlayLive(live) {
+  overlayIsUp = live;
+  const btn = document.getElementById('overlayMainBtn');
   if (!btn) return;
-  btn.textContent = 'Save';
-  btn.style.opacity = '1';
-  btn.style.pointerEvents = 'auto';
+  if (live) {
+    btn.textContent = 'Take Down ↓';
+    btn.style.background = 'var(--danger)';
+  } else {
+    btn.textContent = 'Send Up ↑';
+    btn.style.background = 'var(--accent)';
+  }
 }
 
-function saveWidgets() {
+function overlayMainAction() {
   const widgets = {};
   TOGGLES.forEach(([key]) => {
     const card = document.getElementById(`tog-${key}`);
-    widgets[key] = card?.classList.contains('is-on') || false;
+    widgets[key] = !overlayIsUp && (card?.classList.contains('is-on') || false);
   });
   send({ type: 'save-widgets', widgets });
-  widgetsDirty = false;
-  const btn = document.getElementById('saveWidgetsBtn');
-  if (!btn) return;
-  btn.textContent = 'Saved ✓';
-  btn.style.opacity = '0.4';
-  btn.style.pointerEvents = 'none';
+  setOverlayLive(!overlayIsUp);
 }
 
 function openPreview() {
@@ -771,6 +751,9 @@ function applyState(state) {
   TOGGLES.forEach(([key]) => {
     if (state[key]?.active !== undefined) setToggle(key, state[key].active);
   });
+  // sync Send Up / Take Down button
+  const anyActive = TOGGLES.some(([key]) => document.getElementById(`tog-${key}`)?.classList.contains('is-on'));
+  setOverlayLive(anyActive);
 
   // Always sync live clocks — they must stay accurate across reconnects
   if (state.timer) {
@@ -904,7 +887,7 @@ function cStop() { stopCountdownLocal(); updateCdDisplay(countdownDuration); sen
 function cReset() { stopCountdownLocal(); updateCdDisplay(countdownDuration); send({ type: 'countdown-control', action: 'reset', duration: countdownDuration }); }
 
 // ── push helpers ──
-function preset(name) { send({ type: 'preset', preset: name }); toast(name.replace(/-/g,' '), 'ok'); }
+
 
 function pushEvent() {
   send({ type: 'update', element: 'eventHeader', data: { text: document.getElementById('evTitle').value, subtitle: document.getElementById('evSub').value } });
@@ -1262,12 +1245,7 @@ document.addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.code === 'Space') { e.preventDefault(); timerRunning ? tStop() : tStart(); }
   if (e.code === 'KeyR') { e.preventDefault(); tReset(); }
-  if (e.code === 'Digit1') preset('pre-race');
-  if (e.code === 'Digit2') preset('race-start');
-  if (e.code === 'Digit3') preset('race-running');
-  if (e.code === 'Digit4') preset('finish');
-  if (e.code === 'Digit5') preset('post-race');
-  if (e.code === 'Digit0') preset('clear');
+  if (e.code === 'KeyU') { e.preventDefault(); overlayMainAction(); }
 });
 
 buildToggleGrid();
