@@ -390,6 +390,17 @@ function handleMessage(clientId, msg) {
       break;
     }
 
+    case 'save-widgets': {
+      if (!client.authenticated || !isPlainObject(msg.widgets)) return;
+      Object.entries(msg.widgets).forEach(([key, active]) => {
+        if (overlayState[key] && 'active' in overlayState[key]) {
+          overlayState[key].active = Boolean(active);
+        }
+      });
+      saveAndBroadcastState();
+      break;
+    }
+
     case 'update': {
       if (!client.authenticated) return;
       if (!overlayState[msg.element] || !isPlainObject(msg.data)) return;
