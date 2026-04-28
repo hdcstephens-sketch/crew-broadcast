@@ -169,70 +169,45 @@
 <div id="toasts"></div>
 
 <script>
-const ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
-];
-
 // ── state ─────────────────────────────────────────────────────────────
-let ws, pc = null;
+let ws;
+let mediaSource = null, sourceBuffer = null, meterSourceNode = null;
 let audioCtx = null, analyser = null, meterRaf = null;
-let connState = 'waiting';
-let broadcasterPresent = false;
-let retryTimer = null;
+let connState = 'waiting', activeMimeType = 'audio/webm;codecs=opus';
+const chunkQueue = [];
 
 // ── websocket ─────────────────────────────────────────────────────────
 function wsConnect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}`);
+  ws.binaryType = 'arraybuffer';
   ws.onopen  = () => ws.send(JSON.stringify({ type: 'register', role: 'audio-monitor' }));
-  ws.onclose = () => {
-    clearRetryTimer();
-    setWsStatus(false);
-    tearDown();
-    setState('waiting');
-    setTimeout(wsConnect, 3000);
+  ws.onclose = () => { setWsStatus(false); tearDown(); setState('waiting'); setTimeout(wsConnect, 3000); };
+  ws.onmessage = e => {
+    if (e.data instanceof ArrayBuffer) { handleChunk(e.data); return; }
+    onWsMessage(JSON.parse(e.data));
   };
-  ws.onmessage = e => onWsMessage(JSON.parse(e.data));
 }
 
 function onWsMessage(msg) {
   switch (msg.type) {
     case 'state':
       setWsStatus(true);
-      broadcasterPresent = Boolean(msg.activeBroadcaster);
       addLog('Connected to server');
-      if (broadcasterPresent) {
-        addLog('Broadcaster live — connecting…');
-        requestAudio(true);
+      if (msg.activeBroadcaster) {
+        activeMimeType = msg.activeMimeType || 'audio/webm;codecs=opus';
+        addLog('Broadcaster already live — connecting…');
+        setupMediaSource();
       } else {
         addLog('Waiting for broadcaster…');
       }
       break;
-
     case 'broadcaster-online':
-      broadcasterPresent = true;
+      activeMimeType = msg.mimeType || 'audio/webm;codecs=opus';
       addLog('Broadcaster online — connecting…');
-      requestAudio(true);
+      setupMediaSource();
       break;
-
-    case 'audio-offer':
-      handleOffer(msg.offer, msg.from).catch(err => {
-        addLog('Audio setup error: ' + err.message);
-        scheduleRequestAudio();
-      });
-      break;
-
-    case 'ice-candidate':
-      if (pc) pc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(() => {});
-      break;
-
     case 'broadcaster-left':
-      broadcasterPresent = false;
-      clearRetryTimer();
       tearDown();
       setState('waiting');
       addLog('Broadcaster went offline');
@@ -240,108 +215,82 @@ function onWsMessage(msg) {
   }
 }
 
-function requestAudio(force = false) {
-  if (!broadcasterPresent || ws?.readyState !== 1) return;
-  if (!force && pc && (pc.connectionState === 'connecting' || pc.connectionState === 'connected')) return;
-  clearRetryTimer();
-  setState('connecting');
-  ws.send(JSON.stringify({ type: 'request-audio' }));
-}
-
-function scheduleRequestAudio(reason = 'Connection lost — retrying…') {
-  if (!broadcasterPresent) return;
-  clearRetryTimer();
+// ── MediaSource audio receiver ────────────────────────────────────────
+function setupMediaSource() {
   tearDown();
-  addLog(reason);
-  retryTimer = setTimeout(() => {
-    retryTimer = null;
-    requestAudio(true);
-  }, 1000);
+  setState('connecting');
+
+  const audioEl = document.getElementById('remoteAudio');
+  mediaSource = new MediaSource();
+  audioEl.src = URL.createObjectURL(mediaSource);
+
+  mediaSource.addEventListener('sourceopen', () => {
+    try {
+      sourceBuffer = mediaSource.addSourceBuffer(activeMimeType);
+      sourceBuffer.addEventListener('updateend', () => { flushQueue(); keepLive(audioEl); });
+      flushQueue();
+    } catch (e) { addLog('Audio setup error: ' + e.message); }
+  });
+
+  audioEl.addEventListener('canplay', function onCanPlay() {
+    audioEl.removeEventListener('canplay', onCanPlay);
+    audioEl.volume = parseFloat(document.getElementById('volSlider').value);
+    audioEl.play().catch(() => {});
+    buildMeter(audioEl);
+    setState('receiving');
+    addLog('Audio stream live ✓');
+  });
 }
 
-function clearRetryTimer() {
-  if (retryTimer) {
-    clearTimeout(retryTimer);
-    retryTimer = null;
+function handleChunk(buf) {
+  chunkQueue.push(buf);
+  flushQueue();
+}
+
+function flushQueue() {
+  if (!sourceBuffer || sourceBuffer.updating || chunkQueue.length === 0) return;
+  try {
+    sourceBuffer.appendBuffer(chunkQueue.shift());
+  } catch (e) {
+    if (e.name === 'QuotaExceededError' && sourceBuffer.buffered.length && !sourceBuffer.updating) {
+      const end = sourceBuffer.buffered.end(0);
+      sourceBuffer.remove(sourceBuffer.buffered.start(0), Math.max(0, end - 5));
+    }
+    chunkQueue.length = 0;
   }
 }
 
-// ── WebRTC receive ────────────────────────────────────────────────────
-async function handleOffer(offer, fromId) {
-  clearRetryTimer();
-  tearDown();
-  setState('connecting');
-
-  pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-  const currentPc = pc;
-
-  pc.ontrack = ({ streams }) => {
-    if (pc !== currentPc) return;
-    const audio = document.getElementById('remoteAudio');
-    audio.srcObject = streams[0];
-    audio.volume = parseFloat(document.getElementById('volSlider').value);
-    const tryPlay = () => audio.play().catch(() => setTimeout(tryPlay, 600));
-    tryPlay();
-    buildMeter(streams[0]);
-    setState('receiving');
-    addLog('Audio stream live ✓');
-  };
-
-  pc.onicecandidate = ({ candidate }) => {
-    if (candidate && ws?.readyState === 1) {
-      ws.send(JSON.stringify({ type: 'ice-candidate', candidate, to: fromId }));
-    }
-  };
-
-  pc.onconnectionstatechange = () => {
-    if (pc !== currentPc) return;
-    const state = pc.connectionState;
-    if (state === 'connected') {
-      clearRetryTimer();
-      return;
-    }
-    if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-      scheduleRequestAudio();
-    }
-  };
-
-  pc.oniceconnectionstatechange = () => {
-    if (pc !== currentPc) return;
-    if (pc.iceConnectionState === 'failed') scheduleRequestAudio();
-  };
-
-  await pc.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  ws.send(JSON.stringify({ type: 'audio-answer', answer, to: fromId }));
+function keepLive(audioEl) {
+  if (!sourceBuffer?.buffered.length) return;
+  const end = sourceBuffer.buffered.end(0);
+  if (end - audioEl.currentTime > 3) audioEl.currentTime = end - 0.4;
 }
 
 function tearDown() {
-  if (pc) {
-    pc.ontrack = null;
-    pc.onicecandidate = null;
-    pc.onconnectionstatechange = null;
-    pc.oniceconnectionstatechange = null;
-    pc.close();
-    pc = null;
-  }
+  chunkQueue.length = 0;
+  sourceBuffer = null;
+  if (mediaSource?.readyState === 'open') { try { mediaSource.endOfStream(); } catch {} }
+  mediaSource = null;
   stopMeter();
+  if (meterSourceNode) { try { meterSourceNode.disconnect(); } catch {} meterSourceNode = null; }
   if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
   analyser = null;
-  const audio = document.getElementById('remoteAudio');
-  audio.pause();
-  audio.srcObject = null;
+  const audioEl = document.getElementById('remoteAudio');
+  audioEl.pause();
+  audioEl.src = '';
   document.getElementById('meterFill').style.width = '0%';
   document.getElementById('levelText').textContent = '0%';
 }
 
 // ── meter ─────────────────────────────────────────────────────────────
-function buildMeter(stream) {
+function buildMeter(audioEl) {
   if (audioCtx) audioCtx.close().catch(() => {});
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   analyser = audioCtx.createAnalyser();
   analyser.fftSize = 256;
-  audioCtx.createMediaStreamSource(stream).connect(analyser);
+  meterSourceNode = audioCtx.createMediaElementSource(audioEl);
+  meterSourceNode.connect(analyser);
+  meterSourceNode.connect(audioCtx.destination);
   startMeter();
 }
 
@@ -363,8 +312,7 @@ function stopMeter() {
 }
 
 function setVol(v) {
-  const audio = document.getElementById('remoteAudio');
-  if (audio.srcObject) audio.volume = parseFloat(v);
+  document.getElementById('remoteAudio').volume = parseFloat(v);
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────
