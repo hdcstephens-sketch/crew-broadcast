@@ -35,6 +35,7 @@
       padding: 12px 20px;
     }
     .topbar-brand { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
     .pill { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--text2); text-decoration: none; background: var(--card); }
     .pill:hover { border-color: var(--accent); color: var(--accent); }
     .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; flex-shrink: 0; display: inline-block; }
@@ -44,6 +45,13 @@
 
     /* ── layout ── */
     .main { width: 100%; max-width: 480px; padding: 24px 16px; display: flex; flex-direction: column; gap: 18px; }
+
+    /* ── tabs ── */
+    .tab-bar { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+    .tab-btn { flex: 1; padding: 9px 0; border-radius: 9px; border: none; background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: 0.15s; letter-spacing: 0.04em; }
+    .tab-btn.active { background: var(--card2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    .tab-pane { display: none; flex-direction: column; gap: 18px; }
+    .tab-pane.active { display: flex; }
 
     /* ── orb ── */
     .orb-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0; }
@@ -55,10 +63,10 @@
     }
     .orb-icon  { font-size: 44px; line-height: 1; }
     .orb-label { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--text2); }
-    .orb.waiting  { border-color: rgba(0,168,107,0.3); animation: orbPulse 1.6s ease infinite; }
-    .orb.receiving { border-color: var(--accent); background: rgba(0,168,107,0.08); box-shadow: 0 0 0 14px rgba(0,168,107,0.07), 0 0 50px rgba(0,168,107,0.12); }
+    .orb.connecting { border-color: var(--accent); animation: orbPulse 1.4s ease infinite; }
+    .orb.receiving  { border-color: var(--accent); background: rgba(0,168,107,0.08); box-shadow: 0 0 0 14px rgba(0,168,107,0.07), 0 0 50px rgba(0,168,107,0.12); }
     .orb.receiving .orb-label { color: var(--accent); }
-    @keyframes orbPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,168,107,0.3); } 50% { box-shadow: 0 0 0 20px rgba(0,168,107,0); } }
+    @keyframes orbPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,168,107,0.3); } 50% { box-shadow: 0 0 0 22px rgba(0,168,107,0); } }
     .orb-state { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--text2); text-transform: uppercase; }
     .orb-state.live { color: var(--accent); }
 
@@ -81,13 +89,17 @@
     .sel:disabled { opacity: 0.4; }
     .sel-wrap { position: relative; }
     .sel-wrap::after { content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text2); pointer-events: none; font-size: 12px; }
-    .note { font-size: 11px; color: var(--text2); margin-top: 10px; line-height: 1.55; }
+
+    /* ── small button ── */
     .btn-sm { margin-top: 10px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card2); color: var(--text2); font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
     .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
 
+    /* ── note ── */
+    .note { font-size: 12px; color: var(--text2); margin-top: 10px; line-height: 1.55; }
+
     /* ── setup steps ── */
-    .steps { display: flex; flex-direction: column; gap: 10px; }
-    .step  { display: flex; gap: 10px; align-items: flex-start; }
+    .steps { display: flex; flex-direction: column; gap: 12px; }
+    .step  { display: flex; gap: 12px; align-items: flex-start; }
     .step-num {
       min-width: 22px; height: 22px; border-radius: 50%;
       background: var(--accent-dim); border: 1px solid rgba(0,168,107,0.3);
@@ -115,7 +127,7 @@
 
 <div class="topbar">
   <div class="topbar-brand">AUDIO MONITOR</div>
-  <div style="display:flex;align-items:center;gap:10px;">
+  <div class="topbar-right">
     <span id="wsLabel"><span class="dot" id="wsDot"></span>Connecting</span>
     <a class="pill" href="/control.html">← Control</a>
   </div>
@@ -123,66 +135,77 @@
 
 <div class="main">
 
-  <div class="orb-wrap">
-    <div class="orb" id="orb">
-      <div class="orb-icon">🎧</div>
-      <div class="orb-label" id="orbLabel">WAITING</div>
-    </div>
-    <div class="orb-state" id="orbState">WAITING FOR BROADCASTER</div>
-    <div class="meter-wrap">
-      <div class="meter-row"><span>Received level</span><span id="levelText">0%</span></div>
-      <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
-    </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabBtn-input"  onclick="switchTab('input')">Input</button>
+    <button class="tab-btn"        id="tabBtn-output" onclick="switchTab('output')">Output</button>
   </div>
 
-  <div class="card">
-    <div class="card-label">Volume</div>
-    <input type="range" id="volSlider" min="0" max="1" step="0.01" value="1" oninput="setVol(this.value)">
-  </div>
+  <!-- ═══ INPUT TAB ═══ -->
+  <div class="tab-pane active" id="tab-input">
 
-  <div class="card">
-    <div class="card-label">Output Device</div>
-    <div class="sel-wrap">
-      <select class="sel" id="outSelect" onchange="changeOutput(this.value)" disabled>
-        <option value="">Default Output</option>
-      </select>
-    </div>
-    <p class="note" id="outNote">Loading devices…</p>
-    <button class="btn-sm" onclick="refreshOutputDevices()">Refresh Devices</button>
-  </div>
-
-  <div class="card">
-    <div class="card-label">Audio Hijack Setup</div>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-text">Install <strong>BlackHole 2ch</strong> (free at existential.audio) — this creates a virtual audio cable on your Mac that any app can read from.</div>
+    <div class="orb-wrap">
+      <div class="orb" id="orb">
+        <div class="orb-icon">🎧</div>
+        <div class="orb-label" id="orbLabel">WAITING</div>
       </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-text">Click <strong>Refresh Devices</strong> above, then select <strong>BlackHole 2ch</strong> in the Output Device dropdown. Audio now routes directly to BlackHole — not through Chrome.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-text">In Audio Hijack, create a session. Add an <strong>Audio Device</strong> source block and select <strong>BlackHole 2ch</strong>.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-text">Wire the output to your recorder, encoder, or speakers and hit <strong>Start Capturing</strong>. Audio appears automatically when the phone goes live.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-text">Keep this tab <strong>visible in Chrome</strong> (don't minimize) to prevent the browser throttling audio.</div>
+      <div class="orb-state" id="orbState">WAITING FOR PHONE</div>
+      <div class="meter-wrap">
+        <div class="meter-row"><span>Received level</span><span id="levelText">0%</span></div>
+        <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
       </div>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="card-label">Event Log</div>
-    <div class="log" id="logList">
-      <div class="log-row"><span>Waiting for activity…</span></div>
+    <div class="card">
+      <div class="card-label">Volume</div>
+      <input type="range" id="volSlider" min="0" max="1" step="0.01" value="1" oninput="setVol(this.value)">
     </div>
-  </div>
+
+    <div class="card">
+      <div class="card-label">Event Log</div>
+      <div class="log" id="logList">
+        <div class="log-row"><span>Waiting for activity…</span></div>
+      </div>
+    </div>
+
+  </div><!-- /tab-input -->
+
+  <!-- ═══ OUTPUT TAB ═══ -->
+  <div class="tab-pane" id="tab-output">
+
+    <div class="card">
+      <div class="card-label">Output Device</div>
+      <div class="sel-wrap">
+        <select class="sel" id="outSelect" onchange="changeOutput(this.value)" disabled>
+          <option value="">Default Output</option>
+        </select>
+      </div>
+      <p class="note" id="outNote">Loading devices…</p>
+      <button class="btn-sm" onclick="refreshOutputDevices()">Refresh Devices</button>
+    </div>
+
+    <div class="card">
+      <div class="card-label">BlackHole Setup Guide</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Install <strong>BlackHole 2ch</strong> (free — existential.audio). It creates a virtual audio cable any app can read from.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Click <strong>Refresh Devices</strong> above, then select <strong>BlackHole 2ch</strong> in the Output Device dropdown. Audio routes directly to BlackHole.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">In <strong>Audio Hijack</strong>, add an <em>Audio Device</em> source block, select <strong>BlackHole 2ch</strong>, wire to your recorder or encoder.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">Keep this tab <strong>visible in Chrome</strong> — don't minimise the window, or the browser throttles audio playback.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-output -->
 
 </div>
 
@@ -192,9 +215,12 @@
 <script>
 // ── state ─────────────────────────────────────────────────────────────
 let ws;
-let mediaSource = null, sourceBuffer = null, meterSourceNode = null;
-let audioCtx = null, analyser = null, meterRaf = null;
-let connState = 'waiting', activeMimeType = 'audio/webm;codecs=opus';
+let mediaSource = null, sourceBuffer = null;
+let audioCtx = null, analyser = null, meterSourceNode = null, outputAudioEl = null;
+let meterRaf = null;
+let connState = 'waiting';
+let activeMimeType = 'audio/webm;codecs=opus';
+let selectedOutId = '';
 const chunkQueue = [];
 
 // ── websocket ─────────────────────────────────────────────────────────
@@ -204,9 +230,10 @@ function wsConnect() {
   ws.binaryType = 'arraybuffer';
   ws.onopen  = () => ws.send(JSON.stringify({ type: 'register', role: 'audio-monitor' }));
   ws.onclose = () => { setWsStatus(false); tearDown(); setState('waiting'); setTimeout(wsConnect, 3000); };
+  ws.onerror = () => {};
   ws.onmessage = e => {
     if (e.data instanceof ArrayBuffer) { handleChunk(e.data); return; }
-    onWsMessage(JSON.parse(e.data));
+    try { onWsMessage(JSON.parse(e.data)); } catch {}
   };
 }
 
@@ -218,26 +245,29 @@ function onWsMessage(msg) {
       refreshOutputDevices();
       if (msg.activeBroadcaster) {
         activeMimeType = msg.activeMimeType || 'audio/webm;codecs=opus';
-        addLog('Broadcaster already live — connecting…');
+        addLog('Phone already live — connecting…');
         setupMediaSource();
+        // init chunk arrives as the very next binary message (sent by server right after state)
       } else {
-        addLog('Waiting for broadcaster…');
+        addLog('Waiting for phone to go live…');
       }
       break;
+
     case 'broadcaster-online':
       activeMimeType = msg.mimeType || 'audio/webm;codecs=opus';
-      addLog('Broadcaster online — connecting…');
+      addLog('Phone online — connecting…  [' + activeMimeType + ']');
       setupMediaSource();
       break;
+
     case 'broadcaster-left':
       tearDown();
       setState('waiting');
-      addLog('Broadcaster went offline');
+      addLog('Phone went offline');
       break;
   }
 }
 
-// ── MediaSource audio receiver ────────────────────────────────────────
+// ── MediaSource audio receiver ─────────────────────────────────────────
 function setupMediaSource() {
   tearDown();
   setState('connecting');
@@ -249,13 +279,17 @@ function setupMediaSource() {
   mediaSource.addEventListener('sourceopen', () => {
     try {
       sourceBuffer = mediaSource.addSourceBuffer(activeMimeType);
+      sourceBuffer.mode = 'sequence';
       sourceBuffer.addEventListener('updateend', () => { flushQueue(); keepLive(audioEl); });
       flushQueue();
-    } catch (e) { addLog('Audio setup error: ' + e.message); }
+    } catch (e) {
+      addLog('Audio setup error: ' + e.message);
+      setState('waiting');
+    }
   });
 
-  audioEl.addEventListener('canplay', function onCanPlay() {
-    audioEl.removeEventListener('canplay', onCanPlay);
+  audioEl.addEventListener('canplay', function onCan() {
+    audioEl.removeEventListener('canplay', onCan);
     audioEl.volume = parseFloat(document.getElementById('volSlider').value);
     audioEl.play().catch(() => {});
     buildMeter(audioEl);
@@ -297,6 +331,7 @@ function tearDown() {
   if (meterSourceNode) { try { meterSourceNode.disconnect(); } catch {} meterSourceNode = null; }
   if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
   analyser = null;
+  if (outputAudioEl) { outputAudioEl.pause(); outputAudioEl.srcObject = null; outputAudioEl = null; }
   const audioEl = document.getElementById('remoteAudio');
   audioEl.pause();
   audioEl.src = '';
@@ -307,12 +342,21 @@ function tearDown() {
 // ── meter ─────────────────────────────────────────────────────────────
 function buildMeter(audioEl) {
   if (audioCtx) audioCtx.close().catch(() => {});
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  analyser = audioCtx.createAnalyser();
+  audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+  analyser  = audioCtx.createAnalyser();
   analyser.fftSize = 256;
   meterSourceNode = audioCtx.createMediaElementSource(audioEl);
+  const outDest   = audioCtx.createMediaStreamDestination();
   meterSourceNode.connect(analyser);
-  meterSourceNode.connect(audioCtx.destination);
+  meterSourceNode.connect(outDest);
+
+  outputAudioEl = document.createElement('audio');
+  outputAudioEl.autoplay = true;
+  outputAudioEl.srcObject = outDest.stream;
+  if (selectedOutId && typeof outputAudioEl.setSinkId === 'function') {
+    outputAudioEl.setSinkId(selectedOutId).catch(() => {});
+  }
+  outputAudioEl.play().catch(() => {});
   startMeter();
 }
 
@@ -334,17 +378,15 @@ function stopMeter() {
 }
 
 function setVol(v) {
-  document.getElementById('remoteAudio').volume = parseFloat(v);
+  if (outputAudioEl) outputAudioEl.volume = parseFloat(v);
 }
 
-// ── output device selection ───────────────────────────────────────────
-let selectedOutId = '';
-
+// ── output device selection ────────────────────────────────────────────
 async function refreshOutputDevices() {
   const sel  = document.getElementById('outSelect');
   const note = document.getElementById('outNote');
-
   const canSink = typeof document.createElement('audio').setSinkId === 'function';
+
   if (!canSink) {
     sel.disabled = true;
     note.textContent = 'Output selection requires Chrome on desktop. Safari does not support this.';
@@ -352,15 +394,11 @@ async function refreshOutputDevices() {
   }
 
   try {
-    // Need mic permission first to get labelled device list
-    await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => s.getTracks().forEach(t => t.stop())).catch(() => {});
+    await navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(s => s.getTracks().forEach(t => t.stop())).catch(() => {});
     const devices = await navigator.mediaDevices.enumerateDevices();
     const outputs = devices.filter(d => d.kind === 'audiooutput');
-
-    if (!outputs.length) {
-      note.textContent = 'No output devices found. Try refreshing.';
-      return;
-    }
+    if (!outputs.length) { note.textContent = 'No output devices found.'; return; }
 
     const prev = sel.value;
     sel.innerHTML = '<option value="">Default Output</option>' +
@@ -368,7 +406,7 @@ async function refreshOutputDevices() {
     sel.disabled = false;
     if (prev) sel.value = prev;
 
-    note.textContent = 'Select BlackHole 2ch (or Loopback) to route audio directly to Audio Hijack without going through Chrome\'s main output.';
+    note.textContent = 'Select BlackHole 2ch to route audio to Audio Hijack without going through Chrome\'s main output.';
   } catch (e) {
     note.textContent = 'Could not enumerate devices: ' + e.message;
   }
@@ -376,10 +414,10 @@ async function refreshOutputDevices() {
 
 async function changeOutput(deviceId) {
   selectedOutId = deviceId;
-  const audioEl = document.getElementById('remoteAudio');
+  const label = document.getElementById('outSelect').selectedOptions[0]?.text || 'Default';
+  if (!outputAudioEl) { addLog('Output → ' + label + ' (applies on next stream)'); return; }
   try {
-    await audioEl.setSinkId(deviceId || '');
-    const label = document.getElementById('outSelect').selectedOptions[0]?.text || 'Default';
+    if (typeof outputAudioEl.setSinkId === 'function') await outputAudioEl.setSinkId(deviceId || '');
     addLog('Output → ' + label);
   } catch (e) {
     addLog('Output change failed: ' + e.message);
@@ -387,20 +425,28 @@ async function changeOutput(deviceId) {
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────
+function switchTab(t) {
+  ['input', 'output'].forEach(id => {
+    document.getElementById('tab-' + id).classList.toggle('active', id === t);
+    document.getElementById('tabBtn-' + id).classList.toggle('active', id === t);
+  });
+}
+
 function setState(s) {
   connState = s;
   const states = {
-    waiting:    { icon: '🎧', label: 'WAITING',     text: 'WAITING FOR BROADCASTER', cls: ''          },
-    connecting: { icon: '📡', label: 'CONNECTING…', text: 'CONNECTING',              cls: 'waiting'   },
-    receiving:  { icon: '🎧', label: 'LIVE',         text: 'RECEIVING AUDIO',         cls: 'receiving' },
+    waiting:    { icon: '🎧', label: 'WAITING',     text: 'WAITING FOR PHONE',   cls: ''          },
+    connecting: { icon: '📡', label: 'CONNECTING…', text: 'CONNECTING',          cls: 'connecting'},
+    receiving:  { icon: '🎧', label: 'LIVE',         text: 'RECEIVING AUDIO',     cls: 'receiving' },
   };
   const { icon, label, text, cls } = states[s] || states.waiting;
-  document.getElementById('orb').className = 'orb' + (cls ? ' ' + cls : '');
-  document.getElementById('orb').querySelector('.orb-icon').textContent = icon;
+  const orb = document.getElementById('orb');
+  orb.className = 'orb' + (cls ? ' ' + cls : '');
+  orb.querySelector('.orb-icon').textContent = icon;
   document.getElementById('orbLabel').textContent = label;
   const stEl = document.getElementById('orbState');
   stEl.textContent = text;
-  stEl.className   = 'orb-state' + (cls === 'receiving' ? ' live' : '');
+  stEl.className   = 'orb-state' + (s === 'receiving' ? ' live' : '');
 }
 
 function setWsStatus(ok) {

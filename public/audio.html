@@ -53,30 +53,24 @@
     .warn-banner { display: none; padding: 12px 16px; background: rgba(229,57,53,0.1); border: 1px solid rgba(229,57,53,0.25); border-radius: 12px; font-size: 13px; color: #ef9a9a; }
     .warn-banner.show { display: block; }
 
-    /* ── tabs ── */
-    .tab-bar { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
-    .tab-btn { flex: 1; padding: 9px 0; border-radius: 9px; border: none; background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: 0.15s; letter-spacing: 0.04em; }
-    .tab-btn.active { background: var(--card2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
-    .tab-pane { display: none; flex-direction: column; gap: 18px; }
-    .tab-pane.active { display: flex; }
-
     /* ── orb ── */
-    .orb-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0; }
+    .orb-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 20px 0; }
     .orb {
-      width: 160px; height: 160px; border-radius: 50%;
+      width: 180px; height: 180px; border-radius: 50%;
       border: 3px solid var(--line); background: var(--card);
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
       cursor: pointer; transition: border-color 0.22s, background 0.22s, box-shadow 0.22s;
+      -webkit-tap-highlight-color: transparent;
     }
     .orb:hover { border-color: rgba(0,168,107,0.4); }
-    .orb-icon  { font-size: 44px; line-height: 1; pointer-events: none; }
-    .orb-label { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--text2); pointer-events: none; }
-    .orb.live   { border-color: var(--accent); background: rgba(0,168,107,0.08); box-shadow: 0 0 0 14px rgba(0,168,107,0.07), 0 0 50px rgba(0,168,107,0.12); }
+    .orb-icon  { font-size: 52px; line-height: 1; pointer-events: none; }
+    .orb-label { font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: var(--text2); pointer-events: none; text-align: center; padding: 0 10px; }
+    .orb.live      { border-color: var(--accent); background: rgba(0,168,107,0.08); box-shadow: 0 0 0 16px rgba(0,168,107,0.07), 0 0 50px rgba(0,168,107,0.12); }
     .orb.live .orb-label { color: var(--accent); }
-    .orb.muted  { border-color: var(--danger); background: rgba(229,57,53,0.08); box-shadow: 0 0 0 14px rgba(229,57,53,0.06); }
+    .orb.muted     { border-color: var(--danger); background: rgba(229,57,53,0.08); box-shadow: 0 0 0 14px rgba(229,57,53,0.06); }
     .orb.muted .orb-label { color: var(--danger); }
     .orb.connecting { border-color: var(--accent); animation: orbPulse 1.2s ease infinite; }
-    @keyframes orbPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,168,107,0.3); } 50% { box-shadow: 0 0 0 24px rgba(0,168,107,0); } }
+    @keyframes orbPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,168,107,0.3); } 50% { box-shadow: 0 0 0 28px rgba(0,168,107,0); } }
     .orb-state { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--text2); text-transform: uppercase; }
     .orb-state.live  { color: var(--accent); }
     .orb-state.muted { color: var(--danger); }
@@ -93,25 +87,15 @@
 
     /* ── buttons ── */
     .btn-row { display: flex; gap: 8px; }
-    .btn { flex: 1; padding: 11px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--card2); color: var(--text); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; transition: 0.13s; }
+    .btn { flex: 1; padding: 12px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--card2); color: var(--text); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; transition: 0.13s; }
     .btn:hover   { border-color: var(--accent); }
     .btn:disabled { opacity: 0.3; pointer-events: none; }
-    .btn-go   { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .btn-go:hover { background: #00c07a; border-color: #00c07a; }
     .btn-warn { background: var(--danger-dim); border-color: rgba(229,57,53,0.4); color: #ef9a9a; }
     .btn-warn:hover { background: rgba(229,57,53,0.28); }
 
     /* ── select ── */
-    .sel { width: 100%; padding: 10px 12px; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; }
+    .sel { width: 100%; padding: 10px 12px; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; appearance: none; -webkit-appearance: none; }
     .sel:focus { border-color: var(--accent); }
-    .sel:disabled { opacity: 0.4; }
-
-    /* ── chip ── */
-    .chip { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card2); color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.15s; user-select: none; }
-    .chip.on { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
-
-    /* ── note text ── */
-    .note { font-size: 11px; color: var(--text2); margin-top: 8px; line-height: 1.5; }
 
     /* ── log ── */
     .log { display: flex; flex-direction: column; gap: 6px; }
@@ -140,77 +124,53 @@
 <div class="main">
 
   <div class="warn-banner" id="httpsWarn">
-    Microphone access requires HTTPS. Make sure you're on the secure URL, not http://.
+    Microphone access requires HTTPS. Make sure you're on the secure URL.
   </div>
 
-  <div class="tab-bar">
-    <button class="tab-btn active" id="tabBtn-input"  onclick="switchTab('input')">Input</button>
-    <button class="tab-btn"        id="tabBtn-output" onclick="switchTab('output')">Output</button>
+  <!-- Main orb — tap to start/mute -->
+  <div class="orb-wrap">
+    <div class="orb" id="orb" onclick="orbTap()">
+      <div class="orb-icon">🎙</div>
+      <div class="orb-label" id="orbLabel">OUTPUT TO RECEIVER</div>
+    </div>
+    <div class="orb-state" id="orbState">IDLE — TAP TO START</div>
+    <div class="meter-wrap">
+      <div class="meter-row"><span>Input level</span><span id="levelText">0%</span></div>
+      <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+    </div>
   </div>
 
-  <!-- ═══ INPUT TAB ═══ -->
-  <div class="tab-pane active" id="tab-input">
+  <!-- Controls — visible only when live -->
+  <div class="btn-row" id="liveControls" style="display:none;">
+    <button class="btn btn-warn" id="btnMute" onclick="toggleMute()">Mute</button>
+    <button class="btn" id="btnEnd" onclick="releaseMic()">Release Mic</button>
+  </div>
 
-    <div class="orb-wrap">
-      <div class="orb" id="orb" onclick="orbTap()">
-        <div class="orb-icon">🎙</div>
-        <div class="orb-label" id="orbLabel">TAP TO GO LIVE</div>
-      </div>
-      <div class="orb-state" id="orbState">IDLE</div>
-      <div class="meter-wrap">
-        <div class="meter-row"><span>Input level</span><span id="levelText">0%</span></div>
-        <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
-      </div>
+  <!-- Mic selector -->
+  <div class="card">
+    <div class="card-label">Microphone Input</div>
+    <select class="sel" id="micSelect" onchange="changeMic(this.value)" style="margin-bottom:10px;">
+      <option value="">Default Microphone</option>
+    </select>
+    <button class="btn" style="padding:8px 14px;font-size:12px;flex:none;" onclick="refreshDevices()">Refresh Devices</button>
+  </div>
+
+  <!-- Event log -->
+  <div class="card">
+    <div class="card-label">Event Log</div>
+    <div class="log" id="logList">
+      <div class="log-row"><span>Waiting for activity…</span></div>
     </div>
+  </div>
 
-    <div class="btn-row">
-      <button class="btn btn-go"   id="btnLive" onclick="goLive()">Go Live</button>
-      <button class="btn btn-warn" id="btnMute" onclick="toggleMute()" disabled>Mute</button>
-      <button class="btn"          id="btnEnd"  onclick="releaseMic()" disabled>Release</button>
-    </div>
+</div>
 
-    <div class="card">
-      <div class="card-label">Microphone</div>
-      <select class="sel" id="micSelect" onchange="changeMic(this.value)" style="margin-bottom:10px;">
-        <option value="">Default Microphone</option>
-      </select>
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <span class="chip" id="earbackChip" onclick="toggleEarback()">🔇 Earback Off</span>
-        <button class="btn" style="flex:none;padding:8px 14px;font-size:12px;" onclick="refreshDevices()">Refresh</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">Event Log</div>
-      <div class="log" id="logList">
-        <div class="log-row"><span>Waiting for activity…</span></div>
-      </div>
-    </div>
-
-  </div><!-- /tab-input -->
-
-  <!-- ═══ OUTPUT TAB ═══ -->
-  <div class="tab-pane" id="tab-output">
-
-    <div class="card">
-      <div class="card-label">Earback Output</div>
-      <select class="sel" id="outSelect" onchange="changeOut(this.value)" disabled>
-        <option value="">Default Output</option>
-      </select>
-      <p class="note" id="outNote">Routes your earback monitor to the selected speaker or headphone output.</p>
-    </div>
-
-  </div><!-- /tab-output -->
-
-</div><!-- /main -->
-
-<audio id="localMonitor" autoplay playsinline muted></audio>
 <div id="toasts"></div>
 
 <script>
 // ── auth guard ────────────────────────────────────────────────────────
 const token = localStorage.getItem('crew_token');
-const user  = JSON.parse(localStorage.getItem('crew_user') || 'null');
+const user   = JSON.parse(localStorage.getItem('crew_user') || 'null');
 if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
 if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
   document.getElementById('httpsWarn').classList.add('show');
@@ -221,8 +181,8 @@ let ws;
 let rawStream = null;
 let audioCtx = null, micSource = null, analyser = null, gainNode = null, destNode = null, meterRaf = null;
 let recorder = null;
-let selectedMicId = '', selectedOutId = '';
-let earbackOn = false, isMuted = false, mode = 'idle';
+let selectedMicId = '';
+let isMuted = false, mode = 'idle';
 
 // ── websocket ─────────────────────────────────────────────────────────
 function wsConnect() {
@@ -230,33 +190,37 @@ function wsConnect() {
   ws = new WebSocket(`${proto}//${location.host}`);
   ws.onopen  = () => ws.send(JSON.stringify({ type: 'auth', token }));
   ws.onclose = () => { setWsStatus(false); setTimeout(wsConnect, 3000); };
-  ws.onmessage = e => onWsMessage(JSON.parse(e.data));
-}
-
-function onWsMessage(msg) {
-  if (msg.type === 'auth-ok') {
-    setWsStatus(true);
-    refreshDevices();
-    addLog('Connected to server');
-  }
+  ws.onerror = () => {};
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'auth-ok') {
+        setWsStatus(true);
+        refreshDevices();
+        addLog('Connected to server');
+      } else if (msg.type === 'auth-fail') {
+        addLog('Auth failed — please reload');
+      }
+    } catch {}
+  };
 }
 
 function wsSend(data) {
   if (ws?.readyState === 1) ws.send(JSON.stringify(data));
 }
 
-// ── microphone & audio graph ──────────────────────────────────────────
+// ── microphone ────────────────────────────────────────────────────────
 async function acquireMic() {
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: {
       echoCancellation: true,
       noiseSuppression: true,
-      autoGainControl: true,
+      autoGainControl:  true,
       ...(selectedMicId ? { deviceId: { exact: selectedMicId } } : {})
     }
   });
-  buildGraph(stream);
   rawStream = stream;
+  buildGraph(stream);
   addLog('Mic: ' + (stream.getAudioTracks()[0]?.label || 'default'));
   refreshDevices();
 }
@@ -269,7 +233,7 @@ function buildGraph(stream) {
   analyser  = audioCtx.createAnalyser();
   analyser.fftSize = 256;
   gainNode  = audioCtx.createGain();
-  gainNode.gain.value = isMuted ? 0 : 1;
+  gainNode.gain.value = 1;
   destNode  = audioCtx.createMediaStreamDestination();
   micSource.connect(analyser);
   micSource.connect(gainNode);
@@ -302,29 +266,50 @@ function stopMeter() {
   if (meterRaf) { cancelAnimationFrame(meterRaf); meterRaf = null; }
 }
 
-// ── go live ───────────────────────────────────────────────────────────
-async function goLive() {
+// ── start output ──────────────────────────────────────────────────────
+async function startOutput() {
+  if (mode !== 'idle') return;
+  if (ws?.readyState !== 1) { toast('Not connected to server', 'err'); return; }
+
   try {
-    if (!rawStream) await acquireMic();
-    if (recorder) return;
-    if (ws?.readyState !== 1) throw new Error('Server connection is not ready');
-
-    const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
-      .find(t => MediaRecorder.isTypeSupported(t));
-    if (!mimeType) { toast('MediaRecorder not supported on this browser', 'err'); return; }
-
     setMode('connecting');
+
+    if (!rawStream) await acquireMic();
+
+    const mimeType = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4'
+    ].find(t => MediaRecorder.isTypeSupported(t));
+
+    if (!mimeType) {
+      toast('MediaRecorder not supported on this browser', 'err');
+      setMode('idle');
+      return;
+    }
+
     wsSend({ type: 'start-broadcast', mimeType });
 
-    recorder = new MediaRecorder(destNode.stream, { mimeType, audioBitsPerSecond: 16000 });
-    recorder.ondataavailable = e => { if (e.data.size > 0 && ws?.readyState === 1) ws.send(e.data); };
-    recorder.onstart = () => { setMode(isMuted ? 'muted' : 'live'); addLog('Streaming live ✓'); };
-    recorder.onerror = e => { addLog('Recorder error: ' + (e.error?.message || 'unknown')); releaseMic(); };
-    recorder.start(500);
+    recorder = new MediaRecorder(destNode.stream, { mimeType, audioBitsPerSecond: 32000 });
 
-    document.getElementById('btnLive').disabled = true;
-    document.getElementById('btnMute').disabled = false;
-    document.getElementById('btnEnd').disabled  = false;
+    recorder.ondataavailable = e => {
+      if (e.data.size > 0 && ws?.readyState === 1) ws.send(e.data);
+    };
+
+    recorder.onstart = () => {
+      setMode(isMuted ? 'muted' : 'live');
+      document.getElementById('liveControls').style.display = 'flex';
+      addLog('Output to receiver active ✓  [' + mimeType + ']');
+    };
+
+    recorder.onerror = e => {
+      addLog('Recorder error: ' + (e.error?.message || 'unknown'));
+      releaseMic();
+    };
+
+    recorder.start(250);
 
   } catch (err) {
     setMode('idle');
@@ -335,7 +320,7 @@ async function goLive() {
 
 // ── controls ──────────────────────────────────────────────────────────
 function orbTap() {
-  if (mode === 'idle') goLive();
+  if (mode === 'idle')                   startOutput();
   else if (mode === 'live' || mode === 'muted') toggleMute();
 }
 
@@ -352,74 +337,28 @@ function releaseMic() {
   if (recorder && recorder.state !== 'inactive') recorder.stop();
   recorder = null;
   wsSend({ type: 'end-broadcast' });
-
   if (rawStream) { rawStream.getTracks().forEach(t => t.stop()); rawStream = null; }
-
-  const mon = document.getElementById('localMonitor');
-  mon.pause(); mon.srcObject = null;
-  earbackOn = false; isMuted = false;
-
   tearGraph();
+  isMuted = false;
   setMode('idle');
-
-  document.getElementById('btnLive').disabled = false;
-  document.getElementById('btnMute').disabled = true;
+  document.getElementById('liveControls').style.display = 'none';
   document.getElementById('btnMute').textContent = 'Mute';
-  document.getElementById('btnEnd').disabled  = true;
-  document.getElementById('earbackChip').textContent = '🔇 Earback Off';
-  document.getElementById('earbackChip').classList.remove('on');
   addLog('Mic released');
-}
-
-async function toggleEarback() {
-  if (!rawStream) { toast('Go live first', 'err'); return; }
-  earbackOn = !earbackOn;
-  const mon = document.getElementById('localMonitor');
-  mon.srcObject = rawStream;
-  if (earbackOn) {
-    if (typeof mon.setSinkId === 'function' && selectedOutId) {
-      await mon.setSinkId(selectedOutId).catch(() => {});
-    }
-    mon.muted = false;
-    mon.play().catch(() => {});
-  } else {
-    mon.muted = true;
-    mon.pause();
-  }
-  const chip = document.getElementById('earbackChip');
-  chip.textContent = earbackOn ? '🔊 Earback On' : '🔇 Earback Off';
-  chip.classList.toggle('on', earbackOn);
 }
 
 // ── devices ───────────────────────────────────────────────────────────
 async function refreshDevices() {
   try {
+    await navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(s => s.getTracks().forEach(t => t.stop())).catch(() => {});
     const devices = await navigator.mediaDevices.enumerateDevices();
-
-    const micSel  = document.getElementById('micSelect');
-    const micPrev = micSel.value;
-    micSel.innerHTML = '<option value="">Default Microphone</option>' +
+    const sel  = document.getElementById('micSelect');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Default Microphone</option>' +
       devices.filter(d => d.kind === 'audioinput')
              .map(d => `<option value="${d.deviceId}">${d.label || 'Microphone'}</option>`)
              .join('');
-    if (micPrev) micSel.value = micPrev;
-
-    const outSel  = document.getElementById('outSelect');
-    const outNote = document.getElementById('outNote');
-    const outPrev = outSel.value;
-    const outputs = devices.filter(d => d.kind === 'audiooutput');
-    const canSink = typeof document.createElement('audio').setSinkId === 'function';
-
-    if (outputs.length && canSink) {
-      outSel.disabled = false;
-      outNote.textContent = 'Routes your earback to the selected speaker or headphone output.';
-      outSel.innerHTML = '<option value="">Default Output</option>' +
-        outputs.map(d => `<option value="${d.deviceId}">${d.label || 'Speaker'}</option>`).join('');
-      if (outPrev) outSel.value = outPrev;
-    } else {
-      outSel.disabled = true;
-      outNote.textContent = 'Output selection requires Chrome on desktop. On mobile, output follows the system.';
-    }
+    if (prev) sel.value = prev;
   } catch {}
 }
 
@@ -430,36 +369,27 @@ async function changeMic(id) {
   releaseMic();
   try {
     await acquireMic();
-    if (wasLive) await goLive();
+    if (wasLive) await startOutput();
   } catch { toast('Device change failed', 'err'); }
-}
-
-async function changeOut(id) {
-  selectedOutId = id;
-  if (earbackOn) {
-    const mon = document.getElementById('localMonitor');
-    if (typeof mon.setSinkId === 'function') await mon.setSinkId(id || '').catch(() => {});
-  }
-  const label = document.getElementById('outSelect').selectedOptions[0]?.text || 'Default';
-  addLog('Output → ' + label);
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────
 function setMode(m) {
   mode = m;
   const map = {
-    idle:       { icon: '🎙', label: 'TAP TO GO LIVE', state: 'IDLE',       cls: ''           },
-    connecting: { icon: '📡', label: 'STARTING…',      state: 'CONNECTING', cls: 'connecting' },
-    live:       { icon: '🎙', label: 'ON AIR',          state: 'LIVE',       cls: 'live'       },
-    muted:      { icon: '🔇', label: 'MUTED',           state: 'MUTED',      cls: 'muted'      },
+    idle:       { icon: '🎙', label: 'OUTPUT TO RECEIVER', state: 'IDLE — TAP TO START', cls: ''           },
+    connecting: { icon: '📡', label: 'CONNECTING…',        state: 'CONNECTING…',        cls: 'connecting' },
+    live:       { icon: '🎙', label: 'ON AIR',             state: 'LIVE — TAP TO MUTE', cls: 'live'       },
+    muted:      { icon: '🔇', label: 'MUTED',              state: 'MUTED — TAP TO UNMUTE', cls: 'muted'   },
   };
   const { icon, label, state, cls } = map[m] || map.idle;
-  document.getElementById('orb').className       = 'orb' + (cls ? ' ' + cls : '');
-  document.getElementById('orb').querySelector('.orb-icon').textContent = icon;
+  const orb = document.getElementById('orb');
+  orb.className = 'orb' + (cls ? ' ' + cls : '');
+  orb.querySelector('.orb-icon').textContent = icon;
   document.getElementById('orbLabel').textContent = label;
   const stEl = document.getElementById('orbState');
   stEl.textContent = state;
-  stEl.className   = 'orb-state' + (cls === 'live' || cls === 'muted' ? ' ' + cls : '');
+  stEl.className   = 'orb-state' + (m === 'live' ? ' live' : m === 'muted' ? ' muted' : '');
 }
 
 function setWsStatus(ok) {
@@ -468,16 +398,9 @@ function setWsStatus(ok) {
     `<span class="dot ${ok ? 'live' : 'err'}" id="wsDot"></span>${ok ? 'Live' : 'Reconnecting…'}`;
 }
 
-function switchTab(t) {
-  ['input', 'output'].forEach(id => {
-    document.getElementById('tab-' + id).classList.toggle('active', id === t);
-    document.getElementById('tabBtn-' + id).classList.toggle('active', id === t);
-  });
-}
-
 function addLog(msg) {
   const list = document.getElementById('logList');
-  if (list.children.length === 1 && list.firstElementChild.querySelector('span')?.textContent === 'Waiting for activity…') {
+  if (list.children.length === 1 && list.firstElementChild.textContent.trim() === 'Waiting for activity…') {
     list.innerHTML = '';
   }
   const row = document.createElement('div');

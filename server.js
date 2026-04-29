@@ -385,9 +385,13 @@ function handleMessage(clientId, msg) {
         client.authenticated = true;
         send(client, getStatePayload());
         if (activeBroadcasterId) {
-          send(client, { type: 'broadcaster-online', mimeType: activeMimeType });
+          if (msg.role === 'overlay') {
+            send(client, { type: 'broadcaster-online', mimeType: activeMimeType });
+          }
           if (msg.role === 'audio-monitor' && audioInitChunk) {
-            client.ws.send(audioInitChunk); // send init segment so late joiners can decode
+            // state already carries activeBroadcaster:true — just send the init chunk
+            // so the monitor can decode from mid-stream without a double-setup race
+            client.ws.send(audioInitChunk);
           }
         }
       }
