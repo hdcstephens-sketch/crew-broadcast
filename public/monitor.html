@@ -346,7 +346,6 @@ function buildMeter(audioEl) {
   analyser  = audioCtx.createAnalyser();
   analyser.fftSize = 256;
   meterSourceNode = audioCtx.createMediaElementSource(audioEl);
-  audioEl.muted = true; // element keeps decoding but all audio routes through Web Audio graph only
   const outDest   = audioCtx.createMediaStreamDestination();
   meterSourceNode.connect(analyser);
   meterSourceNode.connect(outDest);
