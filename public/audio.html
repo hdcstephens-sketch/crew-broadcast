@@ -118,6 +118,7 @@
     <span id="wsLabel"><span class="dot" id="wsDot"></span>Connecting</span>
     <a class="pill" href="/control.html">← Control</a>
     <a class="pill" href="/monitor.html" target="_blank">Monitor ↗</a>
+    <button class="pill" onclick="logout()" style="cursor:pointer;border-color:rgba(229,57,53,0.4);color:#ef9a9a;">Log Out</button>
   </div>
 </div>
 
@@ -422,6 +423,13 @@ function toast(msg, type = '') {
   el.textContent = msg;
   document.getElementById('toasts').appendChild(el);
   setTimeout(() => el.remove(), 3000);
+}
+
+function logout() {
+  releaseMic();
+  localStorage.removeItem('crew_token');
+  localStorage.removeItem('crew_user');
+  location.href = '/';
 }
 
 wsConnect();
