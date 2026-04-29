@@ -128,11 +128,6 @@
 
     .empty-row { font-size: 12px; color: var(--text2); padding: 10px; text-align: center; border: 1px dashed var(--line); border-radius: 8px; }
 
-    .finish-lane-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; }
-    .finish-lane-row + .finish-lane-row { border-top: 1px solid var(--line); }
-    .finish-lane-num { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; color: var(--text2); width: 20px; text-align: center; flex-shrink: 0; }
-    .finish-lane-name { flex: 1; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .finish-lane-time { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; min-width: 64px; text-align: right; }
   </style>
 </head>
 <body>
@@ -195,25 +190,16 @@
     </div>
   </div>
 
-  <!-- Finish Times -->
-  <div class="card">
-    <div class="card-label">Finish Times</div>
-    <div id="finishRows"><div class="empty-row">Set lane assignments first (in Admin control).</div></div>
-    <div class="btn-row" style="margin-top:10px;">
-      <button class="btn btn-stop-red" onclick="clearFinishTimes()">Clear</button>
-      <button class="btn btn-go" onclick="pushFinishResults()" style="flex:2;">Push to Overlay</button>
-    </div>
-  </div>
-
   <!-- Results / Leaderboard -->
   <div class="card">
     <div class="card-label">Leaderboard / Results</div>
     <table class="tbl-simple">
-      <thead><tr><th>#</th><th>School</th><th>Time</th><th>Gap</th></tr></thead>
+      <thead><tr><th>#</th><th>School</th><th>Time</th></tr></thead>
       <tbody id="resBdy"></tbody>
     </table>
     <div class="btn-row" style="margin-top:10px;">
       <button class="btn" onclick="addRow()">+ Row</button>
+      <button class="btn btn-stop-red" onclick="clearResults()">Clear All</button>
       <button class="btn btn-go" onclick="pushResults()" style="flex:2;">Push Results</button>
     </div>
   </div>
@@ -248,138 +234,43 @@ let recorder = null;
 let selectedMicId = '';
 let isMuted = false, mode = 'idle';
 
-// Results / finish / schedule state
-let currentLanes = [];
-let finishTimes = [];
+// Results / schedule state
 let raceSchedule = [];
-let timerRunning = false, timerStart = null, timerElapsed = 0, timerIv = null;
 let firstStateReceived = false;
-
-const DEFAULT_RESULTS = [
-  { place: 1, school: 'Brooks School', time: '6:02.4', margin: '-' },
-  { place: 2, school: 'Phillips Exeter', time: '6:05.1', margin: '+2.7' },
-  { place: 3, school: 'Andover', time: '6:07.8', margin: '+5.4' }
-];
 
 // ── state sync ────────────────────────────────────────────────────────
 function applyState(state) {
-  if (state.timer) {
-    timerElapsed = state.timer.elapsed || 0;
-    if (state.timer.running && state.timer.startTime) {
-      timerStart = state.timer.startTime; timerRunning = true;
-      clearInterval(timerIv);
-      timerIv = setInterval(() => { timerElapsed = Date.now() - timerStart; }, 100);
-    } else {
-      clearInterval(timerIv); timerRunning = false;
-    }
-  }
   if (firstStateReceived) return;
   firstStateReceived = true;
-  if (state.lanes?.data) { currentLanes = state.lanes.data; buildFinishRows(); }
-  fillResults(state.results?.data || DEFAULT_RESULTS);
-}
-
-function syncTimer(msg) {
-  if (msg.action === 'start') {
-    timerRunning = true; timerStart = Date.now() - (msg.elapsed || 0);
-    clearInterval(timerIv);
-    timerIv = setInterval(() => { timerElapsed = Date.now() - timerStart; }, 100);
-  } else if (msg.action === 'stop') {
-    timerElapsed = msg.elapsed || 0; clearInterval(timerIv); timerRunning = false;
-  } else if (msg.action === 'reset') {
-    timerElapsed = 0; clearInterval(timerIv); timerRunning = false;
-  }
-}
-
-// ── finish times ──────────────────────────────────────────────────────
-function buildFinishRows() {
-  const container = document.getElementById('finishRows');
-  if (!container) return;
-  if (!currentLanes.length) {
-    container.innerHTML = '<div class="empty-row">Set lane assignments first (in Admin control).</div>';
-    return;
-  }
-  container.innerHTML = currentLanes.map((lane, i) => {
-    const existing = finishTimes.find(f => f.laneIndex === i);
-    const timeStr = existing ? msToTimeStr(existing.ms) : '—';
-    const timeColor = existing ? 'var(--accent)' : 'var(--text2)';
-    const btn = existing
-      ? `<button class="btn btn-stop-red" style="flex:none;padding:5px 10px;font-size:12px;" onclick="unmarkFinish(${i})">✕</button>`
-      : `<button class="btn btn-go" style="flex:none;padding:5px 10px;font-size:12px;" onclick="markFinish(${i})">Mark</button>`;
-    return `<div class="finish-lane-row">
-      <div class="finish-lane-num">${lane.lane}</div>
-      <div class="finish-lane-name">${escAttr(lane.school || 'Lane ' + lane.lane)}</div>
-      <div class="finish-lane-time" style="color:${timeColor};">${timeStr}</div>
-      ${btn}
-    </div>`;
-  }).join('');
-}
-
-function markFinish(i) {
-  if (!timerRunning && timerElapsed === 0) { toast('Timer is not running', 'err'); return; }
-  const ms = timerRunning ? (Date.now() - timerStart) : timerElapsed;
-  const lane = currentLanes[i];
-  if (!lane) return;
-  finishTimes = finishTimes.filter(f => f.laneIndex !== i);
-  finishTimes.push({ laneIndex: i, lane: lane.lane, school: lane.school, logo: lane.logo || null, ms });
-  buildFinishRows();
-  pushFinishResults();
-}
-
-function unmarkFinish(i) {
-  finishTimes = finishTimes.filter(f => f.laneIndex !== i);
-  buildFinishRows();
-  if (finishTimes.length) pushFinishResults();
-}
-
-function clearFinishTimes() {
-  finishTimes = [];
-  buildFinishRows();
-  toast('Finish times cleared', 'ok');
-}
-
-function msToTimeStr(ms) {
-  const m = Math.floor(ms / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
-  const t = Math.floor((ms % 1000) / 100);
-  return `${m}:${String(s).padStart(2,'0')}.${t}`;
-}
-
-function formatGap(ms) {
-  if (ms === 0) return '—';
-  const totalS = ms / 1000;
-  if (totalS < 60) return `+${totalS.toFixed(1)}`;
-  const m = Math.floor(totalS / 60);
-  const rem = (totalS % 60).toFixed(1);
-  return `+${m}:${parseFloat(rem) < 10 ? '0' + rem : rem}`;
-}
-
-function pushFinishResults() {
-  if (!finishTimes.length) return;
-  const sorted = [...finishTimes].sort((a, b) => a.ms - b.ms);
-  const winMs = sorted[0].ms;
-  const data = sorted.map((f, i) => ({
-    place: i + 1, school: f.school, time: msToTimeStr(f.ms),
-    margin: i === 0 ? '—' : formatGap(f.ms - winMs), lane: f.lane, logo: f.logo || null
-  }));
-  wsSend({ type: 'update', element: 'results', data: { data } });
-  wsSend({ type: 'toggle', element: 'results', active: true });
-  fillResults(data);
-  toast(`${data.length} finish time${data.length > 1 ? 's' : ''} pushed`, 'ok');
+  fillResults(state.results?.data || []);
 }
 
 // ── results table ─────────────────────────────────────────────────────
+function parseTimeToSec(s) {
+  const m = String(s || '').trim().match(/^(\d+):(\d+(?:\.\d+)?)$/);
+  if (m) return parseInt(m[1]) * 60 + parseFloat(m[2]);
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+
+function secToGap(diff) {
+  if (diff <= 0) return '—';
+  if (diff < 60) return `+${diff.toFixed(1)}`;
+  const m = Math.floor(diff / 60);
+  const s = (diff % 60).toFixed(1);
+  return `+${m}:${parseFloat(s) < 10 ? '0' + s : s}`;
+}
+
 function fillResults(data) {
   const body = document.getElementById('resBdy');
   if (!body) return;
   body.innerHTML = '';
-  (data || DEFAULT_RESULTS).forEach(r => {
+  (data || []).forEach(r => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td><input type="number" value="${r.place||''}" style="width:38px;"></td>
       <td><input type="text" value="${escAttr(r.school||'')}"></td>
-      <td><input type="text" value="${escAttr(r.time||'')}" style="width:70px;"></td>
-      <td><input type="text" value="${escAttr(r.margin||'')}" style="width:54px;"></td>
+      <td><input type="text" value="${escAttr(r.time||'')}" style="width:76px;" placeholder="6:02.4"></td>
     `;
     body.appendChild(row);
   });
@@ -388,16 +279,40 @@ function fillResults(data) {
 function addRow() {
   const existing = Array.from(document.querySelectorAll('#resBdy tr')).map(row => {
     const inp = row.querySelectorAll('input');
-    return { place: Number(inp[0].value)||0, school: inp[1].value, time: inp[2].value, margin: inp[3].value };
+    return { place: Number(inp[0].value)||0, school: inp[1].value, time: inp[2].value };
   });
-  fillResults([...existing, { place: existing.length + 1, school: '', time: '', margin: '' }]);
+  fillResults([...existing, { place: existing.length + 1, school: '', time: '' }]);
+}
+
+function clearResults() {
+  fillResults([]);
+  wsSend({ type: 'update', element: 'results', data: { data: [] } });
+  toast('Results cleared', 'ok');
 }
 
 function pushResults() {
-  const data = Array.from(document.querySelectorAll('#resBdy tr')).map(row => {
+  const rows = Array.from(document.querySelectorAll('#resBdy tr')).map(row => {
     const inp = row.querySelectorAll('input');
-    return { place: Number(inp[0].value)||0, school: inp[1].value, time: inp[2].value, margin: inp[3].value };
+    return { school: inp[1].value.trim(), time: inp[2].value.trim(), _sec: parseTimeToSec(inp[2].value) };
+  }).filter(r => r.school || r.time);
+
+  // sort by parsed time (nulls last), then assign place and compute gap
+  rows.sort((a, b) => {
+    if (a._sec === null && b._sec === null) return 0;
+    if (a._sec === null) return 1;
+    if (b._sec === null) return -1;
+    return a._sec - b._sec;
   });
+
+  const firstSec = rows[0]?._sec ?? null;
+  const data = rows.map((r, i) => ({
+    place: i + 1,
+    school: r.school,
+    time: r.time,
+    margin: (r._sec !== null && firstSec !== null && i > 0) ? secToGap(r._sec - firstSec) : '—'
+  }));
+
+  fillResults(data);
   wsSend({ type: 'update', element: 'results', data: { data } });
   toast('Results pushed', 'ok');
 }
@@ -449,15 +364,10 @@ function wsConnect() {
       } else if (msg.type === 'state') {
         if (msg.overlayState) applyState(msg.overlayState);
         if (Array.isArray(msg.raceSchedule)) { raceSchedule = msg.raceSchedule; renderRaceSchedule(); }
-      } else if (msg.type === 'timer-control') {
-        syncTimer(msg);
       } else if (msg.type === 'race-schedule') {
         raceSchedule = msg.schedule || []; renderRaceSchedule();
-      } else if (msg.type === 'update') {
-        if (msg.element === 'results' && msg.data?.data) fillResults(msg.data.data);
-        if (msg.element === 'lanes' && msg.data?.data) { currentLanes = msg.data.data; buildFinishRows(); }
-      } else if (msg.type === 'toggle') {
-        // no-op for coach — state is handled via applyState
+      } else if (msg.type === 'update' && msg.element === 'results' && msg.data?.data) {
+        fillResults(msg.data.data);
       }
     } catch {}
   };
@@ -683,7 +593,6 @@ function logout() {
   location.href = '/';
 }
 
-fillResults(DEFAULT_RESULTS);
 wsConnect();
 </script>
 </body>
