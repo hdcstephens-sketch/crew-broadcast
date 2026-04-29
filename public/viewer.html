@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CREW — Race Schedule</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:         #060c09;
+      --card:       #0f1510;
+      --card2:      #161e18;
+      --accent:     #00a86b;
+      --accent-dim: rgba(0,168,107,0.15);
+      --text:       #f0f0f0;
+      --text2:      #8a9a90;
+      --line:       rgba(255,255,255,0.07);
+      --r:          14px;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; padding-bottom: 60px;
+    }
+
+    /* ── top bar ── */
+    .topbar {
+      width: 100%; position: sticky; top: 0; z-index: 50;
+      background: rgba(6,12,9,0.96); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .brand { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; flex-shrink: 0; display: inline-block; }
+    .dot.live { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .dot.err  { background: #e53935; }
+    #wsLabel { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+
+    /* ── layout ── */
+    .main { width: 100%; max-width: 600px; padding: 28px 16px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── heading row ── */
+    .section-head { display: flex; align-items: center; justify-content: space-between; }
+    .section-title { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text2); }
+
+    /* ── race list ── */
+    .race-list { display: flex; flex-direction: column; gap: 8px; }
+    .race-card {
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+      padding: 14px 16px; display: flex; align-items: center; gap: 14px;
+    }
+    .race-num {
+      min-width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent-dim); border: 1px solid rgba(0,168,107,0.25);
+      color: var(--accent); font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .race-info { flex: 1; }
+    .race-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .race-sub  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+    /* ── empty state ── */
+    .empty {
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+      padding: 32px 20px; text-align: center; color: var(--text2); font-size: 13px;
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 10px; }
+
+    /* ── PDF card ── */
+    .pdf-card {
+      background: var(--card); border: 1px solid rgba(0,168,107,0.25); border-radius: var(--r);
+      padding: 18px 20px; display: flex; align-items: center; gap: 16px;
+    }
+    .pdf-icon { font-size: 36px; flex-shrink: 0; }
+    .pdf-info { flex: 1; }
+    .pdf-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .pdf-sub   { font-size: 12px; color: var(--text2); }
+    .pdf-btn {
+      padding: 9px 18px; border-radius: 10px;
+      background: var(--accent); border: none; color: #fff;
+      font-size: 13px; font-weight: 700; font-family: inherit;
+      cursor: pointer; text-decoration: none; white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .pdf-btn:hover { background: #00c07a; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="brand">CREW</div>
+    <span id="wsLabel"><span class="dot" id="wsDot"></span>Connecting</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Race Schedule -->
+  <div>
+    <div class="section-head" style="margin-bottom:12px;">
+      <span class="section-title">Today's Race Schedule</span>
+    </div>
+    <div class="race-list" id="raceList">
+      <div class="empty"><div class="empty-icon">🚣</div>Schedule loading…</div>
+    </div>
+  </div>
+
+  <!-- Schedule PDF (shown only when uploaded) -->
+  <div id="pdfSection" style="display:none;">
+    <div class="section-head" style="margin-bottom:12px;">
+      <span class="section-title">Schedule PDF</span>
+    </div>
+    <div class="pdf-card">
+      <div class="pdf-icon">📄</div>
+      <div class="pdf-info">
+        <div class="pdf-title">Official Schedule</div>
+        <div class="pdf-sub">Tap to open or download the full schedule PDF</div>
+      </div>
+      <a class="pdf-btn" href="/uploads/schedule.pdf" target="_blank">Open PDF</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let ws;
+let raceSchedule = [];
+
+function wsConnect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen  = () => ws.send(JSON.stringify({ type: 'register', role: 'viewer' }));
+  ws.onclose = () => { setWsStatus(false); setTimeout(wsConnect, 3000); };
+  ws.onerror = () => {};
+  ws.onmessage = e => {
+    try { onMsg(JSON.parse(e.data)); } catch {}
+  };
+}
+
+function onMsg(msg) {
+  if (msg.type === 'state') {
+    setWsStatus(true);
+    raceSchedule = msg.raceSchedule || [];
+    render();
+    setPDF(msg.hasPDF);
+  }
+  if (msg.type === 'race-schedule') {
+    raceSchedule = msg.schedule || [];
+    render();
+  }
+}
+
+function render() {
+  const list = document.getElementById('raceList');
+  if (!raceSchedule.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🚣</div>No races scheduled yet.</div>';
+    return;
+  }
+  list.innerHTML = raceSchedule.map((r, i) => `
+    <div class="race-card">
+      <div class="race-num">${i + 1}</div>
+      <div class="race-info">
+        <div class="race-name">${esc(r.name)}</div>
+        ${r.sub ? `<div class="race-sub">${esc(r.sub)}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function setPDF(exists) {
+  document.getElementById('pdfSection').style.display = exists ? '' : 'none';
+}
+
+function setWsStatus(ok) {
+  document.getElementById('wsDot').className = 'dot ' + (ok ? 'live' : 'err');
+  document.getElementById('wsLabel').innerHTML =
+    `<span class="dot ${ok ? 'live' : 'err'}" id="wsDot"></span>${ok ? 'Live' : 'Reconnecting…'}`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+wsConnect();
+</script>
+</body>
+</html>

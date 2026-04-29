@@ -16,10 +16,9 @@ const STORE_DIR = path.join(__dirname, 'data');
 const STORE_FILE = path.join(STORE_DIR, 'state.json');
 
 const USERS = {
-  coach: { password: 'crew2024', role: 'coach', name: 'Head Coach' },
-  admin: { password: 'admin123', role: 'admin', name: 'Administrator' },
-
-  staff: { password: 'staff456', role: 'staff', name: 'Staff' }
+  admin:  { password: 'admin123',  role: 'admin',  name: 'Administrator' },
+  coach:  { password: 'crew2024',  role: 'coach',  name: 'Head Coach'    },
+  staff:  { password: 'staff456',  role: 'staff',  name: 'Staff'         }
 };
 
 const DEFAULT_TEAM_PRESETS = {
@@ -258,7 +257,8 @@ function getStatePayload() {
     teamPresets,
     raceSchedule,
     activeBroadcaster: Boolean(activeBroadcasterId && clients.has(activeBroadcasterId)),
-    activeMimeType
+    activeMimeType,
+    hasPDF: fs.existsSync(path.join(__dirname, 'public', 'uploads', 'schedule.pdf'))
   };
 }
 
@@ -267,6 +267,7 @@ function saveAndBroadcastState() {
   const payload = getStatePayload();
   broadcast('overlay', payload);
   broadcast('controller', payload);
+  broadcast('viewer', payload);
 }
 
 const clients = new Map();
@@ -310,6 +311,30 @@ function requireAuth(req, res, next) {
     res.status(401).json({ error: 'Invalid token' });
   }
 }
+
+function requireAdmin(req, res, next) {
+  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+  next();
+}
+
+const UPLOAD_DIR = path.join(__dirname, 'public', 'uploads');
+
+app.post('/api/upload-schedule',
+  requireAuth,
+  requireAdmin,
+  express.raw({ type: 'application/pdf', limit: '50mb' }),
+  (req, res) => {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    fs.writeFileSync(path.join(UPLOAD_DIR, 'schedule.pdf'), req.body);
+    res.json({ ok: true });
+  }
+);
+
+app.delete('/api/upload-schedule', requireAuth, requireAdmin, (req, res) => {
+  const f = path.join(UPLOAD_DIR, 'schedule.pdf');
+  if (fs.existsSync(f)) fs.unlinkSync(f);
+  res.json({ ok: true });
+});
 
 // Keep WebSocket connections alive through Railway's proxy timeout
 const WS_PING_INTERVAL = 25000;
@@ -380,7 +405,7 @@ function handleMessage(clientId, msg) {
     }
 
     case 'register': {
-      if (msg.role === 'overlay' || msg.role === 'audio-monitor') {
+      if (msg.role === 'overlay' || msg.role === 'audio-monitor' || msg.role === 'viewer') {
         client.role = msg.role;
         client.authenticated = true;
         send(client, getStatePayload());
@@ -557,6 +582,7 @@ function handleMessage(clientId, msg) {
       }));
       persistStore();
       broadcast('controller', { type: 'race-schedule', schedule: raceSchedule });
+      broadcast('viewer',     { type: 'race-schedule', schedule: raceSchedule });
       break;
     }
 

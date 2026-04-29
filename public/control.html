@@ -483,6 +483,20 @@
         <p style="font-size:11px; color:var(--text2); margin-top:6px;">Tap a race to instantly load it into the Event Header.</p>
       </div>
 
+      <!-- Schedule PDF Upload -->
+      <div>
+        <div class="sec-label">Schedule PDF</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <label style="flex:1;min-width:160px;">
+            <input type="file" id="pdfFileInput" accept="application/pdf" style="display:none;" onchange="uploadPDF(this)">
+            <span class="action-btn ghost" style="display:inline-block;cursor:pointer;" onclick="document.getElementById('pdfFileInput').click()">📄 Upload PDF</span>
+          </label>
+          <button class="action-btn ghost" id="viewPdfBtn" onclick="window.open('/uploads/schedule.pdf','_blank')" style="display:none;">View PDF ↗</button>
+          <button class="action-btn ghost" id="deletePdfBtn" onclick="deletePDF()" style="display:none;color:#ef9a9a;">Remove</button>
+        </div>
+        <p id="pdfStatus" style="font-size:11px;color:var(--text2);margin-top:6px;">No schedule PDF uploaded. Viewers can see it at <strong>/viewer.html</strong>.</p>
+      </div>
+
       <!-- School Logos -->
       <div>
         <div class="sec-label">School Logos</div>
@@ -621,6 +635,7 @@
 const token = localStorage.getItem('crew_token');
 const user = JSON.parse(localStorage.getItem('crew_user') || 'null');
 if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
+if (user && user.role !== 'admin') location.href = user.role === 'coach' ? '/audio.html' : '/';
 
 const TOGGLES = [
   ['eventHeader', 'Event Header'],
@@ -1546,6 +1561,47 @@ function confirmImport() {
 
 function show(id) { document.getElementById(id).style.display = ''; }
 function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+// ── Schedule PDF ──────────────────────────────────────────────────────
+async function uploadPDF(input) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const res = await fetch('/api/upload-schedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/pdf', 'Authorization': 'Bearer ' + token },
+      body: file
+    });
+    if (!res.ok) throw new Error('Upload failed');
+    setPdfStatus(true, file.name);
+    toast('Schedule PDF uploaded', 'ok');
+  } catch (e) {
+    toast('Upload failed: ' + e.message, 'err');
+  }
+  input.value = '';
+}
+
+async function deletePDF() {
+  try {
+    await fetch('/api/upload-schedule', {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    setPdfStatus(false);
+    toast('Schedule PDF removed', 'ok');
+  } catch { toast('Remove failed', 'err'); }
+}
+
+function setPdfStatus(exists, name) {
+  document.getElementById('viewPdfBtn').style.display   = exists ? '' : 'none';
+  document.getElementById('deletePdfBtn').style.display = exists ? '' : 'none';
+  document.getElementById('pdfStatus').innerHTML = exists
+    ? `PDF uploaded${name ? ': <strong>' + name + '</strong>' : ''}. Visible at <strong>/viewer.html</strong>.`
+    : 'No schedule PDF uploaded. Viewers can see it at <strong>/viewer.html</strong>.';
+}
+
+// Check on load whether a PDF already exists
+fetch('/uploads/schedule.pdf', { method: 'HEAD' }).then(r => { if (r.ok) setPdfStatus(true); }).catch(() => {});
 </script>
 </body>
 </html>

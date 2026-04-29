@@ -129,10 +129,16 @@
 
 <script>
   (() => {
-    const getNextPath = () => {
+    const roleHome = role => {
+      if (role === 'coach')  return '/audio.html';
+      if (role === 'viewer') return '/viewer.html';
+      return '/control.html';
+    };
+
+    const getNextPath = (role) => {
       const next = new URLSearchParams(location.search).get('next');
-      if (!next || !next.startsWith('/') || next.startsWith('//')) return '/control.html';
-      return next;
+      if (next && next.startsWith('/') && !next.startsWith('//')) return next;
+      return roleHome(role);
     };
 
     const t = localStorage.getItem('crew_token');
@@ -140,7 +146,7 @@
       try {
         const p = JSON.parse(atob(t.split('.')[1]));
         if (p.exp > Date.now() / 1000) {
-          location.href = getNextPath();
+          location.href = getNextPath(p.role);
         }
       } catch {}
     }
@@ -167,7 +173,7 @@
         localStorage.setItem('crew_user',  JSON.stringify(data.user));
         txt.textContent = '✓ Welcome';
         setTimeout(() => {
-          location.href = getNextPath();
+          location.href = getNextPath(data.user.role);
         }, 350);
       } catch(ex) {
         errM.textContent = ex.message;
