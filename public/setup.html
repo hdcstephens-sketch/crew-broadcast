@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CREW Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080b09;
+      --panel:   #0f1410;
+      --card:    #141a15;
+      --card2:   #1a211b;
+      --accent:  #00a86b;
+      --accent-dim: rgba(0,168,107,0.14);
+      --danger:  #e53935;
+      --text:    #f0f0f0;
+      --text2:   #7a9080;
+      --text3:   #3a4d40;
+      --line:    rgba(255,255,255,0.06);
+      --line2:   rgba(255,255,255,0.10);
+      --r:       10px;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+
+    /* ── topbar ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(8,11,9,0.96); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; gap: 12px; height: 52px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; }
+    .brand { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.12em; }
+    .brand em { color: var(--accent); font-style: normal; }
+    .save-status { font-size: 11px; font-weight: 600; color: var(--text2); transition: color 0.2s; }
+    .save-status.dirty { color: #f59e0b; }
+    .save-status.saved { color: var(--accent); }
+
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+    .btn-save {
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 7px 18px; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: 0.14s; letter-spacing: 0.03em;
+    }
+    .btn-save:hover { filter: brightness(1.1); }
+    .btn-save:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+    .topbar-link {
+      font-size: 12px; font-weight: 600; color: var(--text2);
+      background: var(--card); border: 1px solid var(--line);
+      padding: 5px 12px; border-radius: 8px; text-decoration: none; transition: 0.14s;
+    }
+    .topbar-link:hover { color: var(--text); border-color: var(--line2); }
+
+    /* ── layout ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      height: calc(100vh - 52px);
+    }
+    @media (max-width: 720px) {
+      .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; }
+    }
+
+    /* ── race list panel ── */
+    .race-panel {
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .panel-title { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text2); }
+    .btn-add {
+      background: var(--accent-dim); color: var(--accent);
+      border: 1px solid rgba(0,168,107,0.25);
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.14s;
+    }
+    .btn-add:hover { background: rgba(0,168,107,0.22); }
+
+    #raceList { overflow-y: auto; flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+
+    .race-item {
+      border-radius: var(--r);
+      border: 1px solid var(--line);
+      background: var(--card);
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      transition: border-color 0.14s, background 0.14s;
+      position: relative;
+    }
+    .race-item:hover { border-color: var(--line2); background: var(--card2); }
+    .race-item.selected { border-color: var(--accent); background: var(--accent-dim); }
+    .race-item.current-race::after {
+      content: 'LIVE';
+      position: absolute; top: 6px; right: 8px;
+      font-size: 8px; font-weight: 800; letter-spacing: 0.12em;
+      color: var(--accent); background: rgba(0,168,107,0.15);
+      padding: 2px 5px; border-radius: 4px;
+    }
+    .race-num {
+      width: 20px; height: 20px; border-radius: 5px;
+      background: var(--card2); border: 1px solid var(--line2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: var(--text2); flex-shrink: 0;
+    }
+    .race-item.selected .race-num { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .race-item-info { flex: 1; min-width: 0; }
+    .race-item-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .race-item-sub  { font-size: 11px; color: var(--text2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .race-item-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.14s; }
+    .race-item:hover .race-item-actions { opacity: 1; }
+    .race-item.selected .race-item-actions { opacity: 1; }
+    .icon-btn {
+      width: 24px; height: 24px; border-radius: 5px;
+      border: 1px solid var(--line2); background: transparent;
+      color: var(--text2); font-size: 12px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: 0.12s;
+    }
+    .icon-btn:hover { background: var(--card2); color: var(--text); }
+    .icon-btn.del:hover { border-color: rgba(229,57,53,0.4); color: var(--danger); }
+
+    .race-empty {
+      padding: 32px 16px; text-align: center;
+      font-size: 13px; color: var(--text2); line-height: 1.6;
+    }
+
+    /* ── editor panel ── */
+    .editor-panel { overflow-y: auto; padding: 20px; }
+
+    .editor-empty {
+      height: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px; color: var(--text2); text-align: center; padding: 40px;
+    }
+    .editor-empty-icon { font-size: 40px; opacity: 0.4; }
+    .editor-empty p { font-size: 14px; max-width: 260px; line-height: 1.5; }
+
+    .editor-content { max-width: 760px; display: flex; flex-direction: column; gap: 24px; }
+
+    /* ── section blocks ── */
+    .block { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .block-header {
+      padding: 14px 18px; border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .block-title { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text2); }
+    .block-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── form fields ── */
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text2); }
+    .field input, .field select {
+      background: var(--bg); border: 1px solid var(--line2);
+      border-radius: 7px; padding: 9px 11px;
+      color: var(--text); font-size: 13px; font-family: inherit;
+      outline: none; transition: 0.14s; width: 100%;
+    }
+    .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,168,107,0.12); }
+    .field input::placeholder { color: var(--text3); }
+    .field select option { background: #1a211b; }
+
+    /* ── athlete roster ── */
+    .roster-header {
+      display: grid;
+      grid-template-columns: 56px 1fr 140px 44px 40px;
+      gap: 8px; align-items: center;
+      padding: 0 18px 8px;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3);
+      border-bottom: 1px solid var(--line);
+    }
+    #rosterRows { display: flex; flex-direction: column; }
+    .athlete-row {
+      display: grid;
+      grid-template-columns: 56px 1fr 140px 44px 40px;
+      gap: 8px; align-items: center;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--line);
+      transition: background 0.12s;
+    }
+    .athlete-row:last-child { border-bottom: none; }
+    .athlete-row:hover { background: var(--card2); }
+
+    /* photo cell */
+    .photo-cell { position: relative; }
+    .photo-thumb {
+      width: 40px; height: 40px; border-radius: 8px;
+      border: 1.5px dashed var(--line2);
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; cursor: pointer; overflow: hidden;
+      transition: border-color 0.14s;
+    }
+    .photo-thumb:hover { border-color: var(--accent); }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; }
+    .photo-uploading { position: absolute; inset: 0; background: rgba(0,0,0,0.55); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
+    .photo-remove {
+      position: absolute; top: -4px; right: -4px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--danger); color: #fff; border: none;
+      font-size: 9px; cursor: pointer; display: none;
+      align-items: center; justify-content: center;
+    }
+    .photo-cell:hover .photo-remove { display: flex; }
+
+    /* inline inputs in rows */
+    .athlete-row input, .athlete-row select {
+      background: transparent; border: 1px solid transparent;
+      border-radius: 6px; padding: 6px 8px;
+      color: var(--text); font-size: 13px; font-family: inherit;
+      outline: none; transition: 0.12s; width: 100%;
+    }
+    .athlete-row input:hover, .athlete-row select:hover { border-color: var(--line2); background: var(--bg); }
+    .athlete-row input:focus, .athlete-row select:focus { border-color: var(--accent); background: var(--bg); box-shadow: 0 0 0 2px rgba(0,168,107,0.1); }
+    .athlete-row input::placeholder { color: var(--text3); }
+    .athlete-row select option { background: #1a211b; }
+
+    .reorder-btns { display: flex; flex-direction: column; gap: 2px; }
+    .reorder-btns button {
+      background: transparent; border: 1px solid var(--line2); border-radius: 4px;
+      color: var(--text2); font-size: 10px; cursor: pointer;
+      width: 20px; height: 18px; display: flex; align-items: center; justify-content: center;
+      transition: 0.1s; line-height: 1;
+    }
+    .reorder-btns button:hover { background: var(--card2); color: var(--text); }
+
+    .roster-footer { padding: 12px 18px; display: flex; align-items: center; gap: 10px; }
+    .roster-count { font-size: 11px; color: var(--text2); }
+
+    /* ── toast ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 10px; padding: 10px 18px;
+      font-size: 13px; font-weight: 600; color: var(--text);
+      opacity: 0; transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none; z-index: 200; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.ok  { border-color: rgba(34,197,94,0.4); color: #86efac; }
+    #toast.err { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+
+    /* ── confirm modal ── */
+    .modal-bg {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .modal-bg.show { display: flex; }
+    .modal {
+      background: var(--card); border: 1px solid var(--line2);
+      border-radius: 14px; padding: 24px; max-width: 340px; width: 100%;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .modal h3 { font-size: 15px; font-weight: 700; }
+    .modal p  { font-size: 13px; color: var(--text2); line-height: 1.5; }
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-cancel {
+      background: transparent; border: 1px solid var(--line2); border-radius: 7px;
+      padding: 7px 14px; font-size: 13px; color: var(--text2); cursor: pointer; transition: 0.12s;
+    }
+    .btn-cancel:hover { border-color: var(--text2); color: var(--text); }
+    .btn-confirm-del {
+      background: var(--danger); border: none; border-radius: 7px;
+      padding: 7px 14px; font-size: 13px; font-weight: 700; color: #fff; cursor: pointer; transition: 0.12s;
+    }
+    .btn-confirm-del:hover { filter: brightness(1.1); }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="brand">CREW <em>SETUP</em></div>
+    <span class="save-status" id="saveStatus">Saved</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-save" id="saveBtn" onclick="saveAll()">Save All</button>
+    <a class="topbar-link" href="/deck.html">🎛 Deck</a>
+    <a class="topbar-link" href="/control.html">← Control</a>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ── LEFT: race list ── -->
+  <div class="race-panel">
+    <div class="panel-header">
+      <span class="panel-title">Race Order</span>
+      <button class="btn-add" onclick="addRace()">+ Add Race</button>
+    </div>
+    <div id="raceList"></div>
+  </div>
+
+  <!-- ── RIGHT: editor ── -->
+  <div class="editor-panel" id="editorPanel">
+    <div class="editor-empty" id="editorEmpty">
+      <div class="editor-empty-icon">🏁</div>
+      <p>Select a race from the list, or add a new one to get started.</p>
+    </div>
+    <div class="editor-content" id="editorContent" style="display:none"></div>
+  </div>
+
+</div>
+
+<!-- delete confirm modal -->
+<div class="modal-bg" id="deleteModal">
+  <div class="modal">
+    <h3>Delete Race?</h3>
+    <p id="deleteModalText">This will remove the race and its entire athlete roster. This cannot be undone.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm-del" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const token = localStorage.getItem('crew_token');
+  const user  = JSON.parse(localStorage.getItem('crew_user') || 'null');
+  if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
+  if (user && user.role !== 'admin') location.href = user.role === 'coach' ? '/audio.html' : '/';
+
+  // ── state ──
+  let races   = [];   // [{ id, name, sub }]
+  let rosters = {};   // { [raceId]: { boatClass, athletes: [{ id, name, seat, photoPath }] } }
+  let currentRaceId = null;
+  let selectedRaceId = null;
+  let dirty = false;
+  let pendingDeleteId = null;
+
+  const SEAT_OPTIONS = ['Cox', 'Stroke', '7', '6', '5', '4', '3', '2', 'Bow', 'Coach', 'Custom'];
+
+  // ── WebSocket ──
+  let ws;
+  function connect() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${location.host}`);
+    ws.onopen  = () => ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' }));
+    ws.onclose = () => setTimeout(connect, 3000);
+    ws.onmessage = e => onMsg(JSON.parse(e.data));
+  }
+  function wsSend(payload) { if (ws?.readyState === 1) ws.send(JSON.stringify(payload)); }
+
+  function onMsg(msg) {
+    if (msg.type === 'auth-fail') { localStorage.clear(); location.href = '/'; }
+    if (msg.type === 'state' || msg.type === 'setup-saved') {
+      if (Array.isArray(msg.raceSchedule)) races = msg.raceSchedule;
+      if (msg.raceRosters) rosters = msg.raceRosters;
+      if ('currentRaceId' in msg) currentRaceId = msg.currentRaceId;
+      renderRaceList();
+      if (selectedRaceId) renderEditor(selectedRaceId);
+      if (msg.type === 'setup-saved') { setDirty(false); toast('Saved', 'ok'); }
+    }
+    if (msg.type === 'current-race-set') {
+      currentRaceId = msg.raceId;
+      renderRaceList();
+    }
+  }
+
+  // ── dirty tracking ──
+  function setDirty(val) {
+    dirty = val;
+    const s = document.getElementById('saveStatus');
+    const b = document.getElementById('saveBtn');
+    s.textContent  = val ? 'Unsaved changes' : 'Saved';
+    s.className    = 'save-status ' + (val ? 'dirty' : 'saved');
+    b.disabled     = !val;
+  }
+
+  // ── race list ──
+  function renderRaceList() {
+    const list = document.getElementById('raceList');
+    if (!races.length) {
+      list.innerHTML = '<div class="race-empty">No races yet.<br>Press <strong>+ Add Race</strong> to begin.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    races.forEach((race, idx) => {
+      const div = document.createElement('div');
+      div.className = 'race-item' +
+        (race.id === selectedRaceId ? ' selected' : '') +
+        (race.id === currentRaceId  ? ' current-race' : '');
+      div.innerHTML = `
+        <div class="race-num">${idx + 1}</div>
+        <div class="race-item-info">
+          <div class="race-item-name">${esc(race.name || 'Untitled Race')}</div>
+          <div class="race-item-sub">${esc(race.sub || 'No time set')}</div>
+        </div>
+        <div class="race-item-actions">
+          <button class="icon-btn" title="Move up"   onclick="moveRace('${race.id}',-1,event)">↑</button>
+          <button class="icon-btn" title="Move down" onclick="moveRace('${race.id}',1,event)">↓</button>
+          <button class="icon-btn del" title="Delete" onclick="deleteRace('${race.id}',event)">✕</button>
+        </div>`;
+      div.addEventListener('click', () => selectRace(race.id));
+      list.appendChild(div);
+    });
+  }
+
+  function selectRace(id) {
+    selectedRaceId = id;
+    renderRaceList();
+    renderEditor(id);
+  }
+
+  function addRace() {
+    const id = uid();
+    races.push({ id, name: 'New Race', sub: '' });
+    if (!rosters[id]) rosters[id] = { boatClass: '', athletes: [] };
+    setDirty(true);
+    renderRaceList();
+    selectRace(id);
+  }
+
+  function moveRace(id, dir, e) {
+    e.stopPropagation();
+    const idx = races.findIndex(r => r.id === id);
+    if (idx < 0) return;
+    const next = idx + dir;
+    if (next < 0 || next >= races.length) return;
+    [races[idx], races[next]] = [races[next], races[idx]];
+    setDirty(true);
+    renderRaceList();
+  }
+
+  function deleteRace(id, e) {
+    e.stopPropagation();
+    pendingDeleteId = id;
+    const race = races.find(r => r.id === id);
+    document.getElementById('deleteModalText').textContent =
+      `This will remove "${race?.name || 'this race'}" and its entire athlete roster. Cannot be undone.`;
+    document.getElementById('deleteModal').classList.add('show');
+  }
+  function closeDeleteModal() {
+    pendingDeleteId = null;
+    document.getElementById('deleteModal').classList.remove('show');
+  }
+  function confirmDelete() {
+    if (!pendingDeleteId) return closeDeleteModal();
+    races = races.filter(r => r.id !== pendingDeleteId);
+    delete rosters[pendingDeleteId];
+    if (selectedRaceId === pendingDeleteId) {
+      selectedRaceId = null;
+      showEditorEmpty();
+    }
+    setDirty(true);
+    renderRaceList();
+    closeDeleteModal();
+  }
+
+  // ── editor ──
+  function showEditorEmpty() {
+    document.getElementById('editorEmpty').style.display = '';
+    document.getElementById('editorContent').style.display = 'none';
+  }
+
+  function renderEditor(raceId) {
+    const race = races.find(r => r.id === raceId);
+    if (!race) return showEditorEmpty();
+    if (!rosters[raceId]) rosters[raceId] = { boatClass: '', athletes: [] };
+    const roster = rosters[raceId];
+
+    document.getElementById('editorEmpty').style.display = 'none';
+    const content = document.getElementById('editorContent');
+    content.style.display = '';
+    content.innerHTML = `
+      <!-- Race details -->
+      <div class="block">
+        <div class="block-header">
+          <span class="block-title">Race Info</span>
+          <button class="btn-add" style="font-size:11px" onclick="setCurrentRace('${raceId}')">
+            ${raceId === currentRaceId ? '✓ Current Race' : 'Set as Current Race'}
+          </button>
+        </div>
+        <div class="block-body">
+          <div class="field-row">
+            <div class="field">
+              <label>Race Name</label>
+              <input id="f-name" type="text" value="${esc(race.name)}" placeholder="e.g. Men's Varsity 8+" oninput="updateRaceField('${raceId}','name',this.value)">
+            </div>
+            <div class="field">
+              <label>Time / Subtitle</label>
+              <input id="f-sub" type="text" value="${esc(race.sub)}" placeholder="e.g. 10:00 AM" oninput="updateRaceField('${raceId}','sub',this.value)">
+            </div>
+          </div>
+          <div class="field" style="max-width:240px">
+            <label>Boat Class</label>
+            <input id="f-boat" type="text" value="${esc(roster.boatClass||'')}" placeholder="e.g. Varsity 8+, JV 4+" oninput="updateBoatClass('${raceId}',this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Athlete roster -->
+      <div class="block">
+        <div class="block-header">
+          <span class="block-title">Athlete Roster</span>
+          <button class="btn-add" onclick="addAthlete('${raceId}')">+ Add Athlete</button>
+        </div>
+        <div class="roster-header">
+          <span>Photo</span><span>Name</span><span>Seat / Position</span><span></span><span></span>
+        </div>
+        <div id="rosterRows"></div>
+        <div class="roster-footer">
+          <span class="roster-count" id="rosterCount"></span>
+        </div>
+      </div>`;
+
+    renderRoster(raceId);
+  }
+
+  function renderRoster(raceId) {
+    const roster = rosters[raceId];
+    if (!roster) return;
+    const container = document.getElementById('rosterRows');
+    if (!container) return;
+    container.innerHTML = '';
+
+    roster.athletes.forEach((athlete, idx) => {
+      const row = document.createElement('div');
+      row.className = 'athlete-row';
+      row.innerHTML = `
+        <div class="photo-cell">
+          <div class="photo-thumb" onclick="triggerPhotoUpload('${raceId}','${athlete.id}')" title="Click to upload photo">
+            ${athlete.photoPath
+              ? `<img src="${esc(athlete.photoPath)}" alt="">`
+              : '📷'}
+          </div>
+          ${athlete.photoPath ? `<button class="photo-remove" onclick="removePhoto('${raceId}','${athlete.id}',event)" title="Remove photo">✕</button>` : ''}
+        </div>
+        <input type="text" value="${esc(athlete.name)}" placeholder="Athlete name"
+               oninput="updateAthlete('${raceId}','${athlete.id}','name',this.value)">
+        <select onchange="updateAthlete('${raceId}','${athlete.id}','seat',this.value)">
+          ${SEAT_OPTIONS.map(s => `<option ${athlete.seat===s?'selected':''}>${s}</option>`).join('')}
+          ${!SEAT_OPTIONS.includes(athlete.seat) && athlete.seat
+            ? `<option selected>${esc(athlete.seat)}</option>` : ''}
+        </select>
+        <div class="reorder-btns">
+          <button onclick="moveAthlete('${raceId}','${athlete.id}',-1)" ${idx===0?'disabled':''}>↑</button>
+          <button onclick="moveAthlete('${raceId}','${athlete.id}',1)" ${idx===roster.athletes.length-1?'disabled':''}>↓</button>
+        </div>
+        <button class="icon-btn del" onclick="deleteAthlete('${raceId}','${athlete.id}')" title="Remove">✕</button>`;
+      container.appendChild(row);
+    });
+
+    // hidden file inputs for photo uploads
+    roster.athletes.forEach(athlete => {
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'image/*';
+      inp.style.display = 'none';
+      inp.id = `file-${athlete.id}`;
+      inp.onchange = () => uploadPhoto(raceId, athlete.id, inp.files[0]);
+      document.body.appendChild(inp);
+    });
+
+    const count = document.getElementById('rosterCount');
+    if (count) count.textContent = `${roster.athletes.length} athlete${roster.athletes.length !== 1 ? 's' : ''}`;
+  }
+
+  // ── roster mutations ──
+  function addAthlete(raceId) {
+    if (!rosters[raceId]) rosters[raceId] = { boatClass: '', athletes: [] };
+    rosters[raceId].athletes.push({ id: uid(), name: '', seat: 'Stroke', photoPath: '' });
+    setDirty(true);
+    renderRoster(raceId);
+  }
+
+  function deleteAthlete(raceId, athleteId) {
+    if (!rosters[raceId]) return;
+    rosters[raceId].athletes = rosters[raceId].athletes.filter(a => a.id !== athleteId);
+    setDirty(true);
+    renderRoster(raceId);
+  }
+
+  function moveAthlete(raceId, athleteId, dir) {
+    const athletes = rosters[raceId]?.athletes;
+    if (!athletes) return;
+    const idx = athletes.findIndex(a => a.id === athleteId);
+    if (idx < 0) return;
+    const next = idx + dir;
+    if (next < 0 || next >= athletes.length) return;
+    [athletes[idx], athletes[next]] = [athletes[next], athletes[idx]];
+    setDirty(true);
+    renderRoster(raceId);
+  }
+
+  function updateAthlete(raceId, athleteId, field, value) {
+    const athlete = rosters[raceId]?.athletes.find(a => a.id === athleteId);
+    if (athlete) athlete[field] = value;
+    setDirty(true);
+  }
+
+  function updateRaceField(raceId, field, value) {
+    const race = races.find(r => r.id === raceId);
+    if (race) race[field] = value;
+    setDirty(true);
+    renderRaceList();
+  }
+
+  function updateBoatClass(raceId, value) {
+    if (rosters[raceId]) rosters[raceId].boatClass = value;
+    setDirty(true);
+  }
+
+  function setCurrentRace(raceId) {
+    currentRaceId = raceId;
+    wsSend({ type: 'current-race-set', raceId });
+    renderRaceList();
+    renderEditor(raceId);
+    toast('Current race set', 'ok');
+  }
+
+  // ── photo upload ──
+  function triggerPhotoUpload(raceId, athleteId) {
+    // remove any stale file inputs for this athlete first
+    const old = document.getElementById(`file-${athleteId}`);
+    if (old) old.remove();
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.style.display = 'none';
+    inp.id = `file-${athleteId}`;
+    inp.onchange = () => uploadPhoto(raceId, athleteId, inp.files[0]);
+    document.body.appendChild(inp);
+    inp.click();
+  }
+
+  async function uploadPhoto(raceId, athleteId, file) {
+    if (!file) return;
+    const athlete = rosters[raceId]?.athletes.find(a => a.id === athleteId);
+    if (!athlete) return;
+
+    // show uploading state
+    const thumb = document.querySelector(`[onclick="triggerPhotoUpload('${raceId}','${athleteId}')"]`);
+    if (thumb) thumb.innerHTML = '<div class="photo-uploading">...</div>';
+
+    try {
+      const res = await fetch('/api/upload/athlete-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': file.type, 'Authorization': 'Bearer ' + token },
+        body: file
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      athlete.photoPath = data.path;
+      setDirty(true);
+      renderRoster(raceId);
+      toast('Photo uploaded', 'ok');
+    } catch {
+      renderRoster(raceId);
+      toast('Upload failed', 'err');
+    }
+  }
+
+  function removePhoto(raceId, athleteId, e) {
+    e.stopPropagation();
+    const athlete = rosters[raceId]?.athletes.find(a => a.id === athleteId);
+    if (!athlete) return;
+    athlete.photoPath = '';
+    setDirty(true);
+    renderRoster(raceId);
+  }
+
+  // ── save ──
+  function saveAll() {
+    wsSend({ type: 'setup-save', raceSchedule: races, raceRosters: rosters });
+    document.getElementById('saveStatus').textContent = 'Saving…';
+  }
+
+  // ── keyboard shortcut: Cmd/Ctrl+S ──
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (dirty) saveAll(); }
+  });
+
+  // ── utils ──
+  function uid() {
+    return 'r' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
+
+  function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  let toastTimer;
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.className = 'show ' + type;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.className = '', 2200);
+  }
+
+  // initial render while waiting for WS
+  renderRaceList();
+  connect();
+</script>
+</body>
+</html>

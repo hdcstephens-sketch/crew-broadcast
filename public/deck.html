@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CREW Deck</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #070707;
+      --surface: #101010;
+      --surface2: #181818;
+      --line: rgba(255,255,255,0.07);
+      --text: #f0f0f0;
+      --text2: #606060;
+      --r: 12px;
+
+      --c-intro:   #7c3aed;
+      --c-race:    #059669;
+      --c-timer:   #2563eb;
+      --c-alert:   #d97706;
+      --c-element: #475569;
+      --c-danger:  #dc2626;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+
+    /* ── topbar ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(7,7,7,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; gap: 12px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .brand {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px; font-weight: 700; letter-spacing: 0.12em;
+      color: var(--text);
+    }
+    .brand span { color: var(--c-intro); }
+    .conn-pill {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; color: var(--text2);
+      background: var(--surface); border: 1px solid var(--line);
+      padding: 4px 10px; border-radius: 999px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #333; flex-shrink: 0; transition: background 0.3s; }
+    .dot.live { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .dot.err  { background: #ef4444; }
+
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+    .topbar-link {
+      font-size: 12px; font-weight: 600; color: var(--text2);
+      background: var(--surface); border: 1px solid var(--line);
+      padding: 5px 12px; border-radius: 8px; text-decoration: none;
+      transition: 0.14s;
+    }
+    .topbar-link:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    /* ── main layout ── */
+    .deck { max-width: 1000px; margin: 0 auto; padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 28px; }
+
+    /* ── sections ── */
+    .section-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--text2);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 700px) { .btn-grid { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 500px) { .btn-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    /* ── deck buttons ── */
+    .deck-btn {
+      --c: var(--c-element);
+      position: relative;
+      aspect-ratio: 1 / 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--r);
+      cursor: pointer;
+      transition: transform 0.1s, border-color 0.15s, background 0.15s, box-shadow 0.2s;
+      padding: 8px;
+      overflow: hidden;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .deck-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(160deg, color-mix(in srgb, var(--c) 12%, transparent), transparent 60%);
+      border-radius: inherit;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .deck-btn:hover::before { opacity: 1; }
+    .deck-btn:hover { border-color: color-mix(in srgb, var(--c) 50%, transparent); }
+    .deck-btn:active { transform: scale(0.93); }
+
+    .deck-btn.active {
+      border-color: var(--c);
+      background: color-mix(in srgb, var(--c) 14%, var(--surface));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent),
+                  0 0 16px color-mix(in srgb, var(--c) 25%, transparent);
+    }
+    .deck-btn.active::before { opacity: 1; }
+
+    .deck-btn.playing {
+      border-color: var(--c);
+      animation: pulse-border 1s ease-in-out infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 0 1px var(--c), 0 0 12px color-mix(in srgb, var(--c) 30%, transparent); }
+      50%       { box-shadow: 0 0 0 2px var(--c), 0 0 28px color-mix(in srgb, var(--c) 55%, transparent); }
+    }
+
+    .deck-btn.danger { --c: var(--c-danger); }
+
+    .btn-icon {
+      font-size: 26px; line-height: 1;
+      position: relative; z-index: 1;
+      transition: transform 0.15s;
+    }
+    .deck-btn:hover .btn-icon { transform: scale(1.12); }
+
+    .btn-label {
+      font-size: 9.5px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text2); text-align: center; line-height: 1.3;
+      position: relative; z-index: 1;
+      transition: color 0.15s;
+    }
+    .deck-btn:hover .btn-label,
+    .deck-btn.active .btn-label { color: var(--text); }
+
+    .btn-accent-bar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--c);
+      opacity: 0; transition: opacity 0.15s;
+      border-radius: 0 0 var(--r) var(--r);
+    }
+    .deck-btn:hover .btn-accent-bar,
+    .deck-btn.active .btn-accent-bar { opacity: 1; }
+
+    /* playing progress bar */
+    .btn-progress {
+      position: absolute; bottom: 0; left: 0;
+      height: 2px; background: var(--c);
+      border-radius: 0 0 0 var(--r);
+      width: 0%; transition: none;
+    }
+
+    /* ── intro section styling ── */
+    .deck-btn.intro { --c: var(--c-intro); }
+    .deck-btn.race   { --c: var(--c-race); }
+    .deck-btn.timer-btn { --c: var(--c-timer); }
+    .deck-btn.alert-btn { --c: var(--c-alert); }
+
+    /* ── current race bar ── */
+    .race-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 20px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .race-bar-label { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text2); white-space: nowrap; }
+    .race-select {
+      flex: 1; max-width: 380px;
+      background: var(--bg); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; padding: 7px 12px;
+      color: var(--text); font-size: 13px; font-weight: 600; font-family: inherit;
+      outline: none; cursor: pointer; transition: 0.14s;
+    }
+    .race-select:focus { border-color: var(--c-race); box-shadow: 0 0 0 2px rgba(5,150,105,0.2); }
+    .race-select option { background: #111; }
+    .race-bar-setup { font-size: 12px; font-weight: 600; color: var(--text2); text-decoration: none; padding: 5px 11px; border: 1px solid var(--line); border-radius: 7px; transition: 0.14s; }
+    .race-bar-setup:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .athlete-count { font-size: 11px; color: var(--text2); white-space: nowrap; }
+
+    /* ── toast ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface2); border: 1px solid var(--line);
+      border-radius: 10px; padding: 10px 18px;
+      font-size: 13px; font-weight: 600; color: var(--text);
+      opacity: 0; transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none; z-index: 200; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.ok   { border-color: rgba(34,197,94,0.4); color: #86efac; }
+    #toast.err  { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="brand">CREW <span>DECK</span></div>
+    <div class="conn-pill">
+      <div class="dot" id="connDot"></div>
+      <span id="connLabel">Connecting…</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <a class="topbar-link" href="/control.html">← Control</a>
+  </div>
+</div>
+
+<div class="race-bar">
+  <span class="race-bar-label">Current Race</span>
+  <select class="race-select" id="raceSelect" onchange="onRaceChange(this.value)">
+    <option value="">— No race selected —</option>
+  </select>
+  <span class="athlete-count" id="athleteCount"></span>
+  <a class="race-bar-setup" href="/setup.html">⚙ Setup</a>
+</div>
+
+<div class="deck">
+
+  <!-- ── INTROS ── -->
+  <div>
+    <div class="section-label">Intros</div>
+    <div class="btn-grid">
+      <button class="deck-btn intro" data-action="play-intro" data-intro="event-open">
+        <span class="btn-icon">🎬</span>
+        <span class="btn-label">Event Open</span>
+        <div class="btn-accent-bar"></div>
+        <div class="btn-progress" id="prog-event-open"></div>
+      </button>
+      <button class="deck-btn intro" data-action="play-intro" data-intro="race-intro">
+        <span class="btn-icon">🏁</span>
+        <span class="btn-label">Race Intro</span>
+        <div class="btn-accent-bar"></div>
+        <div class="btn-progress" id="prog-race-intro"></div>
+      </button>
+      <button class="deck-btn intro" data-action="play-intro" data-intro="athletes">
+        <span class="btn-icon">👤</span>
+        <span class="btn-label">Athlete Cards</span>
+        <div class="btn-accent-bar"></div>
+        <div class="btn-progress" id="prog-athletes"></div>
+      </button>
+      <button class="deck-btn intro" data-action="play-intro" data-intro="results-reveal">
+        <span class="btn-icon">🏆</span>
+        <span class="btn-label">Results Reveal</span>
+        <div class="btn-accent-bar"></div>
+        <div class="btn-progress" id="prog-results-reveal"></div>
+      </button>
+      <button class="deck-btn intro danger" data-action="play-intro" data-intro="clear">
+        <span class="btn-icon">✖</span>
+        <span class="btn-label">Clear Intro</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── RACE PRESETS ── -->
+  <div>
+    <div class="section-label">Race Presets</div>
+    <div class="btn-grid">
+      <button class="deck-btn race" data-action="preset" data-preset="pre-race">
+        <span class="btn-icon">🔄</span>
+        <span class="btn-label">Pre-Race</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn race" data-action="preset" data-preset="race-start">
+        <span class="btn-icon">🚦</span>
+        <span class="btn-label">Race Start</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn race" data-action="preset" data-preset="race-running">
+        <span class="btn-icon">🚣</span>
+        <span class="btn-label">Running</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn race" data-action="preset" data-preset="finish">
+        <span class="btn-icon">⛳</span>
+        <span class="btn-label">Finish</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn race" data-action="preset" data-preset="post-race">
+        <span class="btn-icon">📊</span>
+        <span class="btn-label">Post-Race</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn danger" data-action="preset" data-preset="clear">
+        <span class="btn-icon">⬛</span>
+        <span class="btn-label">Clear All</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── TIMER ── -->
+  <div>
+    <div class="section-label">Timer</div>
+    <div class="btn-grid">
+      <button class="deck-btn timer-btn" data-action="timer" data-timer="start">
+        <span class="btn-icon">▶️</span>
+        <span class="btn-label">Start</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn timer-btn" data-action="timer" data-timer="stop">
+        <span class="btn-icon">⏸</span>
+        <span class="btn-label">Stop</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn timer-btn" data-action="timer" data-timer="reset">
+        <span class="btn-icon">↺</span>
+        <span class="btn-label">Reset</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn timer-btn" data-action="countdown" data-countdown="start">
+        <span class="btn-icon">⏬</span>
+        <span class="btn-label">Countdown</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn timer-btn" data-action="countdown" data-countdown="stop">
+        <span class="btn-icon">⏹</span>
+        <span class="btn-label">Stop CD</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── ALERTS ── -->
+  <div>
+    <div class="section-label">Alerts</div>
+    <div class="btn-grid">
+      <button class="deck-btn alert-btn" data-action="alert" data-text="PHOTO FINISH" data-dur="5">
+        <span class="btn-icon">📸</span>
+        <span class="btn-label">Photo Finish</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn alert-btn" data-action="alert" data-text="COURSE RECORD" data-dur="5">
+        <span class="btn-icon">⚡</span>
+        <span class="btn-label">Course Record</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn alert-btn" data-action="alert" data-text="FALSE START" data-dur="4">
+        <span class="btn-icon">⚠️</span>
+        <span class="btn-label">False Start</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn alert-btn" data-action="alert" data-text="RACE COMPLETE" data-dur="4">
+        <span class="btn-icon">✅</span>
+        <span class="btn-label">Race Complete</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn alert-btn" data-action="alert" data-text="OFFICIAL RESULT" data-dur="4">
+        <span class="btn-icon">🏅</span>
+        <span class="btn-label">Official Result</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── ELEMENTS ── -->
+  <div>
+    <div class="section-label">Elements</div>
+    <div class="btn-grid">
+      <button class="deck-btn" data-action="toggle" data-element="eventHeader">
+        <span class="btn-icon">📋</span>
+        <span class="btn-label">Event Header</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn" data-action="toggle" data-element="lanes">
+        <span class="btn-icon">🚣</span>
+        <span class="btn-label">Lanes</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn" data-action="toggle" data-element="results">
+        <span class="btn-icon">🏆</span>
+        <span class="btn-label">Results</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn" data-action="toggle" data-element="timer">
+        <span class="btn-icon">⏱</span>
+        <span class="btn-label">Timer</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn" data-action="toggle" data-element="countdown">
+        <span class="btn-icon">⏬</span>
+        <span class="btn-label">Countdown</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn" data-action="toggle" data-element="lowerThird">
+        <span class="btn-icon">💬</span>
+        <span class="btn-label">Lower Third</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn" data-action="toggle" data-element="schoolLogos">
+        <span class="btn-icon">🏫</span>
+        <span class="btn-label">School Logos</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn" data-action="toggle" data-element="strokeRate">
+        <span class="btn-icon">💪</span>
+        <span class="btn-label">Stroke Rate</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn" data-action="toggle" data-element="distance">
+        <span class="btn-icon">📏</span>
+        <span class="btn-label">Distance</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+      <button class="deck-btn" data-action="toggle" data-element="conditions">
+        <span class="btn-icon">🌤</span>
+        <span class="btn-label">Conditions</span>
+        <div class="btn-accent-bar"></div>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const token = localStorage.getItem('crew_token');
+  const user  = JSON.parse(localStorage.getItem('crew_user') || 'null');
+  if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
+  if (user && user.role !== 'admin') location.href = user.role === 'coach' ? '/audio.html' : '/';
+
+  let ws, overlayState = {}, raceSchedule = [], raceRosters = {}, currentRaceId = null;
+
+  // ── WebSocket ──
+  function connect() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${location.host}`);
+    ws.onopen  = () => ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' }));
+    ws.onclose = () => { setConn(false); setTimeout(connect, 3000); };
+    ws.onmessage = e => onMsg(JSON.parse(e.data));
+  }
+
+  function send(payload) { if (ws?.readyState === 1) ws.send(JSON.stringify(payload)); }
+
+  function onMsg(msg) {
+    if (msg.type === 'auth-ok')   { setConn(true); toast('Connected', 'ok'); }
+    if (msg.type === 'auth-fail') { localStorage.clear(); location.href = '/'; }
+
+    if (msg.type === 'state' || msg.type === 'setup-saved') {
+      overlayState  = msg.overlayState  || overlayState;
+      raceSchedule  = msg.raceSchedule  || raceSchedule;
+      raceRosters   = msg.raceRosters   || raceRosters;
+      currentRaceId = msg.currentRaceId ?? currentRaceId;
+      syncElementButtons();
+      syncRaceSelector();
+    }
+    if (msg.type === 'toggle') {
+      if (overlayState[msg.element]) overlayState[msg.element].active = msg.active;
+      syncElementButtons();
+    }
+    if (msg.type === 'current-race-set') {
+      currentRaceId = msg.raceId;
+      syncRaceSelector();
+    }
+    if (msg.type === 'intro-playing') {
+      setIntroPlaying(msg.intro, msg.duration);
+    }
+  }
+
+  function syncRaceSelector() {
+    const sel = document.getElementById('raceSelect');
+    sel.innerHTML = '<option value="">— No race selected —</option>';
+    raceSchedule.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id; opt.textContent = r.name + (r.sub ? '  ·  ' + r.sub : '');
+      if (r.id === currentRaceId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    updateAthleteCount();
+  }
+
+  function updateAthleteCount() {
+    const el = document.getElementById('athleteCount');
+    if (!currentRaceId || !raceRosters[currentRaceId]) { el.textContent = ''; return; }
+    const n = raceRosters[currentRaceId].athletes?.length || 0;
+    el.textContent = `${n} athlete${n !== 1 ? 's' : ''} in roster`;
+  }
+
+  function onRaceChange(raceId) {
+    currentRaceId = raceId || null;
+    send({ type: 'current-race-set', raceId: currentRaceId });
+    updateAthleteCount();
+  }
+
+  function setConn(ok) {
+    document.getElementById('connDot').className   = 'dot ' + (ok ? 'live' : 'err');
+    document.getElementById('connLabel').textContent = ok ? 'Live' : 'Offline';
+  }
+
+  // ── sync element toggle button states ──
+  function syncElementButtons() {
+    document.querySelectorAll('[data-action="toggle"]').forEach(btn => {
+      const el = btn.dataset.element;
+      btn.classList.toggle('active', !!(overlayState[el]?.active));
+    });
+  }
+
+  // ── intro progress animation ──
+  function setIntroPlaying(introId, duration) {
+    const btn = document.querySelector(`[data-intro="${introId}"]`);
+    if (!btn) return;
+    btn.classList.add('playing');
+    const bar = document.getElementById(`prog-${introId}`);
+    if (bar && duration) {
+      bar.style.transition = 'none';
+      bar.style.width = '0%';
+      requestAnimationFrame(() => {
+        bar.style.transition = `width ${duration}s linear`;
+        bar.style.width = '100%';
+      });
+    }
+    setTimeout(() => {
+      btn.classList.remove('playing');
+      if (bar) { bar.style.transition = 'none'; bar.style.width = '0%'; }
+    }, (duration || 5) * 1000);
+  }
+
+  // ── button actions ──
+  document.querySelectorAll('.deck-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+
+      if (action === 'play-intro') {
+        send({ type: 'play-intro', intro: btn.dataset.intro });
+        if (btn.dataset.intro !== 'clear') {
+          btn.classList.add('playing');
+          setTimeout(() => btn.classList.remove('playing'), 6000);
+        }
+        toast('▶ ' + btn.querySelector('.btn-label').textContent, 'ok');
+      }
+
+      else if (action === 'preset') {
+        send({ type: 'preset', preset: btn.dataset.preset });
+        toast(btn.querySelector('.btn-label').textContent, 'ok');
+        flashBtn(btn);
+      }
+
+      else if (action === 'timer') {
+        const a = btn.dataset.timer;
+        send({ type: 'timer-control', action: a, elapsed: 0 });
+        toast('Timer ' + a, 'ok');
+        flashBtn(btn);
+      }
+
+      else if (action === 'countdown') {
+        const a = btn.dataset.countdown;
+        send({ type: 'countdown-control', action: a, duration: 300 });
+        toast('Countdown ' + a, 'ok');
+        flashBtn(btn);
+      }
+
+      else if (action === 'alert') {
+        send({ type: 'alert', text: btn.dataset.text, duration: Number(btn.dataset.dur) || 4 });
+        toast('⚡ ' + btn.dataset.text, 'ok');
+        flashBtn(btn);
+      }
+
+      else if (action === 'toggle') {
+        const el = btn.dataset.element;
+        const nowActive = !(overlayState[el]?.active);
+        if (overlayState[el]) overlayState[el].active = nowActive;
+        btn.classList.toggle('active', nowActive);
+        send({ type: 'toggle', element: el, active: nowActive });
+      }
+    });
+  });
+
+  function flashBtn(btn) {
+    btn.classList.add('active');
+    setTimeout(() => btn.classList.remove('active'), 400);
+  }
+
+  // ── toast ──
+  let toastTimer;
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'show ' + type;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.className = '', 2000);
+  }
+
+  connect();
+</script>
+</body>
+</html>

@@ -209,7 +209,9 @@ function getDefaultStore() {
     designConfig: { ...DEFAULT_DESIGN_CONFIG },
     presetConfigs: { ...DEFAULT_PRESET_CONFIGS },
     teamPresets: { ...DEFAULT_TEAM_PRESETS },
-    raceSchedule: []
+    raceSchedule: [],
+    raceRosters: {},
+    currentRaceId: null
   };
 }
 
@@ -224,7 +226,9 @@ function loadStore() {
       designConfig: deepMerge(defaults.designConfig, parsed.designConfig),
       presetConfigs: deepMerge(defaults.presetConfigs, parsed.presetConfigs),
       teamPresets: deepMerge(defaults.teamPresets, parsed.teamPresets),
-      raceSchedule: Array.isArray(parsed.raceSchedule) ? parsed.raceSchedule : []
+      raceSchedule: Array.isArray(parsed.raceSchedule) ? parsed.raceSchedule : [],
+      raceRosters: isPlainObject(parsed.raceRosters) ? parsed.raceRosters : {},
+      currentRaceId: parsed.currentRaceId || null
     };
   } catch (error) {
     console.error('Failed to load persisted state, using defaults.', error);
@@ -232,10 +236,10 @@ function loadStore() {
   }
 }
 
-let { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule } = loadStore();
+let { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId } = loadStore();
 
 function persistStore() {
-  const data = { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule };
+  const data = { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId };
   fs.mkdirSync(STORE_DIR, { recursive: true });
   fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2));
 }
@@ -256,6 +260,8 @@ function getStatePayload() {
     presetConfigs,
     teamPresets,
     raceSchedule,
+    raceRosters,
+    currentRaceId,
     activeBroadcaster: Boolean(activeBroadcasterId && clients.has(activeBroadcasterId)),
     activeMimeType,
     hasPDF: fs.existsSync(path.join(__dirname, 'public', 'uploads', 'schedule.pdf'))
@@ -333,6 +339,30 @@ app.post('/api/upload-schedule',
 app.delete('/api/upload-schedule', requireAuth, requireAdmin, (req, res) => {
   const f = path.join(UPLOAD_DIR, 'schedule.pdf');
   if (fs.existsSync(f)) fs.unlinkSync(f);
+  res.json({ ok: true });
+});
+
+const ATHLETE_PHOTO_DIR = path.join(__dirname, 'public', 'media', 'athletes');
+
+app.post('/api/upload/athlete-photo',
+  requireAuth,
+  requireAdmin,
+  express.raw({ type: req => /^image\/(jpeg|png|webp|gif)$/.test(req.headers['content-type'] || ''), limit: '10mb' }),
+  (req, res) => {
+    if (!req.body || !req.body.length) return res.status(400).json({ error: 'No image data' });
+    const ext = (req.headers['content-type'] || 'image/jpeg').split('/')[1].split(';')[0];
+    const filename = `${uuidv4()}.${ext}`;
+    fs.mkdirSync(ATHLETE_PHOTO_DIR, { recursive: true });
+    fs.writeFileSync(path.join(ATHLETE_PHOTO_DIR, filename), req.body);
+    res.json({ ok: true, path: `/media/athletes/${filename}` });
+  }
+);
+
+app.delete('/api/upload/athlete-photo', requireAuth, requireAdmin, (req, res) => {
+  const filename = path.basename(req.query.file || '');
+  if (!filename) return res.status(400).json({ error: 'No filename' });
+  const filepath = path.join(ATHLETE_PHOTO_DIR, filename);
+  if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
   res.json({ ok: true });
 });
 
@@ -591,6 +621,59 @@ function handleMessage(clientId, msg) {
       const alertText = String(msg.text || '').slice(0, 120);
       const alertDuration = Math.min(15, Math.max(1, Number(msg.duration) || 3));
       if (alertText) broadcast('overlay', { type: 'alert', text: alertText, duration: alertDuration });
+      break;
+    }
+
+    case 'play-intro': {
+      if (!client.authenticated) return;
+      const introId = String(msg.intro || '').slice(0, 64);
+      if (!introId) return;
+      const roster = currentRaceId ? (raceRosters[currentRaceId] || null) : null;
+      const race   = currentRaceId ? (raceSchedule.find(r => r.id === currentRaceId) || null) : null;
+      const duration = introId === 'athletes' && roster
+        ? Math.max(6, (roster.athletes || []).length * 4)
+        : 6;
+      broadcast('overlay',    { type: 'play-intro', intro: introId, race, roster });
+      broadcast('controller', { type: 'intro-playing', intro: introId, duration });
+      break;
+    }
+
+    case 'setup-save': {
+      if (!client.authenticated || client.user?.role !== 'admin') return;
+      if (Array.isArray(msg.raceSchedule)) {
+        raceSchedule = msg.raceSchedule.slice(0, 100).map(r => ({
+          id:   String(r.id   || uuidv4()).slice(0, 64),
+          name: String(r.name || '').slice(0, 120),
+          sub:  String(r.sub  || '').slice(0, 120)
+        }));
+      }
+      if (isPlainObject(msg.raceRosters)) {
+        raceRosters = {};
+        Object.entries(msg.raceRosters).forEach(([raceId, roster]) => {
+          if (!isPlainObject(roster)) return;
+          raceRosters[raceId] = {
+            boatClass: String(roster.boatClass || '').slice(0, 80),
+            athletes: Array.isArray(roster.athletes) ? roster.athletes.slice(0, 20).map(a => ({
+              id:        String(a.id        || uuidv4()).slice(0, 64),
+              name:      String(a.name      || '').slice(0, 80),
+              seat:      String(a.seat      || '').slice(0, 40),
+              photoPath: String(a.photoPath || '').slice(0, 200)
+            })) : []
+          };
+        });
+      }
+      persistStore();
+      broadcast('controller', { type: 'setup-saved', raceSchedule, raceRosters, currentRaceId });
+      broadcast('overlay',    { type: 'setup-saved', raceSchedule, raceRosters, currentRaceId });
+      break;
+    }
+
+    case 'current-race-set': {
+      if (!client.authenticated) return;
+      currentRaceId = msg.raceId || null;
+      persistStore();
+      broadcast('controller', { type: 'current-race-set', raceId: currentRaceId });
+      broadcast('overlay',    { type: 'current-race-set', raceId: currentRaceId });
       break;
     }
 
