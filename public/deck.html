@@ -192,6 +192,148 @@
     .race-bar-setup:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
     .athlete-count { font-size: 11px; color: var(--text2); white-space: nowrap; }
 
+    /* ── quick edit panel ── */
+    .quick-panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .quick-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .quick-panel-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text2);
+    }
+    .quick-panel-note {
+      font-size: 12px;
+      color: var(--text2);
+    }
+    .quick-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .quick-tab {
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text2);
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: 0.14s;
+    }
+    .quick-tab:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
+    .quick-tab.active {
+      background: rgba(124,58,237,0.14);
+      border-color: rgba(124,58,237,0.35);
+      color: #c4b5fd;
+    }
+    .quick-pane { display: none; }
+    .quick-pane.active {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 10px;
+    }
+    .quick-field {
+      grid-column: span 4;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .quick-field.wide { grid-column: span 6; }
+    .quick-field.full { grid-column: 1 / -1; }
+    .quick-field label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text2);
+    }
+    .quick-input,
+    .quick-select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      padding: 9px 11px;
+      outline: none;
+      transition: 0.14s;
+    }
+    .quick-input:focus,
+    .quick-select:focus {
+      border-color: rgba(124,58,237,0.45);
+      box-shadow: 0 0 0 2px rgba(124,58,237,0.14);
+    }
+    .quick-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .stepper {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 6px;
+    }
+    .step-btn,
+    .quick-action {
+      background: var(--surface2);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: 0.14s;
+    }
+    .step-btn {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .step-btn:hover,
+    .quick-action:hover { border-color: rgba(255,255,255,0.18); }
+    .quick-action {
+      padding: 9px 12px;
+      white-space: nowrap;
+    }
+    .quick-action.primary {
+      background: rgba(124,58,237,0.16);
+      border-color: rgba(124,58,237,0.38);
+      color: #ddd6fe;
+    }
+    .quick-action.primary:hover {
+      border-color: rgba(124,58,237,0.55);
+      color: #ede9fe;
+    }
+    .field-hint {
+      font-size: 11px;
+      color: var(--text2);
+    }
+
     /* ── toast ── */
     #toast {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -204,6 +346,25 @@
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     #toast.ok   { border-color: rgba(34,197,94,0.4); color: #86efac; }
     #toast.err  { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+
+    @media (max-width: 860px) {
+      .quick-pane.active { grid-template-columns: repeat(6, 1fr); }
+      .quick-field, .quick-field.wide { grid-column: span 3; }
+      .quick-field.full { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 560px) {
+      .race-bar {
+        flex-wrap: wrap;
+        align-items: stretch;
+      }
+      .race-select {
+        max-width: none;
+        width: 100%;
+      }
+      .quick-pane.active { grid-template-columns: 1fr; }
+      .quick-field, .quick-field.wide, .quick-field.full { grid-column: 1 / -1; }
+    }
   </style>
 </head>
 <body>
@@ -231,6 +392,151 @@
 </div>
 
 <div class="deck">
+
+  <div class="quick-panel">
+    <div class="quick-panel-head">
+      <div>
+        <div class="quick-panel-title">Quick Edit</div>
+        <div class="quick-panel-note">Change live values without leaving the deck.</div>
+      </div>
+      <div class="quick-tabs">
+        <button class="quick-tab active" data-tab="race" onclick="setQuickTab('race')">Race</button>
+        <button class="quick-tab" data-tab="metrics" onclick="setQuickTab('metrics')">Metrics</button>
+        <button class="quick-tab" data-tab="id" onclick="setQuickTab('id')">ID</button>
+        <button class="quick-tab" data-tab="alerts" onclick="setQuickTab('alerts')">Alerts</button>
+      </div>
+    </div>
+
+    <div class="quick-pane active" data-pane="race">
+      <div class="quick-field wide">
+        <label for="qEvTitle">Event Title</label>
+        <input id="qEvTitle" class="quick-input" placeholder="Men's Varsity 8+">
+      </div>
+      <div class="quick-field wide">
+        <label for="qEvSub">Subtitle</label>
+        <input id="qEvSub" class="quick-input" placeholder="Spring Invitational 2026">
+      </div>
+      <div class="quick-field full">
+        <div class="quick-row">
+          <button class="quick-action primary" onclick="pushEventHeader()">Push Header</button>
+          <span class="field-hint">Loads the event header on the overlay without changing the selected race.</span>
+        </div>
+      </div>
+      <div class="quick-field">
+        <label for="qCdDur">Countdown Seconds</label>
+        <div class="stepper">
+          <button class="step-btn" onclick="stepField('qCdDur', -5, 5)">-</button>
+          <input id="qCdDur" class="quick-input" type="number" min="5" step="5" value="300">
+          <button class="step-btn" onclick="stepField('qCdDur', 5, 5)">+</button>
+        </div>
+      </div>
+      <div class="quick-field wide">
+        <label>Countdown Controls</label>
+        <div class="quick-row">
+          <button class="quick-action primary" onclick="startCountdownFromField()">Start</button>
+          <button class="quick-action" onclick="sendCountdown('stop')">Stop</button>
+          <button class="quick-action" onclick="sendCountdown('reset')">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-pane" data-pane="metrics">
+      <div class="quick-field">
+        <label for="qSpmVal">Stroke Rate</label>
+        <div class="stepper">
+          <button class="step-btn" onclick="stepField('qSpmVal', -1, 0)">-</button>
+          <input id="qSpmVal" class="quick-input" type="number" min="0" step="1" value="36">
+          <button class="step-btn" onclick="stepField('qSpmVal', 1, 0)">+</button>
+        </div>
+      </div>
+      <div class="quick-field wide">
+        <label for="qSpmLbl">Stroke Rate Label</label>
+        <input id="qSpmLbl" class="quick-input" placeholder="Leading Boat">
+      </div>
+      <div class="quick-field">
+        <label>Push SPM</label>
+        <div class="quick-row">
+          <button class="quick-action primary" onclick="pushStrokeRate()">Update</button>
+        </div>
+      </div>
+      <div class="quick-field">
+        <label for="qDstCov">Distance Covered</label>
+        <div class="stepper">
+          <button class="step-btn" onclick="stepField('qDstCov', -50, 0)">-</button>
+          <input id="qDstCov" class="quick-input" type="number" min="0" step="10" value="0">
+          <button class="step-btn" onclick="stepField('qDstCov', 50, 0)">+</button>
+        </div>
+      </div>
+      <div class="quick-field">
+        <label for="qDstTot">Distance Total</label>
+        <div class="stepper">
+          <button class="step-btn" onclick="stepField('qDstTot', -250, 250)">-</button>
+          <input id="qDstTot" class="quick-input" type="number" min="250" step="250" value="2000">
+          <button class="step-btn" onclick="stepField('qDstTot', 250, 250)">+</button>
+        </div>
+      </div>
+      <div class="quick-field wide">
+        <label>Push Distance</label>
+        <div class="quick-row">
+          <button class="quick-action primary" onclick="pushDistance()">Update</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-pane" data-pane="id">
+      <div class="quick-field">
+        <label for="qLtName">Lower Third Name</label>
+        <input id="qLtName" class="quick-input" placeholder="Name">
+      </div>
+      <div class="quick-field">
+        <label for="qLtTitle">Lower Third Title</label>
+        <input id="qLtTitle" class="quick-input" placeholder="Title">
+      </div>
+      <div class="quick-field">
+        <label for="qLtSchool">Lower Third School</label>
+        <input id="qLtSchool" class="quick-input" placeholder="School">
+      </div>
+      <div class="quick-field full">
+        <div class="quick-row">
+          <button class="quick-action primary" onclick="pushLowerThird()">Push Lower Third</button>
+        </div>
+      </div>
+      <div class="quick-field wide">
+        <label for="qWmText">Watermark Text</label>
+        <input id="qWmText" class="quick-input" placeholder="Brooks School Crew">
+      </div>
+      <div class="quick-field wide">
+        <label>Push Watermark</label>
+        <div class="quick-row">
+          <button class="quick-action primary" onclick="pushWatermark()">Update Watermark</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-pane" data-pane="alerts">
+      <div class="quick-field wide">
+        <label for="qAlertText">Custom Alert</label>
+        <input id="qAlertText" class="quick-input" placeholder="Custom message">
+      </div>
+      <div class="quick-field">
+        <label for="qAlertDur">Duration</label>
+        <div class="stepper">
+          <button class="step-btn" onclick="stepField('qAlertDur', -1, 1)">-</button>
+          <input id="qAlertDur" class="quick-input" type="number" min="1" max="15" step="1" value="4">
+          <button class="step-btn" onclick="stepField('qAlertDur', 1, 1)">+</button>
+        </div>
+      </div>
+      <div class="quick-field">
+        <label>Send Alert</label>
+        <div class="quick-row">
+          <button class="quick-action primary" onclick="sendQuickAlert()">Flash</button>
+        </div>
+      </div>
+      <div class="quick-field full">
+        <span class="field-hint">Preset alert buttons below still work. This tab gives you a custom text/duration sender.</span>
+      </div>
+    </div>
+  </div>
 
   <!-- ── INTROS ── -->
   <div>
@@ -437,6 +743,7 @@
   if (user && user.role !== 'admin') location.href = user.role === 'coach' ? '/audio.html' : '/';
 
   let ws, overlayState = {}, raceSchedule = [], boats = {}, currentRaceId = null;
+  let quickFieldsReady = false;
 
   // ── WebSocket ──
   function connect() {
@@ -460,14 +767,25 @@
       currentRaceId = msg.currentRaceId ?? currentRaceId;
       syncElementButtons();
       syncRaceSelector();
+      syncQuickFields();
     }
     if (msg.type === 'toggle') {
       if (overlayState[msg.element]) overlayState[msg.element].active = msg.active;
       syncElementButtons();
     }
+    if (msg.type === 'update' && msg.element && msg.data && overlayState[msg.element]) {
+      Object.assign(overlayState[msg.element], msg.data);
+      syncQuickFields();
+    }
     if (msg.type === 'current-race-set') {
       currentRaceId = msg.raceId;
       syncRaceSelector();
+    }
+    if (msg.type === 'countdown-control') {
+      overlayState.countdown = overlayState.countdown || {};
+      if (msg.duration !== undefined) overlayState.countdown.duration = msg.duration;
+      overlayState.countdown.active = msg.action === 'start' ? true : msg.action === 'stop' ? false : overlayState.countdown.active;
+      syncQuickFields();
     }
     if (msg.type === 'intro-playing') {
       setIntroPlaying(msg.intro, msg.duration);
@@ -500,6 +818,147 @@
     currentRaceId = raceId || null;
     send({ type: 'current-race-set', raceId: currentRaceId });
     updateAthleteCount();
+  }
+
+  function setQuickTab(tab) {
+    document.querySelectorAll('.quick-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.querySelectorAll('.quick-pane').forEach(pane => {
+      pane.classList.toggle('active', pane.dataset.pane === tab);
+    });
+  }
+
+  function setFieldValue(id, value, fallback = '') {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (document.activeElement === el) return;
+    el.value = value ?? fallback;
+  }
+
+  function syncQuickFields() {
+    const eventHeader = overlayState.eventHeader || {};
+    const countdown = overlayState.countdown || {};
+    const strokeRate = overlayState.strokeRate || {};
+    const distance = overlayState.distance || {};
+    const lowerThird = overlayState.lowerThird || {};
+    const watermark = overlayState.watermark || {};
+
+    setFieldValue('qEvTitle', eventHeader.text || '');
+    setFieldValue('qEvSub', eventHeader.subtitle || '');
+    setFieldValue('qCdDur', countdown.duration ?? 300, 300);
+    setFieldValue('qSpmVal', strokeRate.value ?? 36, 36);
+    setFieldValue('qSpmLbl', strokeRate.label || 'Leading Boat');
+    setFieldValue('qDstCov', distance.covered ?? 0, 0);
+    setFieldValue('qDstTot', distance.total ?? 2000, 2000);
+    setFieldValue('qLtName', lowerThird.name || '');
+    setFieldValue('qLtTitle', lowerThird.title || '');
+    setFieldValue('qLtSchool', lowerThird.school || '');
+    setFieldValue('qWmText', watermark.text || '');
+
+    if (!quickFieldsReady) {
+      quickFieldsReady = true;
+      setFieldValue('qAlertText', '');
+      setFieldValue('qAlertDur', 4, 4);
+    }
+  }
+
+  function stepField(id, delta, min = null, max = null) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let value = Number(el.value || 0) + delta;
+    if (min !== null) value = Math.max(min, value);
+    if (max !== null) value = Math.min(max, value);
+    el.value = value;
+  }
+
+  function getNum(id, fallback = 0) {
+    const value = Number(document.getElementById(id)?.value);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  function pushEventHeader() {
+    send({
+      type: 'update',
+      element: 'eventHeader',
+      data: {
+        text: document.getElementById('qEvTitle').value,
+        subtitle: document.getElementById('qEvSub').value
+      }
+    });
+    toast('Header updated', 'ok');
+  }
+
+  function sendCountdown(action) {
+    const duration = Math.max(5, getNum('qCdDur', 300));
+    document.getElementById('qCdDur').value = duration;
+    send({ type: 'countdown-control', action, duration });
+    toast('Countdown ' + action, 'ok');
+  }
+
+  function startCountdownFromField() {
+    sendCountdown('start');
+  }
+
+  function pushStrokeRate() {
+    const value = Math.max(0, getNum('qSpmVal', 36));
+    document.getElementById('qSpmVal').value = value;
+    send({
+      type: 'update',
+      element: 'strokeRate',
+      data: {
+        value,
+        label: document.getElementById('qSpmLbl').value || 'Leading Boat'
+      }
+    });
+    toast('Stroke rate updated', 'ok');
+  }
+
+  function pushDistance() {
+    const covered = Math.max(0, getNum('qDstCov', 0));
+    const total = Math.max(covered || 0, getNum('qDstTot', 2000));
+    document.getElementById('qDstCov').value = covered;
+    document.getElementById('qDstTot').value = total;
+    send({
+      type: 'update',
+      element: 'distance',
+      data: { covered, total }
+    });
+    toast('Distance updated', 'ok');
+  }
+
+  function pushLowerThird() {
+    send({
+      type: 'update',
+      element: 'lowerThird',
+      data: {
+        name: document.getElementById('qLtName').value,
+        title: document.getElementById('qLtTitle').value,
+        school: document.getElementById('qLtSchool').value
+      }
+    });
+    toast('Lower third updated', 'ok');
+  }
+
+  function pushWatermark() {
+    send({
+      type: 'update',
+      element: 'watermark',
+      data: { text: document.getElementById('qWmText').value }
+    });
+    toast('Watermark updated', 'ok');
+  }
+
+  function sendQuickAlert() {
+    const text = document.getElementById('qAlertText').value.trim();
+    const duration = Math.min(15, Math.max(1, getNum('qAlertDur', 4)));
+    document.getElementById('qAlertDur').value = duration;
+    if (!text) {
+      toast('Enter alert text', 'err');
+      return;
+    }
+    send({ type: 'alert', text, duration });
+    toast('⚡ ' + text, 'ok');
   }
 
   function setConn(ok) {
@@ -563,9 +1022,7 @@
       }
 
       else if (action === 'countdown') {
-        const a = btn.dataset.countdown;
-        send({ type: 'countdown-control', action: a, duration: 300 });
-        toast('Countdown ' + a, 'ok');
+        sendCountdown(btn.dataset.countdown);
         flashBtn(btn);
       }
 

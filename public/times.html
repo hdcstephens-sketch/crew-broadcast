@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CREW - Times</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #060c09;
+      --card: #0f1510;
+      --card2: #161e18;
+      --accent: #00a86b;
+      --accent-2: #7ddfbd;
+      --danger: #e53935;
+      --text: #f0f0f0;
+      --text2: #8a9a90;
+      --line: rgba(255,255,255,0.07);
+      --r: 16px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(6,12,9,0.96);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 20px;
+    }
+
+    .brand {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill,
+    .pill-btn {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--text2);
+      background: var(--card);
+      text-decoration: none;
+    }
+
+    .pill:hover,
+    .pill-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .pill-btn {
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .pill-danger { border-color: rgba(229,57,53,0.35); color: #ef9a9a; }
+    .pill-danger:hover { border-color: var(--danger); color: #ef9a9a; }
+
+    .status-label {
+      font-size: 12px;
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #444;
+      flex-shrink: 0;
+    }
+
+    .dot.live { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .dot.err { background: var(--danger); }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 16px;
+    }
+
+    .card-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text2);
+      margin-bottom: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      color: var(--text2);
+      font-weight: 600;
+    }
+
+    .sel,
+    .text-inp,
+    .tbl input {
+      width: 100%;
+      background: var(--card2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .sel,
+    .text-inp { padding: 10px 12px; }
+
+    .sel:focus,
+    .text-inp:focus,
+    .tbl input:focus { border-color: var(--accent); }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 110px;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--card2);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: 0.14s;
+    }
+
+    .btn:hover { border-color: var(--accent); }
+    .btn-go { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-go:hover { background: #00c07a; }
+    .btn-danger { border-color: rgba(229,57,53,0.35); color: #ef9a9a; }
+    .btn-danger:hover { border-color: var(--danger); }
+
+    .timer-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .timer-display {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 64px;
+      line-height: 0.95;
+      letter-spacing: 0.03em;
+      font-weight: 700;
+    }
+
+    .timer-display .sub {
+      font-size: 36px;
+      color: var(--accent-2);
+    }
+
+    .timer-state {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text2);
+    }
+
+    .timer-state.live { color: var(--accent); }
+
+    .race-status {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text2);
+      margin-top: 12px;
+    }
+
+    .race-status strong { color: var(--text); }
+
+    .lane-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .lane-row {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) 92px 84px;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--card2);
+      border: 1px solid transparent;
+    }
+
+    .lane-row.is-marked {
+      border-color: rgba(0,168,107,0.35);
+      box-shadow: inset 0 0 0 1px rgba(0,168,107,0.15);
+    }
+
+    .lane-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.05);
+      color: var(--text2);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .lane-school {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lane-time {
+      text-align: right;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+
+    .empty {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px dashed var(--line);
+      color: var(--text2);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .tbl-wrap { overflow-x: auto; }
+    .tbl {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 420px;
+    }
+
+    .tbl th {
+      text-align: left;
+      padding: 0 6px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text2);
+    }
+
+    .tbl td { padding: 4px 6px; }
+    .tbl input { padding: 9px 10px; font-size: 13px; }
+
+    .tbl .place-inp { width: 54px; }
+    .tbl .time-inp { width: 92px; }
+    .tbl .gap-inp { width: 90px; }
+
+    .hint {
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+
+    #toasts {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .toast {
+      padding: 10px 14px;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .toast.ok { background: var(--accent); }
+    .toast.err { background: var(--danger); }
+
+    @media (max-width: 980px) {
+      .page { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .topbar-right { width: 100%; justify-content: flex-start; }
+      .timer-display { font-size: 52px; }
+      .timer-display .sub { font-size: 28px; }
+      .lane-row { grid-template-columns: 34px minmax(0, 1fr) 82px 78px; gap: 8px; }
+      .lane-time { font-size: 21px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">TIMES</div>
+  <div class="topbar-right">
+    <span id="wsLabel" class="status-label"><span id="wsDot" class="dot"></span>Connecting</span>
+    <a id="controlLink" class="pill" href="/control.html" style="display:none;">Control</a>
+    <a class="pill" href="/audio.html">Commentary</a>
+    <a class="pill" href="/monitor.html" target="_blank">Monitor</a>
+    <button class="pill-btn pill-danger" onclick="logout()">Log Out</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="col">
+    <div class="card">
+      <div class="card-label">Race Context</div>
+      <div class="field">
+        <label class="field-label" for="raceSelect">Schedule race</label>
+        <select id="raceSelect" class="sel" onchange="onRaceSelect(this.value)">
+          <option value="">No races in schedule</option>
+        </select>
+      </div>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn btn-go" onclick="loadRaceContext()">Load Race To Overlay</button>
+        <button class="btn" onclick="setSelectedAsCurrent()">Set Current Only</button>
+      </div>
+      <div class="race-status">
+        <div>Current live race: <strong id="currentRaceText">None selected</strong></div>
+        <div>Overlay header: <strong id="headerText">Waiting for state...</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Race Timer</div>
+      <div class="timer-wrap">
+        <div class="timer-display" id="timerDisp">00:00<span class="sub">.0</span></div>
+        <div class="timer-state" id="timerState">Ready</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-go" onclick="tStart()">Start</button>
+        <button class="btn" onclick="tStop()">Stop</button>
+        <button class="btn btn-danger" onclick="tReset()">Reset</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Lane Finish Capture</div>
+      <div id="laneList" class="lane-list"></div>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn" onclick="copyMarksToResults()">Copy Marks To Results</button>
+        <button class="btn btn-go" onclick="pushMarkedResults()">Push Marked Results</button>
+        <button class="btn btn-danger" onclick="clearFinishMarks()">Clear Marks</button>
+      </div>
+      <div class="hint">Use the mark buttons in finish order. Marked results stay local on this page until you push them.</div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <div class="card-label">Manual Results Pad</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Place</th>
+              <th>School</th>
+              <th>Time</th>
+              <th>Gap</th>
+            </tr>
+          </thead>
+          <tbody id="resBdy"></tbody>
+        </table>
+      </div>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn" onclick="seedRowsFromLanes()">Seed From Lanes</button>
+        <button class="btn" onclick="addRow()">Add Row</button>
+      </div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn btn-danger" onclick="clearResults()">Clear Results</button>
+        <button class="btn btn-go" onclick="pushResults()">Push Results</button>
+      </div>
+      <div class="hint">`Push Results` sorts by time automatically, recalculates places and margins, and updates the live results state for every client.</div>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+const token = localStorage.getItem('crew_token');
+const user = JSON.parse(localStorage.getItem('crew_user') || 'null');
+if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
+if (user && !['admin', 'coach'].includes(user.role)) location.href = '/';
+if (user?.role === 'admin') document.getElementById('controlLink').style.display = '';
+
+let ws;
+let raceSchedule = [];
+let currentRaceId = null;
+let selectedRaceId = null;
+let overlayState = {};
+let currentLanes = [];
+let finishTimes = [];
+let timerRunning = false;
+let timerStart = null;
+let timerElapsed = 0;
+let timerIv = null;
+let firstStateReceived = false;
+
+function escAttr(v) {
+  return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function setWsStatus(ok) {
+  document.getElementById('wsDot').className = 'dot ' + (ok ? 'live' : 'err');
+  document.getElementById('wsLabel').innerHTML =
+    `<span class="dot ${ok ? 'live' : 'err'}" id="wsDot"></span>${ok ? 'Live' : 'Reconnecting...'}`;
+}
+
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 2600);
+}
+
+function wsSend(payload) {
+  if (ws?.readyState === 1) ws.send(JSON.stringify(payload));
+}
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' }));
+  ws.onclose = () => { setWsStatus(false); setTimeout(connect, 3000); };
+  ws.onmessage = e => onMessage(JSON.parse(e.data));
+}
+
+function onMessage(msg) {
+  if (msg.type === 'auth-ok') {
+    setWsStatus(true);
+    toast('Connected', 'ok');
+    return;
+  }
+  if (msg.type === 'auth-fail') {
+    localStorage.removeItem('crew_token');
+    localStorage.removeItem('crew_user');
+    location.href = '/';
+    return;
+  }
+
+  if (msg.type === 'state' || msg.type === 'setup-saved') {
+    if (Array.isArray(msg.raceSchedule)) raceSchedule = msg.raceSchedule;
+    currentRaceId = msg.currentRaceId ?? currentRaceId;
+    if (msg.overlayState) applyState(msg.overlayState);
+    renderRaceSelect();
+    return;
+  }
+
+  if (msg.type === 'current-race-set') {
+    currentRaceId = msg.raceId || null;
+    renderRaceSelect();
+    return;
+  }
+
+  if (msg.type === 'race-schedule') {
+    raceSchedule = msg.schedule || [];
+    renderRaceSelect();
+    return;
+  }
+
+  if (msg.type === 'update') {
+    if (msg.element === 'results' && msg.data?.data) fillResults(msg.data.data);
+    if (msg.element === 'lanes' && msg.data?.data) {
+      setCurrentLanes(msg.data.data);
+    }
+    if (msg.element === 'eventHeader' && msg.data) {
+      overlayState.eventHeader = { ...(overlayState.eventHeader || {}), ...msg.data };
+      renderRaceStatus();
+    }
+    return;
+  }
+
+  if (msg.type === 'timer-control') {
+    syncTimer(msg);
+  }
+}
+
+function applyState(state) {
+  overlayState = state || {};
+
+  if (state.timer) {
+    timerElapsed = state.timer.elapsed || 0;
+    if (state.timer.running && state.timer.startTime) {
+      timerStart = state.timer.startTime;
+      timerRunning = true;
+      runTimer();
+    } else {
+      stopTimerLocal();
+      updateTimerDisplay(timerElapsed);
+    }
+  }
+
+  setCurrentLanes(state.lanes?.data || []);
+  renderRaceStatus();
+
+  if (firstStateReceived) return;
+  firstStateReceived = true;
+  fillResults(state.results?.data || []);
+}
+
+function setCurrentLanes(lanes) {
+  currentLanes = lanes || [];
+  finishTimes = finishTimes.filter(item => item.laneIndex >= 0 && item.laneIndex < currentLanes.length);
+  renderLaneList();
+}
+
+function renderRaceSelect() {
+  const select = document.getElementById('raceSelect');
+  if (!raceSchedule.length) {
+    select.innerHTML = '<option value="">No races in schedule</option>';
+    selectedRaceId = null;
+    renderRaceStatus();
+    return;
+  }
+
+  if (!selectedRaceId || !raceSchedule.some(r => r.id === selectedRaceId)) {
+    selectedRaceId = currentRaceId && raceSchedule.some(r => r.id === currentRaceId)
+      ? currentRaceId
+      : raceSchedule[0].id;
+  }
+
+  select.innerHTML = raceSchedule.map(r => `
+    <option value="${escAttr(r.id)}" ${r.id === selectedRaceId ? 'selected' : ''}>
+      ${escAttr(r.name)}${r.sub ? ' - ' + escAttr(r.sub) : ''}
+    </option>
+  `).join('');
+
+  renderRaceStatus();
+}
+
+function onRaceSelect(raceId) {
+  selectedRaceId = raceId || null;
+  renderRaceStatus();
+}
+
+function getSelectedRace() {
+  return raceSchedule.find(r => r.id === selectedRaceId) || null;
+}
+
+function getCurrentRace() {
+  return raceSchedule.find(r => r.id === currentRaceId) || null;
+}
+
+function renderRaceStatus() {
+  const currentRace = getCurrentRace();
+  const header = overlayState.eventHeader || {};
+  document.getElementById('currentRaceText').textContent =
+    currentRace ? currentRace.name + (currentRace.sub ? ' - ' + currentRace.sub : '') : 'None selected';
+  document.getElementById('headerText').textContent =
+    header.text ? header.text + (header.subtitle ? ' - ' + header.subtitle : '') : 'No header loaded';
+}
+
+function setSelectedAsCurrent() {
+  const race = getSelectedRace();
+  if (!race) { toast('Pick a race first', 'err'); return; }
+  currentRaceId = race.id;
+  wsSend({ type: 'current-race-set', raceId: race.id });
+  renderRaceStatus();
+  toast('Current race set', 'ok');
+}
+
+function loadRaceContext() {
+  const race = getSelectedRace();
+  if (!race) { toast('Pick a race first', 'err'); return; }
+  currentRaceId = race.id;
+  wsSend({ type: 'current-race-set', raceId: race.id });
+  wsSend({ type: 'update', element: 'eventHeader', data: { text: race.name, subtitle: race.sub || '' } });
+  overlayState.eventHeader = { ...(overlayState.eventHeader || {}), text: race.name, subtitle: race.sub || '' };
+  renderRaceStatus();
+  toast('Race loaded to overlay', 'ok');
+}
+
+function updateTimerDisplay(ms) {
+  const totalTenths = Math.floor(ms / 100);
+  const t = totalTenths % 10;
+  const totalS = Math.floor(totalTenths / 10);
+  const s = totalS % 60;
+  const m = Math.floor(totalS / 60);
+  document.getElementById('timerDisp').innerHTML =
+    `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}<span class="sub">.${t}</span>`;
+}
+
+function runTimer() {
+  clearInterval(timerIv);
+  timerRunning = true;
+  document.getElementById('timerState').textContent = 'Running';
+  document.getElementById('timerState').className = 'timer-state live';
+  timerIv = setInterval(() => updateTimerDisplay(Date.now() - timerStart), 100);
+}
+
+function stopTimerLocal() {
+  clearInterval(timerIv);
+  timerIv = null;
+  timerRunning = false;
+  document.getElementById('timerState').textContent = timerElapsed > 0 ? 'Stopped' : 'Ready';
+  document.getElementById('timerState').className = 'timer-state';
+}
+
+function syncTimer(msg) {
+  if (msg.action === 'start') {
+    timerRunning = true;
+    timerStart = Date.now() - (msg.elapsed || 0);
+    runTimer();
+  } else if (msg.action === 'stop') {
+    timerElapsed = msg.elapsed || 0;
+    stopTimerLocal();
+    updateTimerDisplay(timerElapsed);
+  } else if (msg.action === 'reset') {
+    timerElapsed = 0;
+    stopTimerLocal();
+    updateTimerDisplay(0);
+  }
+}
+
+function tStart() {
+  timerRunning = true;
+  timerStart = Date.now() - timerElapsed;
+  runTimer();
+  wsSend({ type: 'timer-control', action: 'start', elapsed: timerElapsed });
+}
+
+function tStop() {
+  if (!timerRunning && timerElapsed === 0) return;
+  timerElapsed = timerRunning ? (Date.now() - timerStart) : timerElapsed;
+  stopTimerLocal();
+  updateTimerDisplay(timerElapsed);
+  wsSend({ type: 'timer-control', action: 'stop', elapsed: timerElapsed });
+}
+
+function tReset() {
+  timerElapsed = 0;
+  stopTimerLocal();
+  updateTimerDisplay(0);
+  wsSend({ type: 'timer-control', action: 'reset' });
+}
+
+function msToTimeStr(ms) {
+  const m = Math.floor(ms / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  const t = Math.floor((ms % 1000) / 100);
+  return `${m}:${String(s).padStart(2, '0')}.${t}`;
+}
+
+function formatGap(ms) {
+  if (ms <= 0) return '-';
+  const totalS = ms / 1000;
+  if (totalS < 60) return `+${totalS.toFixed(1)}`;
+  const m = Math.floor(totalS / 60);
+  const rem = (totalS % 60).toFixed(1);
+  return `+${m}:${parseFloat(rem) < 10 ? '0' + rem : rem}`;
+}
+
+function renderLaneList() {
+  const list = document.getElementById('laneList');
+  if (!currentLanes.length) {
+    list.innerHTML = '<div class="empty">No lane assignments are live yet.</div>';
+    return;
+  }
+
+  list.innerHTML = currentLanes.map((lane, i) => {
+    const marked = finishTimes.find(f => f.laneIndex === i);
+    return `
+      <div class="lane-row${marked ? ' is-marked' : ''}">
+        <div class="lane-num">${escAttr(lane.lane || i + 1)}</div>
+        <div class="lane-school">${escAttr(lane.school || 'Lane ' + (lane.lane || i + 1))}</div>
+        <div class="lane-time">${marked ? msToTimeStr(marked.ms) : '--'}</div>
+        ${marked
+          ? `<button class="btn btn-danger" style="min-width:0;padding:9px 10px;" onclick="unmarkFinish(${i})">Clear</button>`
+          : `<button class="btn btn-go" style="min-width:0;padding:9px 10px;" onclick="markFinish(${i})">Mark</button>`}
+      </div>
+    `;
+  }).join('');
+}
+
+function markFinish(i) {
+  if (!timerRunning && timerElapsed === 0) {
+    toast('Start the timer first', 'err');
+    return;
+  }
+  const lane = currentLanes[i];
+  if (!lane) return;
+  const ms = timerRunning ? (Date.now() - timerStart) : timerElapsed;
+  finishTimes = finishTimes.filter(f => f.laneIndex !== i);
+  finishTimes.push({
+    laneIndex: i,
+    lane: lane.lane,
+    school: lane.school,
+    logo: lane.logo || null,
+    ms
+  });
+  renderLaneList();
+}
+
+function unmarkFinish(i) {
+  finishTimes = finishTimes.filter(f => f.laneIndex !== i);
+  renderLaneList();
+}
+
+function clearFinishMarks() {
+  finishTimes = [];
+  renderLaneList();
+  toast('Finish marks cleared', 'ok');
+}
+
+function buildMarkedResultsData() {
+  if (!finishTimes.length) return [];
+  const sorted = [...finishTimes].sort((a, b) => a.ms - b.ms);
+  const firstMs = sorted[0].ms;
+  return sorted.map((row, idx) => ({
+    place: idx + 1,
+    school: row.school,
+    time: msToTimeStr(row.ms),
+    margin: idx === 0 ? '-' : formatGap(row.ms - firstMs),
+    lane: row.lane,
+    logo: row.logo || null
+  }));
+}
+
+function copyMarksToResults() {
+  const data = buildMarkedResultsData();
+  if (!data.length) {
+    toast('No marked finishes yet', 'err');
+    return;
+  }
+  fillResults(data);
+  toast('Marked results copied into pad', 'ok');
+}
+
+function pushMarkedResults() {
+  const data = buildMarkedResultsData();
+  if (!data.length) {
+    toast('No marked finishes yet', 'err');
+    return;
+  }
+  fillResults(data);
+  wsSend({ type: 'update', element: 'results', data: { data } });
+  toast('Marked results pushed', 'ok');
+}
+
+function parseTimeToSec(value) {
+  const str = String(value || '').trim();
+  const mmss = str.match(/^(\d+):(\d+(?:\.\d+)?)$/);
+  if (mmss) return Number(mmss[1]) * 60 + Number(mmss[2]);
+  const n = Number(str);
+  return Number.isFinite(n) ? n : null;
+}
+
+function secToGap(diff) {
+  if (diff <= 0) return '-';
+  if (diff < 60) return `+${diff.toFixed(1)}`;
+  const m = Math.floor(diff / 60);
+  const s = (diff % 60).toFixed(1);
+  return `+${m}:${parseFloat(s) < 10 ? '0' + s : s}`;
+}
+
+function fillResults(data) {
+  const body = document.getElementById('resBdy');
+  body.innerHTML = '';
+  (data || []).forEach(r => {
+    const row = document.createElement('tr');
+    row.dataset.lane = r.lane || '';
+    row.dataset.logo = r.logo || '';
+    row.innerHTML = `
+      <td><input class="place-inp" type="number" value="${escAttr(r.place || '')}"></td>
+      <td><input type="text" value="${escAttr(r.school || '')}" placeholder="School"></td>
+      <td><input class="time-inp" type="text" value="${escAttr(r.time || '')}" placeholder="6:02.4"></td>
+      <td><input class="gap-inp" type="text" value="${escAttr(r.margin || '')}" placeholder="+0.0"></td>
+    `;
+    body.appendChild(row);
+  });
+}
+
+function addRow() {
+  const existing = Array.from(document.querySelectorAll('#resBdy tr')).map(readResultRow);
+  fillResults([...existing, { place: existing.length + 1, school: '', time: '', margin: '' }]);
+}
+
+function readResultRow(row) {
+  const inputs = row.querySelectorAll('input');
+  return {
+    place: Number(inputs[0].value) || 0,
+    school: inputs[1].value.trim(),
+    time: inputs[2].value.trim(),
+    margin: inputs[3].value.trim(),
+    lane: row.dataset.lane ? Number(row.dataset.lane) : null,
+    logo: row.dataset.logo || null
+  };
+}
+
+function seedRowsFromLanes() {
+  if (!currentLanes.length) {
+    toast('No lanes are live yet', 'err');
+    return;
+  }
+  fillResults(currentLanes.map((lane, i) => ({
+    place: i + 1,
+    school: lane.school || '',
+    time: '',
+    margin: '',
+    lane: lane.lane || i + 1,
+    logo: lane.logo || null
+  })));
+  toast('Rows seeded from lanes', 'ok');
+}
+
+function clearResults() {
+  fillResults([]);
+  wsSend({ type: 'update', element: 'results', data: { data: [] } });
+  toast('Results cleared', 'ok');
+}
+
+function pushResults() {
+  const rows = Array.from(document.querySelectorAll('#resBdy tr')).map(row => {
+    const base = readResultRow(row);
+    return { ...base, _sec: parseTimeToSec(base.time) };
+  }).filter(r => r.school || r.time);
+
+  if (!rows.length) {
+    toast('Add at least one result row', 'err');
+    return;
+  }
+
+  rows.sort((a, b) => {
+    if (a._sec === null && b._sec === null) return 0;
+    if (a._sec === null) return 1;
+    if (b._sec === null) return -1;
+    return a._sec - b._sec;
+  });
+
+  const firstSec = rows[0]?._sec ?? null;
+  const data = rows.map((row, idx) => ({
+    place: idx + 1,
+    school: row.school,
+    time: row.time,
+    margin: row._sec !== null && firstSec !== null && idx > 0 ? secToGap(row._sec - firstSec) : '-',
+    lane: row.lane || null,
+    logo: row.logo || null
+  }));
+
+  fillResults(data);
+  wsSend({ type: 'update', element: 'results', data: { data } });
+  toast('Results pushed', 'ok');
+}
+
+function logout() {
+  localStorage.removeItem('crew_token');
+  localStorage.removeItem('crew_user');
+  location.href = '/';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.code === 'Space') {
+    e.preventDefault();
+    timerRunning ? tStop() : tStart();
+  }
+  if (e.key.toLowerCase() === 'r') {
+    e.preventDefault();
+    tReset();
+  }
+});
+
+connect();
+</script>
+</body>
+</html>
