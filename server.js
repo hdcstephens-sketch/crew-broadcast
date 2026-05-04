@@ -203,6 +203,15 @@ function deepMerge(base, override) {
   return override !== undefined ? override : base;
 }
 
+const DEFAULT_BOATS = {
+  'varsity-1': { id: 'varsity-1', name: 'Varsity 1', boatClass: '', athletes: [] },
+  'varsity-2': { id: 'varsity-2', name: 'Varsity 2', boatClass: '', athletes: [] },
+  'varsity-3': { id: 'varsity-3', name: 'Varsity 3', boatClass: '', athletes: [] },
+  'varsity-4': { id: 'varsity-4', name: 'Varsity 4', boatClass: '', athletes: [] },
+  'jv-5':      { id: 'jv-5',     name: 'JV 5',      boatClass: '', athletes: [] },
+  'jv-6':      { id: 'jv-6',     name: 'JV 6',      boatClass: '', athletes: [] }
+};
+
 function getDefaultStore() {
   return {
     overlayState: defaultOverlayState(),
@@ -211,7 +220,8 @@ function getDefaultStore() {
     teamPresets: { ...DEFAULT_TEAM_PRESETS },
     raceSchedule: [],
     raceRosters: {},
-    currentRaceId: null
+    currentRaceId: null,
+    boats: { ...DEFAULT_BOATS }
   };
 }
 
@@ -228,7 +238,8 @@ function loadStore() {
       teamPresets: deepMerge(defaults.teamPresets, parsed.teamPresets),
       raceSchedule: Array.isArray(parsed.raceSchedule) ? parsed.raceSchedule : [],
       raceRosters: isPlainObject(parsed.raceRosters) ? parsed.raceRosters : {},
-      currentRaceId: parsed.currentRaceId || null
+      currentRaceId: parsed.currentRaceId || null,
+      boats: isPlainObject(parsed.boats) ? { ...DEFAULT_BOATS, ...parsed.boats } : { ...DEFAULT_BOATS }
     };
   } catch (error) {
     console.error('Failed to load persisted state, using defaults.', error);
@@ -236,10 +247,10 @@ function loadStore() {
   }
 }
 
-let { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId } = loadStore();
+let { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId, boats } = loadStore();
 
 function persistStore() {
-  const data = { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId };
+  const data = { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId, boats };
   fs.mkdirSync(STORE_DIR, { recursive: true });
   fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2));
 }
@@ -262,6 +273,7 @@ function getStatePayload() {
     raceSchedule,
     raceRosters,
     currentRaceId,
+    boats,
     activeBroadcaster: Boolean(activeBroadcasterId && clients.has(activeBroadcasterId)),
     activeMimeType,
     hasPDF: fs.existsSync(path.join(__dirname, 'public', 'uploads', 'schedule.pdf'))
@@ -304,7 +316,16 @@ app.post('/api/login', (req, res) => {
 });
 
 app.get('/api/state', requireAuth, (req, res) => {
-  res.json({ overlayState, designConfig, presetConfigs, teamPresets });
+  res.json({
+    overlayState,
+    designConfig,
+    presetConfigs,
+    teamPresets,
+    raceSchedule,
+    raceRosters,
+    currentRaceId,
+    boats
+  });
 });
 
 function requireAuth(req, res, next) {
@@ -628,13 +649,42 @@ function handleMessage(clientId, msg) {
       if (!client.authenticated) return;
       const introId = String(msg.intro || '').slice(0, 64);
       if (!introId) return;
-      const roster = currentRaceId ? (raceRosters[currentRaceId] || null) : null;
-      const race   = currentRaceId ? (raceSchedule.find(r => r.id === currentRaceId) || null) : null;
+      const race = currentRaceId ? (raceSchedule.find(r => r.id === currentRaceId) || null) : null;
+      // Prefer boat roster if race has a boatId, fall back to raceRoster
+      let roster = null;
+      if (race?.boatId && boats[race.boatId]) {
+        roster = boats[race.boatId];
+      } else if (currentRaceId && raceRosters[currentRaceId]) {
+        roster = raceRosters[currentRaceId];
+      }
       const duration = introId === 'athletes' && roster
-        ? Math.max(6, (roster.athletes || []).length * 4)
+        ? Math.max(6, (roster.athletes || []).length * 5)
         : 6;
       broadcast('overlay',    { type: 'play-intro', intro: introId, race, roster });
       broadcast('controller', { type: 'intro-playing', intro: introId, duration });
+      break;
+    }
+
+    case 'boats-save': {
+      if (!client.authenticated || client.user?.role !== 'admin') return;
+      if (!isPlainObject(msg.boats)) return;
+      Object.entries(msg.boats).forEach(([id, boat]) => {
+        if (!isPlainObject(boat) || !boats[id]) return;
+        boats[id] = {
+          id:        String(boat.id || id).slice(0, 64),
+          name:      String(boat.name || '').slice(0, 80),
+          boatClass: String(boat.boatClass || '').slice(0, 80),
+          athletes: Array.isArray(boat.athletes) ? boat.athletes.slice(0, 20).map(a => ({
+            id:        String(a.id        || uuidv4()).slice(0, 64),
+            name:      String(a.name      || '').slice(0, 80),
+            seat:      String(a.seat      || '').slice(0, 40),
+            photoPath: String(a.photoPath || '').slice(0, 200)
+          })) : []
+        };
+      });
+      persistStore();
+      broadcast('controller', { type: 'boats-saved', boats, raceSchedule, currentRaceId });
+      broadcast('overlay',    { type: 'boats-saved', boats, raceSchedule, currentRaceId });
       break;
     }
 
@@ -642,9 +692,10 @@ function handleMessage(clientId, msg) {
       if (!client.authenticated || client.user?.role !== 'admin') return;
       if (Array.isArray(msg.raceSchedule)) {
         raceSchedule = msg.raceSchedule.slice(0, 100).map(r => ({
-          id:   String(r.id   || uuidv4()).slice(0, 64),
-          name: String(r.name || '').slice(0, 120),
-          sub:  String(r.sub  || '').slice(0, 120)
+          id:     String(r.id     || uuidv4()).slice(0, 64),
+          name:   String(r.name   || '').slice(0, 120),
+          sub:    String(r.sub    || '').slice(0, 120),
+          boatId: r.boatId ? String(r.boatId).slice(0, 64) : null
         }));
       }
       if (isPlainObject(msg.raceRosters)) {
@@ -662,15 +713,19 @@ function handleMessage(clientId, msg) {
           };
         });
       }
+      if (!raceSchedule.some(r => r.id === currentRaceId)) {
+        currentRaceId = raceSchedule[0]?.id || null;
+      }
       persistStore();
-      broadcast('controller', { type: 'setup-saved', raceSchedule, raceRosters, currentRaceId });
-      broadcast('overlay',    { type: 'setup-saved', raceSchedule, raceRosters, currentRaceId });
+      broadcast('controller', { type: 'setup-saved', raceSchedule, raceRosters, currentRaceId, boats });
+      broadcast('overlay',    { type: 'setup-saved', raceSchedule, raceRosters, currentRaceId, boats });
       break;
     }
 
     case 'current-race-set': {
       if (!client.authenticated) return;
-      currentRaceId = msg.raceId || null;
+      const nextRaceId = msg.raceId ? String(msg.raceId) : null;
+      currentRaceId = nextRaceId && raceSchedule.some(r => r.id === nextRaceId) ? nextRaceId : null;
       persistStore();
       broadcast('controller', { type: 'current-race-set', raceId: currentRaceId });
       broadcast('overlay',    { type: 'current-race-set', raceId: currentRaceId });

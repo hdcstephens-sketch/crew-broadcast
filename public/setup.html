@@ -7,23 +7,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:      #080b09;
-      --panel:   #0f1410;
-      --card:    #141a15;
-      --card2:   #1a211b;
-      --accent:  #00a86b;
-      --accent-dim: rgba(0,168,107,0.14);
-      --danger:  #e53935;
-      --text:    #f0f0f0;
-      --text2:   #7a9080;
-      --text3:   #3a4d40;
-      --line:    rgba(255,255,255,0.06);
-      --line2:   rgba(255,255,255,0.10);
-      --r:       10px;
+      --bg: #080b09; --panel: #0f1410; --card: #141a15; --card2: #1a211b;
+      --accent: #00a86b; --accent-dim: rgba(0,168,107,0.14);
+      --danger: #e53935; --text: #f0f0f0; --text2: #7a9080; --text3: #3a4d40;
+      --line: rgba(255,255,255,0.06); --line2: rgba(255,255,255,0.10); --r: 10px;
     }
-
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
 
     /* ── topbar ── */
@@ -32,255 +21,155 @@
       background: rgba(8,11,9,0.96); backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--line);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 20px; gap: 12px; height: 52px;
+      padding: 0 20px; height: 52px; gap: 12px;
     }
-    .topbar-left { display: flex; align-items: center; gap: 14px; }
     .brand { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.12em; }
     .brand em { color: var(--accent); font-style: normal; }
-    .save-status { font-size: 11px; font-weight: 600; color: var(--text2); transition: color 0.2s; }
+    .save-status { font-size: 11px; font-weight: 600; color: var(--text2); transition: color 0.2s; white-space: nowrap; }
     .save-status.dirty { color: #f59e0b; }
     .save-status.saved { color: var(--accent); }
-
     .topbar-right { display: flex; align-items: center; gap: 8px; }
-    .btn-save {
-      background: var(--accent); color: #fff;
-      border: none; border-radius: 8px;
-      padding: 7px 18px; font-size: 13px; font-weight: 700;
-      cursor: pointer; transition: 0.14s; letter-spacing: 0.03em;
-    }
+    .btn-save { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 7px 18px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.14s; }
     .btn-save:hover { filter: brightness(1.1); }
     .btn-save:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
-    .topbar-link {
-      font-size: 12px; font-weight: 600; color: var(--text2);
-      background: var(--card); border: 1px solid var(--line);
-      padding: 5px 12px; border-radius: 8px; text-decoration: none; transition: 0.14s;
-    }
+    .topbar-link { font-size: 12px; font-weight: 600; color: var(--text2); background: var(--card); border: 1px solid var(--line); padding: 5px 12px; border-radius: 8px; text-decoration: none; transition: 0.14s; }
     .topbar-link:hover { color: var(--text); border-color: var(--line2); }
 
-    /* ── layout ── */
-    .layout {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      height: calc(100vh - 52px);
-    }
-    @media (max-width: 720px) {
-      .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; }
-    }
+    /* ── tab bar ── */
+    .tab-bar { display: flex; background: var(--panel); border-bottom: 1px solid var(--line); padding: 0 20px; gap: 0; }
+    .tab-btn { padding: 12px 20px; font-size: 13px; font-weight: 600; color: var(--text2); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; transition: 0.14s; white-space: nowrap; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: flex; flex-direction: column; }
 
-    /* ── race list panel ── */
-    .race-panel {
-      background: var(--panel);
-      border-right: 1px solid var(--line);
-      display: flex; flex-direction: column;
-      overflow: hidden;
-    }
-    .panel-header {
-      padding: 14px 16px 10px;
-      border-bottom: 1px solid var(--line);
-      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
-    }
+    /* ── two-column layout (schedule + boats tabs) ── */
+    .split-layout { display: grid; grid-template-columns: 290px 1fr; height: calc(100vh - 100px); }
+    @media (max-width: 720px) { .split-layout { grid-template-columns: 1fr; height: auto; } }
+
+    /* ── left panel ── */
+    .left-panel { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; }
+    .panel-header { padding: 12px 14px 10px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px; }
     .panel-title { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text2); }
-    .btn-add {
-      background: var(--accent-dim); color: var(--accent);
-      border: 1px solid rgba(0,168,107,0.25);
-      border-radius: 6px; padding: 4px 10px;
-      font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.14s;
-    }
-    .btn-add:hover { background: rgba(0,168,107,0.22); }
+    .panel-header-btns { display: flex; gap: 6px; }
+    .btn-sm { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,168,107,0.25); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.14s; white-space: nowrap; }
+    .btn-sm:hover { background: rgba(0,168,107,0.22); }
+    .btn-sm.ghost { background: transparent; color: var(--text2); border-color: var(--line2); }
+    .btn-sm.ghost:hover { color: var(--text); border-color: var(--line); background: var(--card2); }
 
-    #raceList { overflow-y: auto; flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
-
-    .race-item {
-      border-radius: var(--r);
-      border: 1px solid var(--line);
-      background: var(--card);
-      padding: 10px 12px;
-      cursor: pointer;
-      display: flex; align-items: center; gap: 8px;
-      transition: border-color 0.14s, background 0.14s;
-      position: relative;
-    }
-    .race-item:hover { border-color: var(--line2); background: var(--card2); }
-    .race-item.selected { border-color: var(--accent); background: var(--accent-dim); }
-    .race-item.current-race::after {
-      content: 'LIVE';
-      position: absolute; top: 6px; right: 8px;
-      font-size: 8px; font-weight: 800; letter-spacing: 0.12em;
-      color: var(--accent); background: rgba(0,168,107,0.15);
-      padding: 2px 5px; border-radius: 4px;
-    }
-    .race-num {
-      width: 20px; height: 20px; border-radius: 5px;
-      background: var(--card2); border: 1px solid var(--line2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 700; color: var(--text2); flex-shrink: 0;
-    }
-    .race-item.selected .race-num { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .race-item-info { flex: 1; min-width: 0; }
-    .race-item-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .race-item-sub  { font-size: 11px; color: var(--text2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .race-item-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.14s; }
-    .race-item:hover .race-item-actions { opacity: 1; }
-    .race-item.selected .race-item-actions { opacity: 1; }
-    .icon-btn {
-      width: 24px; height: 24px; border-radius: 5px;
-      border: 1px solid var(--line2); background: transparent;
-      color: var(--text2); font-size: 12px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: 0.12s;
-    }
+    /* ── list items ── */
+    .list-scroll { overflow-y: auto; flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+    .list-item { border-radius: var(--r); border: 1px solid var(--line); background: var(--card); padding: 9px 11px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.13s; position: relative; }
+    .list-item:hover { border-color: var(--line2); background: var(--card2); }
+    .list-item.selected { border-color: var(--accent); background: var(--accent-dim); }
+    .list-item.current-mark::after { content: 'LIVE'; position: absolute; top: 6px; right: 8px; font-size: 8px; font-weight: 800; letter-spacing: 0.1em; color: var(--accent); background: rgba(0,168,107,0.15); padding: 2px 5px; border-radius: 4px; }
+    .item-num { width: 22px; height: 22px; border-radius: 5px; background: var(--card2); border: 1px solid var(--line2); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--text2); flex-shrink: 0; }
+    .list-item.selected .item-num { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-sub  { font-size: 11px; color: var(--text2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.13s; flex-shrink: 0; }
+    .list-item:hover .item-actions, .list-item.selected .item-actions { opacity: 1; }
+    .icon-btn { width: 24px; height: 24px; border-radius: 5px; border: 1px solid var(--line2); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.12s; }
     .icon-btn:hover { background: var(--card2); color: var(--text); }
     .icon-btn.del:hover { border-color: rgba(229,57,53,0.4); color: var(--danger); }
+    .list-empty { padding: 28px 14px; text-align: center; font-size: 13px; color: var(--text2); line-height: 1.6; }
 
-    .race-empty {
-      padding: 32px 16px; text-align: center;
-      font-size: 13px; color: var(--text2); line-height: 1.6;
-    }
+    /* ── right editor panel ── */
+    .right-panel { overflow-y: auto; }
+    .editor-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--text2); text-align: center; padding: 40px; }
+    .editor-empty-icon { font-size: 36px; opacity: 0.35; }
+    .editor-body { padding: 20px; max-width: 780px; display: flex; flex-direction: column; gap: 20px; }
 
-    /* ── editor panel ── */
-    .editor-panel { overflow-y: auto; padding: 20px; }
-
-    .editor-empty {
-      height: 100%; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 10px; color: var(--text2); text-align: center; padding: 40px;
-    }
-    .editor-empty-icon { font-size: 40px; opacity: 0.4; }
-    .editor-empty p { font-size: 14px; max-width: 260px; line-height: 1.5; }
-
-    .editor-content { max-width: 760px; display: flex; flex-direction: column; gap: 24px; }
-
-    /* ── section blocks ── */
+    /* ── blocks ── */
     .block { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
-    .block-header {
-      padding: 14px 18px; border-bottom: 1px solid var(--line);
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    .block-header { padding: 13px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
     .block-title { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text2); }
-    .block-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
-
-    /* ── form fields ── */
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .block-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
     .field { display: flex; flex-direction: column; gap: 5px; }
     .field label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text2); }
-    .field input, .field select {
-      background: var(--bg); border: 1px solid var(--line2);
-      border-radius: 7px; padding: 9px 11px;
-      color: var(--text); font-size: 13px; font-family: inherit;
-      outline: none; transition: 0.14s; width: 100%;
-    }
-    .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,168,107,0.12); }
+    .field input, .field select { background: var(--bg); border: 1px solid var(--line2); border-radius: 7px; padding: 8px 10px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: 0.14s; width: 100%; }
+    .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,168,107,0.1); }
     .field input::placeholder { color: var(--text3); }
     .field select option { background: #1a211b; }
 
-    /* ── athlete roster ── */
-    .roster-header {
-      display: grid;
-      grid-template-columns: 56px 1fr 140px 44px 40px;
-      gap: 8px; align-items: center;
-      padding: 0 18px 8px;
-      font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3);
-      border-bottom: 1px solid var(--line);
-    }
-    #rosterRows { display: flex; flex-direction: column; }
-    .athlete-row {
-      display: grid;
-      grid-template-columns: 56px 1fr 140px 44px 40px;
-      gap: 8px; align-items: center;
-      padding: 10px 18px;
-      border-bottom: 1px solid var(--line);
-      transition: background 0.12s;
-    }
-    .athlete-row:last-child { border-bottom: none; }
-    .athlete-row:hover { background: var(--card2); }
+    /* boat badge in race list */
+    .boat-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: rgba(0,168,107,0.15); color: var(--accent); letter-spacing: 0.06em; white-space: nowrap; }
 
-    /* photo cell */
+    /* ── athlete roster (shared) ── */
+    .roster-cols { display: grid; grid-template-columns: 52px 1fr 130px 42px 38px; gap: 8px; align-items: center; }
+    .roster-head { padding: 6px 18px; font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); border-bottom: 1px solid var(--line); }
+    .roster-head { display: grid; grid-template-columns: 52px 1fr 130px 42px 38px; gap: 8px; padding: 6px 18px; }
+    .roster-row { display: grid; grid-template-columns: 52px 1fr 130px 42px 38px; gap: 8px; align-items: center; padding: 9px 18px; border-bottom: 1px solid var(--line); transition: background 0.12s; }
+    .roster-row:last-child { border-bottom: none; }
+    .roster-row:hover { background: var(--card2); }
+    .roster-row input, .roster-row select { background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 5px 7px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; transition: 0.12s; width: 100%; }
+    .roster-row input:hover, .roster-row select:hover { border-color: var(--line2); background: var(--bg); }
+    .roster-row input:focus, .roster-row select:focus { border-color: var(--accent); background: var(--bg); }
+    .roster-row input::placeholder { color: var(--text3); }
+    .roster-row select option { background: #1a211b; }
     .photo-cell { position: relative; }
-    .photo-thumb {
-      width: 40px; height: 40px; border-radius: 8px;
-      border: 1.5px dashed var(--line2);
-      background: var(--bg);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; cursor: pointer; overflow: hidden;
-      transition: border-color 0.14s;
-    }
+    .photo-thumb { width: 38px; height: 38px; border-radius: 7px; border: 1.5px dashed var(--line2); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; overflow: hidden; transition: border-color 0.14s; }
     .photo-thumb:hover { border-color: var(--accent); }
-    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; }
-    .photo-uploading { position: absolute; inset: 0; background: rgba(0,0,0,0.55); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
-    .photo-remove {
-      position: absolute; top: -4px; right: -4px;
-      width: 16px; height: 16px; border-radius: 50%;
-      background: var(--danger); color: #fff; border: none;
-      font-size: 9px; cursor: pointer; display: none;
-      align-items: center; justify-content: center;
-    }
-    .photo-cell:hover .photo-remove { display: flex; }
-
-    /* inline inputs in rows */
-    .athlete-row input, .athlete-row select {
-      background: transparent; border: 1px solid transparent;
-      border-radius: 6px; padding: 6px 8px;
-      color: var(--text); font-size: 13px; font-family: inherit;
-      outline: none; transition: 0.12s; width: 100%;
-    }
-    .athlete-row input:hover, .athlete-row select:hover { border-color: var(--line2); background: var(--bg); }
-    .athlete-row input:focus, .athlete-row select:focus { border-color: var(--accent); background: var(--bg); box-shadow: 0 0 0 2px rgba(0,168,107,0.1); }
-    .athlete-row input::placeholder { color: var(--text3); }
-    .athlete-row select option { background: #1a211b; }
-
-    .reorder-btns { display: flex; flex-direction: column; gap: 2px; }
-    .reorder-btns button {
-      background: transparent; border: 1px solid var(--line2); border-radius: 4px;
-      color: var(--text2); font-size: 10px; cursor: pointer;
-      width: 20px; height: 18px; display: flex; align-items: center; justify-content: center;
-      transition: 0.1s; line-height: 1;
-    }
-    .reorder-btns button:hover { background: var(--card2); color: var(--text); }
-
-    .roster-footer { padding: 12px 18px; display: flex; align-items: center; gap: 10px; }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+    .photo-rm { position: absolute; top: -3px; right: -3px; width: 14px; height: 14px; border-radius: 50%; background: var(--danger); color: #fff; border: none; font-size: 8px; cursor: pointer; display: none; align-items: center; justify-content: center; }
+    .photo-cell:hover .photo-rm { display: flex; }
+    .reorder-col { display: flex; flex-direction: column; gap: 2px; }
+    .reorder-col button { background: transparent; border: 1px solid var(--line2); border-radius: 4px; color: var(--text2); font-size: 9px; cursor: pointer; width: 18px; height: 16px; display: flex; align-items: center; justify-content: center; transition: 0.1s; }
+    .reorder-col button:hover { background: var(--card2); color: var(--text); }
+    .roster-footer { padding: 10px 18px; display: flex; align-items: center; gap: 10px; }
     .roster-count { font-size: 11px; color: var(--text2); }
 
+    /* ── boats tab ── */
+    .boats-layout { display: grid; grid-template-columns: 290px 1fr; height: calc(100vh - 100px); }
+    .boat-item { position: relative; }
+    .boat-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: rgba(0,168,107,0.12); color: var(--accent); letter-spacing: 0.06em; margin-top: 2px; }
+
+    /* ── presets tab ── */
+    #tab-presets { padding: 24px; overflow-y: auto; }
+    .presets-intro { font-size: 13px; color: var(--text2); margin-bottom: 20px; max-width: 600px; line-height: 1.5; }
+    .preset-table-wrap { overflow-x: auto; }
+    .preset-table { border-collapse: collapse; min-width: 700px; }
+    .preset-table th, .preset-table td { padding: 10px 14px; border: 1px solid var(--line); text-align: center; }
+    .preset-table th { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text2); background: var(--panel); }
+    .preset-table th.row-label { text-align: left; min-width: 110px; }
+    .preset-table td.row-label { font-size: 12px; font-weight: 600; color: var(--text); text-align: left; background: var(--panel); }
+    .preset-table tr:hover td { background: var(--card2); }
+    .preset-table tr:hover td.row-label { background: var(--panel); }
+    .preset-cb { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+    /* ── import modal ── */
+    .modal-bg { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.72); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+    .modal-bg.show { display: flex; }
+    .modal { background: var(--card); border: 1px solid var(--line2); border-radius: 14px; padding: 24px; width: 640px; max-width: 95vw; display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; }
+    .modal h3 { font-size: 15px; font-weight: 700; }
+    .modal p  { font-size: 13px; color: var(--text2); line-height: 1.5; }
+    .modal textarea { width: 100%; background: var(--bg); border: 1px solid var(--line2); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 13px; font-family: 'Inter', sans-serif; outline: none; resize: vertical; min-height: 140px; transition: 0.14s; }
+    .modal textarea:focus { border-color: var(--accent); }
+    .modal textarea::placeholder { color: var(--text3); }
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+    .btn-cancel { background: transparent; border: 1px solid var(--line2); border-radius: 7px; padding: 7px 14px; font-size: 13px; color: var(--text2); cursor: pointer; transition: 0.12s; }
+    .btn-cancel:hover { color: var(--text); border-color: var(--line); }
+    .parsed-preview { display: flex; flex-direction: column; gap: 6px; }
+    .parsed-row { display: grid; grid-template-columns: 1fr 120px 160px; gap: 8px; align-items: center; padding: 8px 10px; background: var(--card2); border-radius: 7px; border: 1px solid var(--line); }
+    .parsed-row input, .parsed-row select { background: var(--bg); border: 1px solid var(--line2); border-radius: 6px; padding: 5px 8px; color: var(--text); font-size: 12px; font-family: inherit; outline: none; width: 100%; }
+    .parsed-row input:focus, .parsed-row select:focus { border-color: var(--accent); }
+    .parsed-row select option { background: #1a211b; }
+
+    /* confirm modal */
+    .confirm-modal { max-width: 340px; }
+    .confirm-modal h3 { font-size: 15px; font-weight: 700; }
+    .confirm-modal p  { font-size: 13px; color: var(--text2); line-height: 1.5; }
+    .btn-del-confirm { background: var(--danger); border: none; border-radius: 7px; padding: 7px 14px; font-size: 13px; font-weight: 700; color: #fff; cursor: pointer; }
+
     /* ── toast ── */
-    #toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: var(--card); border: 1px solid var(--line);
-      border-radius: 10px; padding: 10px 18px;
-      font-size: 13px; font-weight: 600; color: var(--text);
-      opacity: 0; transition: opacity 0.2s, transform 0.2s;
-      pointer-events: none; z-index: 200; white-space: nowrap;
-    }
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: var(--text); opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 300; white-space: nowrap; }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     #toast.ok  { border-color: rgba(34,197,94,0.4); color: #86efac; }
     #toast.err { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
 
-    /* ── confirm modal ── */
-    .modal-bg {
-      display: none; position: fixed; inset: 0; z-index: 300;
-      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-      align-items: center; justify-content: center;
-    }
-    .modal-bg.show { display: flex; }
-    .modal {
-      background: var(--card); border: 1px solid var(--line2);
-      border-radius: 14px; padding: 24px; max-width: 340px; width: 100%;
-      display: flex; flex-direction: column; gap: 16px;
-    }
-    .modal h3 { font-size: 15px; font-weight: 700; }
-    .modal p  { font-size: 13px; color: var(--text2); line-height: 1.5; }
-    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
-    .btn-cancel {
-      background: transparent; border: 1px solid var(--line2); border-radius: 7px;
-      padding: 7px 14px; font-size: 13px; color: var(--text2); cursor: pointer; transition: 0.12s;
-    }
-    .btn-cancel:hover { border-color: var(--text2); color: var(--text); }
-    .btn-confirm-del {
-      background: var(--danger); border: none; border-radius: 7px;
-      padding: 7px 14px; font-size: 13px; font-weight: 700; color: #fff; cursor: pointer; transition: 0.12s;
-    }
-    .btn-confirm-del:hover { filter: brightness(1.1); }
-
-    /* scrollbar */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 99px; }
@@ -288,48 +177,109 @@
 </head>
 <body>
 
+<!-- topbar -->
 <div class="topbar">
-  <div class="topbar-left">
+  <div style="display:flex;align-items:center;gap:14px">
     <div class="brand">CREW <em>SETUP</em></div>
     <span class="save-status" id="saveStatus">Saved</span>
   </div>
   <div class="topbar-right">
-    <button class="btn-save" id="saveBtn" onclick="saveAll()">Save All</button>
+    <button class="btn-save" id="saveBtn" onclick="saveAll()" disabled>Save All</button>
     <a class="topbar-link" href="/deck.html">🎛 Deck</a>
     <a class="topbar-link" href="/control.html">← Control</a>
   </div>
 </div>
 
-<div class="layout">
+<!-- tab bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('schedule')">📋 Schedule</button>
+  <button class="tab-btn" onclick="switchTab('boats')">🚣 Boats</button>
+  <button class="tab-btn" onclick="switchTab('presets')">🎛 Presets</button>
+</div>
 
-  <!-- ── LEFT: race list ── -->
-  <div class="race-panel">
-    <div class="panel-header">
-      <span class="panel-title">Race Order</span>
-      <button class="btn-add" onclick="addRace()">+ Add Race</button>
+<!-- ═══════════════════════════════════ SCHEDULE TAB ═══ -->
+<div class="tab-content active" id="tab-schedule">
+  <div class="split-layout">
+    <div class="left-panel">
+      <div class="panel-header">
+        <span class="panel-title">Race Order</span>
+        <div class="panel-header-btns">
+          <button class="btn-sm ghost" onclick="openImport()">⬇ Import</button>
+          <button class="btn-sm" onclick="addRace()">+ Add</button>
+        </div>
+      </div>
+      <div class="list-scroll" id="raceList"></div>
     </div>
-    <div id="raceList"></div>
-  </div>
-
-  <!-- ── RIGHT: editor ── -->
-  <div class="editor-panel" id="editorPanel">
-    <div class="editor-empty" id="editorEmpty">
-      <div class="editor-empty-icon">🏁</div>
-      <p>Select a race from the list, or add a new one to get started.</p>
+    <div class="right-panel" id="scheduleEditor">
+      <div class="editor-empty">
+        <div class="editor-empty-icon">🏁</div>
+        <p style="font-size:13px;color:var(--text2);max-width:240px;line-height:1.5">Select a race or press <strong>Import</strong> to paste your full schedule at once.</p>
+      </div>
     </div>
-    <div class="editor-content" id="editorContent" style="display:none"></div>
   </div>
+</div>
 
+<!-- ═══════════════════════════════════ BOATS TAB ═══ -->
+<div class="tab-content" id="tab-boats">
+  <div class="boats-layout">
+    <div class="left-panel">
+      <div class="panel-header">
+        <span class="panel-title">Boat Library</span>
+      </div>
+      <div class="list-scroll" id="boatList"></div>
+    </div>
+    <div class="right-panel" id="boatEditor">
+      <div class="editor-empty">
+        <div class="editor-empty-icon">🚣</div>
+        <p style="font-size:13px;color:var(--text2);max-width:260px;line-height:1.5">Select a boat to edit its class name and athlete roster. These are saved permanently and assigned to races on the Schedule tab.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ PRESETS TAB ═══ -->
+<div class="tab-content" id="tab-presets" style="padding:24px;overflow-y:auto">
+  <p class="presets-intro">Check which overlay widgets each race preset button activates. Changes apply immediately — no save needed.</p>
+  <div class="preset-table-wrap">
+    <table class="preset-table" id="presetTable"></table>
+  </div>
+</div>
+
+<!-- import modal -->
+<div class="modal-bg" id="importModal">
+  <div class="modal">
+    <h3>Quick Schedule Import</h3>
+    <p>Paste your race schedule below — any format works. Times and race names are detected automatically.</p>
+    <textarea id="importText" placeholder="e.g.
+10:00 AM  Men's Varsity 8+
+10:20 AM  Women's Varsity 4+
+10:40 AM  JV 8+
+11:00 AM  JV 4+"></textarea>
+    <div style="display:flex;gap:8px">
+      <button class="btn-sm" onclick="runParser()" style="padding:7px 16px;font-size:13px">Parse →</button>
+    </div>
+    <div id="parsedPreview" style="display:none">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text2);margin-bottom:8px" id="parsedCount"></div>
+      <div style="display:grid;grid-template-columns:1fr 110px 160px;gap:6px;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);padding:0 4px;margin-bottom:4px">
+        <span>Race Name</span><span>Time</span><span>Assign Boat</span>
+      </div>
+      <div class="parsed-preview" id="parsedRows"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeImport()">Cancel</button>
+      <button class="btn-sm" id="importApplyBtn" style="display:none;padding:7px 16px;font-size:13px" onclick="applyImport()">Add to Schedule</button>
+    </div>
+  </div>
 </div>
 
 <!-- delete confirm modal -->
 <div class="modal-bg" id="deleteModal">
-  <div class="modal">
+  <div class="modal confirm-modal">
     <h3>Delete Race?</h3>
-    <p id="deleteModalText">This will remove the race and its entire athlete roster. This cannot be undone.</p>
+    <p id="deleteMsgText">This will remove the race and its boat assignment.</p>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
-      <button class="btn-confirm-del" onclick="confirmDelete()">Delete</button>
+      <button class="btn-del-confirm" onclick="confirmDelete()">Delete</button>
     </div>
   </div>
 </div>
@@ -337,380 +287,691 @@
 <div id="toast"></div>
 
 <script>
-  const token = localStorage.getItem('crew_token');
-  const user  = JSON.parse(localStorage.getItem('crew_user') || 'null');
-  if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
-  if (user && user.role !== 'admin') location.href = user.role === 'coach' ? '/audio.html' : '/';
+/* ── Auth guard ── */
+const token = localStorage.getItem('crew_token');
+const user  = JSON.parse(localStorage.getItem('crew_user') || 'null');
+if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
+if (user && user.role !== 'admin') location.href = user.role === 'coach' ? '/audio.html' : '/';
 
-  // ── state ──
-  let races   = [];   // [{ id, name, sub }]
-  let rosters = {};   // { [raceId]: { boatClass, athletes: [{ id, name, seat, photoPath }] } }
-  let currentRaceId = null;
-  let selectedRaceId = null;
-  let dirty = false;
-  let pendingDeleteId = null;
+/* ── State ── */
+let races        = [];   // [{ id, name, sub, boatId }]
+let boats        = {};   // { [id]: { id, name, boatClass, athletes } }
+let presetCfgs   = {};   // { [presetName]: { elements: [...] } }
+let currentRaceId = null;
+let selectedRaceId = null;
+let selectedBoatId = null;
+let dirty = false;
+let pendingDeleteId = null;
+let parsedImport = [];
 
-  const SEAT_OPTIONS = ['Cox', 'Stroke', '7', '6', '5', '4', '3', '2', 'Bow', 'Coach', 'Custom'];
+const BOAT_ORDER = ['varsity-1','varsity-2','varsity-3','varsity-4','jv-5','jv-6'];
+const BOAT_LABELS = {
+  'varsity-1': 'Varsity 1',
+  'varsity-2': 'Varsity 2',
+  'varsity-3': 'Varsity 3',
+  'varsity-4': 'Varsity 4',
+  'jv-5': 'JV 5',
+  'jv-6': 'JV 6'
+};
+const SEAT_OPTIONS = ['Cox','Stroke','7','6','5','4','3','2','Bow','Coach','Custom'];
+const WIDGETS = [
+  { key: 'eventHeader', label: 'Event Header' },
+  { key: 'timer',       label: 'Timer'        },
+  { key: 'countdown',   label: 'Countdown'    },
+  { key: 'results',     label: 'Results'      },
+  { key: 'lanes',       label: 'Lanes'        },
+  { key: 'schoolLogos', label: 'Logos'        },
+  { key: 'strokeRate',  label: 'SPM'          },
+  { key: 'distance',    label: 'Distance'     },
+  { key: 'lowerThird',  label: 'Lower 3rd'   },
+  { key: 'watermark',   label: 'Watermark'    },
+  { key: 'conditions',  label: 'Conditions'   },
+];
+const PRESETS = [
+  { key: 'pre-race',     label: 'Pre-Race'    },
+  { key: 'race-start',   label: 'Race Start'  },
+  { key: 'race-running', label: 'Running'     },
+  { key: 'finish',       label: 'Finish'      },
+  { key: 'post-race',    label: 'Post-Race'   },
+];
 
-  // ── WebSocket ──
-  let ws;
-  function connect() {
-    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    ws = new WebSocket(`${proto}//${location.host}`);
-    ws.onopen  = () => ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' }));
-    ws.onclose = () => setTimeout(connect, 3000);
-    ws.onmessage = e => onMsg(JSON.parse(e.data));
-  }
-  function wsSend(payload) { if (ws?.readyState === 1) ws.send(JSON.stringify(payload)); }
+/* ── WebSocket ── */
+let ws;
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen  = () => ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' }));
+  ws.onclose = () => setTimeout(connect, 3000);
+  ws.onmessage = e => onMsg(JSON.parse(e.data));
+}
+function wsSend(p) { if (ws?.readyState === 1) ws.send(JSON.stringify(p)); }
 
-  function onMsg(msg) {
-    if (msg.type === 'auth-fail') { localStorage.clear(); location.href = '/'; }
-    if (msg.type === 'state' || msg.type === 'setup-saved') {
-      if (Array.isArray(msg.raceSchedule)) races = msg.raceSchedule;
-      if (msg.raceRosters) rosters = msg.raceRosters;
-      if ('currentRaceId' in msg) currentRaceId = msg.currentRaceId;
-      renderRaceList();
-      if (selectedRaceId) renderEditor(selectedRaceId);
-      if (msg.type === 'setup-saved') { setDirty(false); toast('Saved', 'ok'); }
+function onMsg(msg) {
+  if (msg.type === 'auth-fail') { localStorage.clear(); location.href = '/'; }
+  if (msg.type === 'state' || msg.type === 'setup-saved' || msg.type === 'boats-saved') {
+    if (Array.isArray(msg.raceSchedule)) races = msg.raceSchedule;
+    if (msg.boats)        boats = msg.boats;
+    if (msg.presetConfigs) presetCfgs = msg.presetConfigs;
+    if ('currentRaceId' in msg) currentRaceId = msg.currentRaceId;
+    ensureBoatObjects();
+    if (!selectedRaceId || !races.some(r => r.id === selectedRaceId)) {
+      selectedRaceId = (currentRaceId && races.some(r => r.id === currentRaceId)) ? currentRaceId : (races[0]?.id || null);
     }
-    if (msg.type === 'current-race-set') {
-      currentRaceId = msg.raceId;
-      renderRaceList();
-    }
-  }
-
-  // ── dirty tracking ──
-  function setDirty(val) {
-    dirty = val;
-    const s = document.getElementById('saveStatus');
-    const b = document.getElementById('saveBtn');
-    s.textContent  = val ? 'Unsaved changes' : 'Saved';
-    s.className    = 'save-status ' + (val ? 'dirty' : 'saved');
-    b.disabled     = !val;
-  }
-
-  // ── race list ──
-  function renderRaceList() {
-    const list = document.getElementById('raceList');
-    if (!races.length) {
-      list.innerHTML = '<div class="race-empty">No races yet.<br>Press <strong>+ Add Race</strong> to begin.</div>';
-      return;
-    }
-    list.innerHTML = '';
-    races.forEach((race, idx) => {
-      const div = document.createElement('div');
-      div.className = 'race-item' +
-        (race.id === selectedRaceId ? ' selected' : '') +
-        (race.id === currentRaceId  ? ' current-race' : '');
-      div.innerHTML = `
-        <div class="race-num">${idx + 1}</div>
-        <div class="race-item-info">
-          <div class="race-item-name">${esc(race.name || 'Untitled Race')}</div>
-          <div class="race-item-sub">${esc(race.sub || 'No time set')}</div>
-        </div>
-        <div class="race-item-actions">
-          <button class="icon-btn" title="Move up"   onclick="moveRace('${race.id}',-1,event)">↑</button>
-          <button class="icon-btn" title="Move down" onclick="moveRace('${race.id}',1,event)">↓</button>
-          <button class="icon-btn del" title="Delete" onclick="deleteRace('${race.id}',event)">✕</button>
-        </div>`;
-      div.addEventListener('click', () => selectRace(race.id));
-      list.appendChild(div);
-    });
-  }
-
-  function selectRace(id) {
-    selectedRaceId = id;
+    if (!selectedBoatId || !boats[selectedBoatId]) selectedBoatId = BOAT_ORDER[0];
     renderRaceList();
-    renderEditor(id);
+    renderBoatList();
+    if (selectedRaceId) renderRaceEditor(selectedRaceId);
+    else renderScheduleEmpty();
+    if (selectedBoatId) renderBoatEditor(selectedBoatId);
+    renderPresetTable();
+    if (msg.type === 'setup-saved' || msg.type === 'boats-saved') { setDirty(false); toast('Saved', 'ok'); }
   }
-
-  function addRace() {
-    const id = uid();
-    races.push({ id, name: 'New Race', sub: '' });
-    if (!rosters[id]) rosters[id] = { boatClass: '', athletes: [] };
-    setDirty(true);
+  if (msg.type === 'current-race-set') {
+    currentRaceId = msg.raceId;
+    if (!selectedRaceId && currentRaceId) selectedRaceId = currentRaceId;
     renderRaceList();
-    selectRace(id);
+    if (selectedRaceId) renderRaceEditor(selectedRaceId);
   }
+  if (msg.type === 'preset-config') {
+    if (presetCfgs[msg.name]) presetCfgs[msg.name] = { elements: msg.elements };
+    renderPresetTable();
+  }
+}
 
-  function moveRace(id, dir, e) {
-    e.stopPropagation();
-    const idx = races.findIndex(r => r.id === id);
-    if (idx < 0) return;
-    const next = idx + dir;
-    if (next < 0 || next >= races.length) return;
-    [races[idx], races[next]] = [races[next], races[idx]];
-    setDirty(true);
-    renderRaceList();
-  }
+/* ── Dirty state ── */
+function setDirty(val) {
+  dirty = val;
+  const s = document.getElementById('saveStatus');
+  s.textContent = val ? 'Unsaved changes' : 'Saved';
+  s.className   = 'save-status ' + (val ? 'dirty' : 'saved');
+  document.getElementById('saveBtn').disabled = !val;
+}
 
-  function deleteRace(id, e) {
-    e.stopPropagation();
-    pendingDeleteId = id;
-    const race = races.find(r => r.id === id);
-    document.getElementById('deleteModalText').textContent =
-      `This will remove "${race?.name || 'this race'}" and its entire athlete roster. Cannot be undone.`;
-    document.getElementById('deleteModal').classList.add('show');
-  }
-  function closeDeleteModal() {
-    pendingDeleteId = null;
-    document.getElementById('deleteModal').classList.remove('show');
-  }
-  function confirmDelete() {
-    if (!pendingDeleteId) return closeDeleteModal();
-    races = races.filter(r => r.id !== pendingDeleteId);
-    delete rosters[pendingDeleteId];
-    if (selectedRaceId === pendingDeleteId) {
-      selectedRaceId = null;
-      showEditorEmpty();
-    }
-    setDirty(true);
-    renderRaceList();
-    closeDeleteModal();
-  }
+/* ── Tabs ── */
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['schedule','boats','presets'][i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
 
-  // ── editor ──
-  function showEditorEmpty() {
-    document.getElementById('editorEmpty').style.display = '';
-    document.getElementById('editorContent').style.display = 'none';
+function getDefaultBoat(id) {
+  return { id, name: BOAT_LABELS[id] || id, boatClass: '', athletes: [] };
+}
+
+function ensureBoatObjects() {
+  BOAT_ORDER.forEach(id => {
+    const current = boats[id];
+    boats[id] = {
+      ...getDefaultBoat(id),
+      ...(current || {}),
+      athletes: Array.isArray(current?.athletes) ? current.athletes : []
+    };
+    if (!boats[id].name) boats[id].name = BOAT_LABELS[id] || id;
+  });
+}
+
+function boatDisplayName(boatId) {
+  const boat = boats[boatId] || getDefaultBoat(boatId);
+  return boat.name || BOAT_LABELS[boatId] || boatId;
+}
+
+function boatOptionLabel(boatId) {
+  const boat = boats[boatId] || getDefaultBoat(boatId);
+  const cls = boat.boatClass ? ' — ' + boat.boatClass : '';
+  const count = boat.athletes?.filter(a => a.name)?.length || 0;
+  return `${boat.name}${cls}${count ? ' · ' + count + ' athletes' : ''}`;
+}
+
+function normalizeText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[+]/g, ' plus ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function boatIdFromNumber(num) {
+  const n = Number(num);
+  if (n >= 1 && n <= 4) return `varsity-${n}`;
+  if (n === 5 || n === 6) return `jv-${n}`;
+  return null;
+}
+
+function parseBoatHint(text) {
+  const value = normalizeText(text);
+  let match = value.match(/\b(?:boat|b)\s*([1-6])\b/);
+  if (match) return boatIdFromNumber(match[1]);
+
+  match = value.match(/\b(?:varsity|v)\s*([1-4])\b/);
+  if (match) return `varsity-${match[1]}`;
+
+  match = value.match(/\b([1-4])\s*v\b/);
+  if (match) return `varsity-${match[1]}`;
+
+  match = value.match(/\b([1-4])v\b/);
+  if (match) return `varsity-${match[1]}`;
+
+  match = value.match(/\bjv\s*([5-6])\b/);
+  if (match) return `jv-${match[1]}`;
+
+  match = value.match(/\b([5-6])\s*jv\b/);
+  if (match) return `jv-${match[1]}`;
+
+  if (/\bjunior varsity\b|\bjv\b/.test(value)) return 'jv';
+  if (/\bvarsity\b/.test(value)) return 'varsity';
+  return null;
+}
+
+function nextUnusedBoat(prefix, usedIds) {
+  return BOAT_ORDER.find(id => id.startsWith(prefix) && !usedIds.includes(id)) || null;
+}
+
+function renderScheduleEmpty() {
+  document.getElementById('scheduleEditor').innerHTML = `
+    <div class="editor-empty">
+      <div class="editor-empty-icon">🏁</div>
+      <p style="font-size:13px;color:var(--text2);max-width:240px;line-height:1.5">Select a race or press <strong>Import</strong> to paste your full schedule at once.</p>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCHEDULE TAB
+══════════════════════════════════════════════════════ */
+function renderRaceList() {
+  const list = document.getElementById('raceList');
+  if (!races.length) {
+    list.innerHTML = '<div class="list-empty">No races yet.<br>Press <strong>+ Add</strong> or <strong>⬇ Import</strong>.</div>';
+    return;
   }
+  list.innerHTML = '';
+  races.forEach((race, idx) => {
+    const boat = race.boatId ? boats[race.boatId] : null;
+    const div = document.createElement('div');
+    div.className = 'list-item' + (race.id === selectedRaceId ? ' selected' : '') + (race.id === currentRaceId ? ' current-mark' : '');
+    div.innerHTML = `
+      <div class="item-num">${idx + 1}</div>
+      <div class="item-info">
+        <div class="item-name">${esc(race.name || 'Untitled')}</div>
+        <div class="item-sub">${esc(race.sub || 'No time')}${boat ? ' · <span class="boat-badge">' + esc(boatDisplayName(race.boatId)) + '</span>' : ''}</div>
+      </div>
+      <div class="item-actions">
+        <button class="icon-btn" onclick="moveRace('${race.id}',-1,event)">↑</button>
+        <button class="icon-btn" onclick="moveRace('${race.id}',1,event)">↓</button>
+        <button class="icon-btn del" onclick="deleteRace('${race.id}',event)">✕</button>
+      </div>`;
+    div.addEventListener('click', () => selectRace(race.id));
+    list.appendChild(div);
+  });
+}
 
-  function renderEditor(raceId) {
-    const race = races.find(r => r.id === raceId);
-    if (!race) return showEditorEmpty();
-    if (!rosters[raceId]) rosters[raceId] = { boatClass: '', athletes: [] };
-    const roster = rosters[raceId];
+function selectRace(id) {
+  selectedRaceId = id;
+  renderRaceList();
+  renderRaceEditor(id);
+}
 
-    document.getElementById('editorEmpty').style.display = 'none';
-    const content = document.getElementById('editorContent');
-    content.style.display = '';
-    content.innerHTML = `
-      <!-- Race details -->
-      <div class="block">
-        <div class="block-header">
-          <span class="block-title">Race Info</span>
-          <button class="btn-add" style="font-size:11px" onclick="setCurrentRace('${raceId}')">
-            ${raceId === currentRaceId ? '✓ Current Race' : 'Set as Current Race'}
-          </button>
-        </div>
-        <div class="block-body">
-          <div class="field-row">
-            <div class="field">
-              <label>Race Name</label>
-              <input id="f-name" type="text" value="${esc(race.name)}" placeholder="e.g. Men's Varsity 8+" oninput="updateRaceField('${raceId}','name',this.value)">
-            </div>
-            <div class="field">
-              <label>Time / Subtitle</label>
-              <input id="f-sub" type="text" value="${esc(race.sub)}" placeholder="e.g. 10:00 AM" oninput="updateRaceField('${raceId}','sub',this.value)">
-            </div>
+function addRace() {
+  const r = { id: uid(), name: 'New Race', sub: '', boatId: null };
+  races.push(r);
+  setDirty(true);
+  renderRaceList();
+  selectRace(r.id);
+}
+
+function moveRace(id, dir, e) {
+  e.stopPropagation();
+  const i = races.findIndex(r => r.id === id);
+  const j = i + dir;
+  if (j < 0 || j >= races.length) return;
+  [races[i], races[j]] = [races[j], races[i]];
+  setDirty(true);
+  renderRaceList();
+}
+
+function deleteRace(id, e) {
+  e.stopPropagation();
+  pendingDeleteId = id;
+  const r = races.find(x => x.id === id);
+  document.getElementById('deleteMsgText').textContent = `Remove "${r?.name || 'this race'}" from the schedule?`;
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDeleteModal() { pendingDeleteId = null; document.getElementById('deleteModal').classList.remove('show'); }
+function confirmDelete() {
+  if (!pendingDeleteId) return closeDeleteModal();
+  if (currentRaceId === pendingDeleteId) {
+    const remaining = races.filter(r => r.id !== pendingDeleteId);
+    currentRaceId = remaining[0]?.id || null;
+    wsSend({ type: 'current-race-set', raceId: currentRaceId });
+  }
+  races = races.filter(r => r.id !== pendingDeleteId);
+  if (selectedRaceId === pendingDeleteId) {
+    selectedRaceId = currentRaceId || races[0]?.id || null;
+    if (selectedRaceId) renderRaceEditor(selectedRaceId);
+    else renderScheduleEmpty();
+  }
+  setDirty(true);
+  renderRaceList();
+  closeDeleteModal();
+}
+
+function renderRaceEditor(raceId) {
+  const race = races.find(r => r.id === raceId);
+  if (!race) return;
+  const ed = document.getElementById('scheduleEditor');
+  const assignedBoat = race.boatId ? boats[race.boatId] : null;
+  const athleteRows = assignedBoat?.athletes?.filter(a => a.name) || [];
+  const boatOptions = BOAT_ORDER.map(bid => {
+    const b = boats[bid];
+    if (!b) return '';
+    return `<option value="${bid}" ${race.boatId === bid ? 'selected' : ''}>${esc(boatOptionLabel(bid))}</option>`;
+  }).join('');
+
+  ed.innerHTML = `<div class="editor-body">
+    <div class="block">
+      <div class="block-header">
+        <span class="block-title">Race Info</span>
+        <button class="btn-sm" onclick="setCurrentRace('${raceId}')" style="font-size:11px">${raceId === currentRaceId ? '✓ Current Race' : 'Set as Current Race'}</button>
+      </div>
+      <div class="block-body">
+        <div class="field-row">
+          <div class="field"><label>Race Name</label>
+            <input type="text" value="${esc(race.name)}" placeholder="e.g. Men's Varsity 8+" oninput="updateRace('${raceId}','name',this.value)">
           </div>
-          <div class="field" style="max-width:240px">
-            <label>Boat Class</label>
-            <input id="f-boat" type="text" value="${esc(roster.boatClass||'')}" placeholder="e.g. Varsity 8+, JV 4+" oninput="updateBoatClass('${raceId}',this.value)">
+          <div class="field"><label>Time / Subtitle</label>
+            <input type="text" value="${esc(race.sub)}" placeholder="e.g. 10:00 AM" oninput="updateRace('${raceId}','sub',this.value)">
           </div>
+        </div>
+        <div class="field" style="max-width:320px"><label>Assign Boat</label>
+          <select onchange="updateRace('${raceId}','boatId',this.value||null)">
+            <option value="">— No boat assigned —</option>
+            ${boatOptions}
+          </select>
+        </div>
+        ${athleteRows.length
+          ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">
+               ${athleteRows.length} athlete${athleteRows.length!==1?'s':''} from <strong style="color:var(--accent)">${esc(boatDisplayName(race.boatId))}</strong> will be used for intros.
+             </div>`
+          : ''}
+        ${athleteRows.length
+          ? `<div style="display:grid;gap:6px;margin-top:4px">
+               ${athleteRows.map(a => `
+                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card2)">
+                   <span style="font-size:12px;font-weight:600">${esc(a.name)}</span>
+                   <span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em">${esc(a.seat || '')}</span>
+                 </div>`).join('')}
+             </div>`
+          : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function updateRace(id, field, value) {
+  const r = races.find(x => x.id === id);
+  if (r) r[field] = field === 'boatId' ? (value || null) : value;
+  setDirty(true);
+  renderRaceList();
+  renderRaceEditor(id);
+}
+
+function setCurrentRace(raceId) {
+  currentRaceId = raceId;
+  wsSend({ type: 'current-race-set', raceId });
+  renderRaceList();
+  renderRaceEditor(raceId);
+  toast('Current race set', 'ok');
+}
+
+/* ── Schedule Quick Import ── */
+function openImport() {
+  document.getElementById('importText').value = '';
+  document.getElementById('parsedPreview').style.display = 'none';
+  document.getElementById('importApplyBtn').style.display = 'none';
+  document.getElementById('importModal').classList.add('show');
+}
+function closeImport() { document.getElementById('importModal').classList.remove('show'); parsedImport = []; }
+
+function parseScheduleText(text) {
+  const TIME_RE = /\b(\d{1,2}:\d{2}(?:\s*[AP]M)?)\b/i;
+  const lines = text.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  let pending = '';
+
+  for (const line of lines) {
+    if (/^(race\s*#?|no\.\s*\d|time\b|event\b)/i.test(line) && line.length < 25) continue;
+    const tm = line.match(TIME_RE);
+    if (tm) {
+      const time = tm[1].toUpperCase();
+      const rest = line.replace(TIME_RE, '').replace(/[-–—|:,]+/g,' ').trim()
+                       .replace(/^(race|heat|event)?\s*\d+[\.\):]?\s*/i,'').trim();
+      if (rest && pending) { out.push({ name: pending, sub: '' }); pending = ''; }
+      if (rest) { out.push({ name: rest, sub: time }); }
+      else if (pending) { out.push({ name: pending, sub: time }); pending = ''; }
+    } else {
+      if (pending) out.push({ name: pending, sub: '' });
+      pending = line.replace(/^(race|heat|event)?\s*\d+[\.\):]?\s*/i,'').trim();
+    }
+  }
+  if (pending) out.push({ name: pending, sub: '' });
+  return out.filter(r => r.name.length > 1);
+}
+
+function suggestBoat(raceName) {
+  const name = normalizeText(raceName);
+  const usedIds = parsedImport.filter(r => r.boatId).map(r => r.boatId);
+  const boatList = BOAT_ORDER.map(id => boats[id]).filter(Boolean);
+  const hintedBoat = parseBoatHint(name);
+
+  if (hintedBoat && boats[hintedBoat]) return hintedBoat;
+  if (hintedBoat === 'varsity') return nextUnusedBoat('varsity', usedIds);
+  if (hintedBoat === 'jv') return nextUnusedBoat('jv', usedIds);
+
+  // 1. match on boatClass substring
+  for (const b of boatList) {
+    if (usedIds.includes(b.id)) continue;
+    const cls = normalizeText(b.boatClass);
+    const boatName = normalizeText(b.name);
+    if (cls && name.includes(cls)) return b.id;
+    if (boatName && name.includes(boatName)) return b.id;
+  }
+  // 2. varsity keyword → next open Varsity slot
+  if (/varsity|v8|v4|v2|v1x/i.test(name)) return nextUnusedBoat('varsity', usedIds);
+  // 3. jv keyword → next open JV slot
+  if (/\bjv\b|junior varsity/i.test(name)) return nextUnusedBoat('jv', usedIds);
+  return null;
+}
+
+function runParser() {
+  const raw = document.getElementById('importText').value;
+  const parsed = parseScheduleText(raw);
+  parsedImport = parsed.map(r => ({ ...r, boatId: null }));
+  // auto-suggest boats sequentially
+  parsedImport.forEach(r => { r.boatId = suggestBoat(r.name); });
+
+  const count = document.getElementById('parsedCount');
+  const rows  = document.getElementById('parsedRows');
+  const prev  = document.getElementById('parsedPreview');
+  const applyBtn = document.getElementById('importApplyBtn');
+
+  if (!parsedImport.length) {
+    count.textContent = 'No races detected — check formatting.';
+    rows.innerHTML = '';
+    prev.style.display = '';
+    applyBtn.style.display = 'none';
+    return;
+  }
+  count.textContent = `${parsedImport.length} race${parsedImport.length !== 1 ? 's' : ''} detected`;
+  rows.innerHTML = parsedImport.map((r, i) => {
+    const boatOpts = `<option value="">None</option>` + BOAT_ORDER.map(bid => {
+      const b = boats[bid]; if (!b) return '';
+      return `<option value="${bid}" ${r.boatId === bid ? 'selected' : ''}>${esc(boatOptionLabel(bid))}</option>`;
+    }).join('');
+    return `<div class="parsed-row">
+      <input type="text" value="${esc(r.name)}" oninput="parsedImport[${i}].name=this.value">
+      <input type="text" value="${esc(r.sub)}"  placeholder="Time" oninput="parsedImport[${i}].sub=this.value">
+      <select onchange="parsedImport[${i}].boatId=this.value||null">${boatOpts}</select>
+    </div>`;
+  }).join('');
+  prev.style.display = '';
+  applyBtn.style.display = '';
+}
+
+function applyImport() {
+  parsedImport.forEach(r => races.push({ id: uid(), name: r.name, sub: r.sub, boatId: r.boatId || null }));
+  setDirty(true);
+  renderRaceList();
+  if (!selectedRaceId && races.length) {
+    selectedRaceId = races[0].id;
+    renderRaceEditor(selectedRaceId);
+  }
+  closeImport();
+  toast(`Added ${parsedImport.length} races`, 'ok');
+  parsedImport = [];
+}
+
+/* ══════════════════════════════════════════════════════
+   BOATS TAB
+══════════════════════════════════════════════════════ */
+function renderBoatList() {
+  const list = document.getElementById('boatList');
+  list.innerHTML = '';
+  BOAT_ORDER.forEach((bid, idx) => {
+    const b = boats[bid] || getDefaultBoat(bid);
+    const div = document.createElement('div');
+    div.className = 'list-item boat-item' + (bid === selectedBoatId ? ' selected' : '');
+    div.innerHTML = `
+      <div class="item-num">${idx + 1}</div>
+      <div class="item-info">
+        <div class="item-name">${esc(boatDisplayName(bid))}</div>
+        <div class="item-sub">${b.boatClass ? esc(b.boatClass) : '<em style="color:var(--text3)">No class set</em>'}</div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);flex-shrink:0">${b.athletes?.length || 0} athletes</div>`;
+    div.addEventListener('click', () => selectBoat(bid));
+    list.appendChild(div);
+  });
+}
+
+function selectBoat(bid) {
+  selectedBoatId = bid;
+  renderBoatList();
+  renderBoatEditor(bid);
+}
+
+function renderBoatEditor(bid) {
+  const b = boats[bid];
+  if (!b) return;
+  const ed = document.getElementById('boatEditor');
+  ed.innerHTML = `<div class="editor-body">
+    <div class="block">
+      <div class="block-header"><span class="block-title">${esc(boatDisplayName(bid))} — Details</span></div>
+      <div class="block-body">
+        <div class="field" style="max-width:340px"><label>Boat Class (e.g. Men's Varsity 8+)</label>
+          <input type="text" value="${esc(b.boatClass||'')}" placeholder="e.g. Men's Varsity 8+"
+            oninput="updateBoat('${bid}','boatClass',this.value)">
         </div>
       </div>
+    </div>
+    <div class="block">
+      <div class="block-header">
+        <span class="block-title">Athlete Roster</span>
+        <button class="btn-sm" onclick="addBoatAthlete('${bid}')">+ Add Athlete</button>
+      </div>
+      <div class="roster-head"><span>Photo</span><span>Name</span><span>Seat</span><span></span><span></span></div>
+      <div id="boatRosterRows"></div>
+      <div class="roster-footer"><span class="roster-count" id="boatRosterCount"></span></div>
+    </div>
+  </div>`;
+  renderBoatRoster(bid);
+}
 
-      <!-- Athlete roster -->
-      <div class="block">
-        <div class="block-header">
-          <span class="block-title">Athlete Roster</span>
-          <button class="btn-add" onclick="addAthlete('${raceId}')">+ Add Athlete</button>
+function renderBoatRoster(bid) {
+  const b = boats[bid];
+  if (!b) return;
+  const container = document.getElementById('boatRosterRows');
+  if (!container) return;
+  container.innerHTML = '';
+
+  (b.athletes || []).forEach((a, idx) => {
+    const row = document.createElement('div');
+    row.className = 'roster-row';
+    row.innerHTML = `
+      <div class="photo-cell">
+        <div class="photo-thumb" onclick="triggerBoatPhoto('${bid}','${a.id}')" title="Upload photo">
+          ${a.photoPath ? `<img src="${esc(a.photoPath)}" alt="">` : '📷'}
         </div>
-        <div class="roster-header">
-          <span>Photo</span><span>Name</span><span>Seat / Position</span><span></span><span></span>
-        </div>
-        <div id="rosterRows"></div>
-        <div class="roster-footer">
-          <span class="roster-count" id="rosterCount"></span>
-        </div>
-      </div>`;
-
-    renderRoster(raceId);
-  }
-
-  function renderRoster(raceId) {
-    const roster = rosters[raceId];
-    if (!roster) return;
-    const container = document.getElementById('rosterRows');
-    if (!container) return;
-    container.innerHTML = '';
-
-    roster.athletes.forEach((athlete, idx) => {
-      const row = document.createElement('div');
-      row.className = 'athlete-row';
-      row.innerHTML = `
-        <div class="photo-cell">
-          <div class="photo-thumb" onclick="triggerPhotoUpload('${raceId}','${athlete.id}')" title="Click to upload photo">
-            ${athlete.photoPath
-              ? `<img src="${esc(athlete.photoPath)}" alt="">`
-              : '📷'}
-          </div>
-          ${athlete.photoPath ? `<button class="photo-remove" onclick="removePhoto('${raceId}','${athlete.id}',event)" title="Remove photo">✕</button>` : ''}
-        </div>
-        <input type="text" value="${esc(athlete.name)}" placeholder="Athlete name"
-               oninput="updateAthlete('${raceId}','${athlete.id}','name',this.value)">
-        <select onchange="updateAthlete('${raceId}','${athlete.id}','seat',this.value)">
-          ${SEAT_OPTIONS.map(s => `<option ${athlete.seat===s?'selected':''}>${s}</option>`).join('')}
-          ${!SEAT_OPTIONS.includes(athlete.seat) && athlete.seat
-            ? `<option selected>${esc(athlete.seat)}</option>` : ''}
-        </select>
-        <div class="reorder-btns">
-          <button onclick="moveAthlete('${raceId}','${athlete.id}',-1)" ${idx===0?'disabled':''}>↑</button>
-          <button onclick="moveAthlete('${raceId}','${athlete.id}',1)" ${idx===roster.athletes.length-1?'disabled':''}>↓</button>
-        </div>
-        <button class="icon-btn del" onclick="deleteAthlete('${raceId}','${athlete.id}')" title="Remove">✕</button>`;
-      container.appendChild(row);
-    });
-
-    // hidden file inputs for photo uploads
-    roster.athletes.forEach(athlete => {
-      const inp = document.createElement('input');
-      inp.type = 'file'; inp.accept = 'image/*';
-      inp.style.display = 'none';
-      inp.id = `file-${athlete.id}`;
-      inp.onchange = () => uploadPhoto(raceId, athlete.id, inp.files[0]);
-      document.body.appendChild(inp);
-    });
-
-    const count = document.getElementById('rosterCount');
-    if (count) count.textContent = `${roster.athletes.length} athlete${roster.athletes.length !== 1 ? 's' : ''}`;
-  }
-
-  // ── roster mutations ──
-  function addAthlete(raceId) {
-    if (!rosters[raceId]) rosters[raceId] = { boatClass: '', athletes: [] };
-    rosters[raceId].athletes.push({ id: uid(), name: '', seat: 'Stroke', photoPath: '' });
-    setDirty(true);
-    renderRoster(raceId);
-  }
-
-  function deleteAthlete(raceId, athleteId) {
-    if (!rosters[raceId]) return;
-    rosters[raceId].athletes = rosters[raceId].athletes.filter(a => a.id !== athleteId);
-    setDirty(true);
-    renderRoster(raceId);
-  }
-
-  function moveAthlete(raceId, athleteId, dir) {
-    const athletes = rosters[raceId]?.athletes;
-    if (!athletes) return;
-    const idx = athletes.findIndex(a => a.id === athleteId);
-    if (idx < 0) return;
-    const next = idx + dir;
-    if (next < 0 || next >= athletes.length) return;
-    [athletes[idx], athletes[next]] = [athletes[next], athletes[idx]];
-    setDirty(true);
-    renderRoster(raceId);
-  }
-
-  function updateAthlete(raceId, athleteId, field, value) {
-    const athlete = rosters[raceId]?.athletes.find(a => a.id === athleteId);
-    if (athlete) athlete[field] = value;
-    setDirty(true);
-  }
-
-  function updateRaceField(raceId, field, value) {
-    const race = races.find(r => r.id === raceId);
-    if (race) race[field] = value;
-    setDirty(true);
-    renderRaceList();
-  }
-
-  function updateBoatClass(raceId, value) {
-    if (rosters[raceId]) rosters[raceId].boatClass = value;
-    setDirty(true);
-  }
-
-  function setCurrentRace(raceId) {
-    currentRaceId = raceId;
-    wsSend({ type: 'current-race-set', raceId });
-    renderRaceList();
-    renderEditor(raceId);
-    toast('Current race set', 'ok');
-  }
-
-  // ── photo upload ──
-  function triggerPhotoUpload(raceId, athleteId) {
-    // remove any stale file inputs for this athlete first
-    const old = document.getElementById(`file-${athleteId}`);
-    if (old) old.remove();
-    const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = 'image/*';
-    inp.style.display = 'none';
-    inp.id = `file-${athleteId}`;
-    inp.onchange = () => uploadPhoto(raceId, athleteId, inp.files[0]);
-    document.body.appendChild(inp);
-    inp.click();
-  }
-
-  async function uploadPhoto(raceId, athleteId, file) {
-    if (!file) return;
-    const athlete = rosters[raceId]?.athletes.find(a => a.id === athleteId);
-    if (!athlete) return;
-
-    // show uploading state
-    const thumb = document.querySelector(`[onclick="triggerPhotoUpload('${raceId}','${athleteId}')"]`);
-    if (thumb) thumb.innerHTML = '<div class="photo-uploading">...</div>';
-
-    try {
-      const res = await fetch('/api/upload/athlete-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': file.type, 'Authorization': 'Bearer ' + token },
-        body: file
-      });
-      if (!res.ok) throw new Error('Upload failed');
-      const data = await res.json();
-      athlete.photoPath = data.path;
-      setDirty(true);
-      renderRoster(raceId);
-      toast('Photo uploaded', 'ok');
-    } catch {
-      renderRoster(raceId);
-      toast('Upload failed', 'err');
-    }
-  }
-
-  function removePhoto(raceId, athleteId, e) {
-    e.stopPropagation();
-    const athlete = rosters[raceId]?.athletes.find(a => a.id === athleteId);
-    if (!athlete) return;
-    athlete.photoPath = '';
-    setDirty(true);
-    renderRoster(raceId);
-  }
-
-  // ── save ──
-  function saveAll() {
-    wsSend({ type: 'setup-save', raceSchedule: races, raceRosters: rosters });
-    document.getElementById('saveStatus').textContent = 'Saving…';
-  }
-
-  // ── keyboard shortcut: Cmd/Ctrl+S ──
-  document.addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (dirty) saveAll(); }
+        ${a.photoPath ? `<button class="photo-rm" onclick="removeBoatPhoto('${bid}','${a.id}',event)">✕</button>` : ''}
+      </div>
+      <input type="text" value="${esc(a.name)}" placeholder="Athlete name"
+             oninput="updateBoatAthlete('${bid}','${a.id}','name',this.value)">
+      <select onchange="updateBoatAthlete('${bid}','${a.id}','seat',this.value)">
+        ${SEAT_OPTIONS.map(s=>`<option ${a.seat===s?'selected':''}>${s}</option>`).join('')}
+        ${!SEAT_OPTIONS.includes(a.seat)&&a.seat?`<option selected>${esc(a.seat)}</option>`:''}
+      </select>
+      <div class="reorder-col">
+        <button onclick="moveBoatAthlete('${bid}','${a.id}',-1)" ${idx===0?'disabled':''}>↑</button>
+        <button onclick="moveBoatAthlete('${bid}','${a.id}',1)" ${idx===(b.athletes.length-1)?'disabled':''}>↓</button>
+      </div>
+      <button class="icon-btn del" onclick="deleteBoatAthlete('${bid}','${a.id}')">✕</button>`;
+    container.appendChild(row);
   });
 
-  // ── utils ──
-  function uid() {
-    return 'r' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-  }
+  const cnt = document.getElementById('boatRosterCount');
+  if (cnt) cnt.textContent = `${b.athletes.length} athlete${b.athletes.length !== 1 ? 's' : ''}`;
+}
 
-  function esc(str) {
-    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  let toastTimer;
-  function toast(msg, type = '') {
-    const el = document.getElementById('toast');
-    el.textContent = msg; el.className = 'show ' + type;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.className = '', 2200);
-  }
-
-  // initial render while waiting for WS
+function refreshRaceViewsForBoat(bid) {
   renderRaceList();
-  connect();
+  if (selectedRaceId && races.find(r => r.id === selectedRaceId)?.boatId === bid) {
+    renderRaceEditor(selectedRaceId);
+  }
+}
+
+function updateBoat(bid, field, value) {
+  if (boats[bid]) boats[bid][field] = value;
+  setDirty(true);
+  renderBoatList();
+  refreshRaceViewsForBoat(bid);
+}
+
+function addBoatAthlete(bid) {
+  if (!boats[bid]) return;
+  boats[bid].athletes.push({ id: uid(), name: '', seat: 'Stroke', photoPath: '' });
+  setDirty(true);
+  renderBoatRoster(bid);
+  refreshRaceViewsForBoat(bid);
+}
+
+function updateBoatAthlete(bid, aid, field, value) {
+  const a = boats[bid]?.athletes.find(x => x.id === aid);
+  if (a) a[field] = value;
+  setDirty(true);
+  refreshRaceViewsForBoat(bid);
+}
+
+function deleteBoatAthlete(bid, aid) {
+  if (!boats[bid]) return;
+  boats[bid].athletes = boats[bid].athletes.filter(a => a.id !== aid);
+  setDirty(true);
+  renderBoatRoster(bid);
+  refreshRaceViewsForBoat(bid);
+}
+
+function moveBoatAthlete(bid, aid, dir) {
+  const arr = boats[bid]?.athletes;
+  if (!arr) return;
+  const i = arr.findIndex(a => a.id === aid);
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+  setDirty(true);
+  renderBoatRoster(bid);
+  refreshRaceViewsForBoat(bid);
+}
+
+function triggerBoatPhoto(bid, aid) {
+  const old = document.getElementById(`bfile-${aid}`);
+  if (old) old.remove();
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+  inp.id = `bfile-${aid}`;
+  inp.onchange = () => uploadBoatPhoto(bid, aid, inp.files[0]);
+  document.body.appendChild(inp);
+  inp.click();
+}
+
+async function uploadBoatPhoto(bid, aid, file) {
+  if (!file) return;
+  const a = boats[bid]?.athletes.find(x => x.id === aid);
+  if (!a) return;
+  try {
+    const res = await fetch('/api/upload/athlete-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': file.type, 'Authorization': 'Bearer ' + token },
+      body: file
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    a.photoPath = data.path;
+    setDirty(true);
+    renderBoatRoster(bid);
+    refreshRaceViewsForBoat(bid);
+    toast('Photo uploaded', 'ok');
+  } catch { toast('Upload failed', 'err'); }
+}
+
+function removeBoatPhoto(bid, aid, e) {
+  e.stopPropagation();
+  const a = boats[bid]?.athletes.find(x => x.id === aid);
+  if (a) { a.photoPath = ''; setDirty(true); renderBoatRoster(bid); refreshRaceViewsForBoat(bid); }
+}
+
+/* ══════════════════════════════════════════════════════
+   PRESETS TAB
+══════════════════════════════════════════════════════ */
+function renderPresetTable() {
+  const tbl = document.getElementById('presetTable');
+  if (!tbl) return;
+
+  // header row
+  let html = '<thead><tr><th class="row-label">Preset</th>';
+  WIDGETS.forEach(w => { html += `<th>${w.label}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  PRESETS.forEach(preset => {
+    const active = new Set(presetCfgs[preset.key]?.elements || []);
+    html += `<tr><td class="row-label">${preset.label}</td>`;
+    WIDGETS.forEach(w => {
+      html += `<td><input type="checkbox" class="preset-cb" ${active.has(w.key) ? 'checked' : ''}
+                onchange="togglePreset('${preset.key}','${w.key}',this.checked)"></td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody>';
+  tbl.innerHTML = html;
+}
+
+function togglePreset(presetKey, widgetKey, checked) {
+  if (!presetCfgs[presetKey]) presetCfgs[presetKey] = { elements: [] };
+  const els = new Set(presetCfgs[presetKey].elements);
+  if (checked) els.add(widgetKey); else els.delete(widgetKey);
+  presetCfgs[presetKey].elements = Array.from(els);
+  wsSend({ type: 'preset-config', name: presetKey, elements: Array.from(els) });
+}
+
+/* ══════════════════════════════════════════════════════
+   SAVE
+══════════════════════════════════════════════════════ */
+function saveAll() {
+  wsSend({ type: 'setup-save', raceSchedule: races, raceRosters: {} });
+  wsSend({ type: 'boats-save', boats });
+  document.getElementById('saveStatus').textContent = 'Saving…';
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (dirty) saveAll(); }
+});
+
+/* ── Utils ── */
+function uid() { return 'r' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+let toastTimer;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 2200);
+}
+
+/* ── Boot ── */
+renderRaceList();
+renderBoatList();
+connect();
 </script>
 </body>
 </html>

@@ -436,7 +436,7 @@
   if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
   if (user && user.role !== 'admin') location.href = user.role === 'coach' ? '/audio.html' : '/';
 
-  let ws, overlayState = {}, raceSchedule = [], raceRosters = {}, currentRaceId = null;
+  let ws, overlayState = {}, raceSchedule = [], boats = {}, currentRaceId = null;
 
   // ── WebSocket ──
   function connect() {
@@ -453,10 +453,10 @@
     if (msg.type === 'auth-ok')   { setConn(true); toast('Connected', 'ok'); }
     if (msg.type === 'auth-fail') { localStorage.clear(); location.href = '/'; }
 
-    if (msg.type === 'state' || msg.type === 'setup-saved') {
+    if (msg.type === 'state' || msg.type === 'setup-saved' || msg.type === 'boats-saved') {
       overlayState  = msg.overlayState  || overlayState;
       raceSchedule  = msg.raceSchedule  || raceSchedule;
-      raceRosters   = msg.raceRosters   || raceRosters;
+      boats         = msg.boats         || boats;
       currentRaceId = msg.currentRaceId ?? currentRaceId;
       syncElementButtons();
       syncRaceSelector();
@@ -488,9 +488,12 @@
 
   function updateAthleteCount() {
     const el = document.getElementById('athleteCount');
-    if (!currentRaceId || !raceRosters[currentRaceId]) { el.textContent = ''; return; }
-    const n = raceRosters[currentRaceId].athletes?.length || 0;
-    el.textContent = `${n} athlete${n !== 1 ? 's' : ''} in roster`;
+    const race = raceSchedule.find(r => r.id === currentRaceId);
+    const boat = race?.boatId ? boats[race.boatId] : null;
+    const n = boat?.athletes?.filter(a => a.name)?.length || 0;
+    if (!race) { el.textContent = ''; return; }
+    if (!boat) { el.textContent = 'No boat assigned'; return; }
+    el.textContent = `${boat.name || 'Boat'} · ${n} athlete${n !== 1 ? 's' : ''}`;
   }
 
   function onRaceChange(raceId) {
