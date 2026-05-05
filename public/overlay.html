@@ -26,24 +26,141 @@
     position: absolute; inset: 0; z-index: 90;
     overflow: hidden; pointer-events: none;
   }
-
-  /* shared bg */
   .int-bg {
     position: absolute; inset: 0;
-    background: #020302;
+    background: #06080a;
+  }
+
+  /* ── LIVE badge ── */
+  .int-live-badge {
+    position: absolute; top: 44px; right: 56px;
+    display: flex; align-items: center; gap: 9px;
+    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+    letter-spacing: 0.22em; color: #fff; z-index: 10;
+    background: rgba(0,0,0,0.45); padding: 7px 16px 6px; border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .int-live-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #ef4444;
+    animation: livePulse 1.4s ease-in-out infinite;
+  }
+  @keyframes livePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.55); }
+    50%       { box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+  }
+
+  /* ── diagonal accent slash (event open) ── */
+  .int-eo-slash {
+    position: absolute; left: -80px; top: 0; bottom: 0; width: 520px;
+    background: var(--ov-accent);
+    clip-path: polygon(0 0, 86% 0, 100% 100%, 0 100%);
+    z-index: 1;
+  }
+  .int-eo-slash-stripes {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      -55deg, transparent, transparent 18px,
+      rgba(255,255,255,0.03) 18px, rgba(255,255,255,0.03) 20px
+    );
+  }
+
+  /* ── event open ── */
+  .int-center-stage {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 80px; z-index: 2;
+  }
+  .int-event-logo {
+    width: 120px; height: 120px; object-fit: contain;
+    border-radius: 18px; margin-bottom: 30px;
+    filter: drop-shadow(0 0 48px rgba(0,72,48,0.65));
+  }
+  .int-event-org {
+    font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
+    letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.42);
+    margin-bottom: 16px;
+  }
+  .int-event-title-big {
+    font-family: 'Rajdhani', sans-serif; font-size: 96px; font-weight: 700;
+    line-height: 0.88; letter-spacing: 0.02em; text-transform: uppercase; color: #fff;
+    max-width: 1300px;
+  }
+  .int-event-divider {
+    width: 0; height: 3px; background: var(--ov-accent); margin: 26px 0;
+  }
+  .int-event-sub {
+    font-family: 'Rajdhani', sans-serif; font-size: 30px; font-weight: 600;
+    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.68);
+  }
+  .int-eo-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 68px;
+    background: rgba(0,0,0,0.5); border-top: 2px solid var(--ov-accent);
+    display: flex; align-items: center; justify-content: center; gap: 40px;
+    padding: 0 80px; z-index: 3;
+  }
+  .int-eo-bottom-item {
+    font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.48);
+  }
+  .int-eo-bottom-sep { width: 1px; height: 26px; background: rgba(255,255,255,0.14); }
+
+  /* ── race intro ── */
+  .int-race-panel {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 840px;
+    background: linear-gradient(108deg, var(--ov-accent) 0%, #002a1c 100%);
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 80px 90px 80px 80px;
+    clip-path: polygon(0 0, 95% 0, 100% 100%, 0 100%);
+  }
+  .int-race-eyebrow {
+    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+    letter-spacing: 0.38em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5); margin-bottom: 10px;
+  }
+  .int-race-eyebrow-line {
+    width: 0; height: 2px; background: rgba(255,255,255,0.28); margin-bottom: 32px;
+  }
+  .int-race-panel-name {
+    font-family: 'Rajdhani', sans-serif; font-size: 72px; font-weight: 700;
+    line-height: 0.88; letter-spacing: 0.01em; text-transform: uppercase;
+    color: #fff; margin-bottom: 30px;
+  }
+  .int-race-badges {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .int-race-badge {
+    font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 6px 16px; border-radius: 4px;
+    border: 1.5px solid rgba(255,255,255,0.28); color: rgba(255,255,255,0.78);
+    background: rgba(0,0,0,0.15);
+  }
+  .int-race-side {
+    position: absolute; left: 840px; right: 0; top: 0; bottom: 0;
+    background: #04080a;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+  }
+  .int-race-side-bg-text {
+    font-family: 'Rajdhani', sans-serif; font-size: 220px; font-weight: 700;
+    color: rgba(255,255,255,0.025); letter-spacing: -0.02em; user-select: none;
+  }
+  .int-race-side-tag {
+    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+    letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.18);
   }
 
   /* ── athlete card ── */
   .int-photo-panel {
-    position: absolute; left: 0; top: 0; bottom: 0; width: 680px;
+    position: absolute; left: 0; top: 0; bottom: 0; width: 670px;
     overflow: hidden;
   }
   .int-photo-accent {
-    position: absolute; left: 0; top: 0; bottom: 0; width: 12px;
+    position: absolute; left: 0; top: 0; bottom: 0; width: 10px;
     background: var(--ov-accent); z-index: 3;
   }
   .int-photo-frame {
-    position: absolute; left: 12px; right: 0; top: 0; bottom: 0; overflow: hidden;
+    position: absolute; left: 10px; right: 0; top: 0; bottom: 0; overflow: hidden;
   }
   .int-photo-img    { width: 100%; height: 100%; object-fit: cover; display: block; }
   .int-photo-fallback {
@@ -51,141 +168,104 @@
     display: flex; align-items: center; justify-content: center;
     background: #0c130e;
     font-family: 'Rajdhani', sans-serif; font-size: 220px; font-weight: 700;
-    color: rgba(255,255,255,0.07); text-transform: uppercase;
+    color: rgba(255,255,255,0.05); text-transform: uppercase;
   }
   .int-photo-gradient {
-    position: absolute; bottom: 0; left: 12px; right: 0; height: 55%;
-    background: linear-gradient(to top, #020302 0%, transparent 100%); z-index: 2;
+    position: absolute; bottom: 0; left: 10px; right: 0; height: 65%;
+    background: linear-gradient(to top, #060809 0%, transparent 100%); z-index: 2;
   }
   .int-photo-school-bar {
-    position: absolute; bottom: 0; left: 12px; right: 0;
-    padding: 22px 28px; z-index: 3;
+    position: absolute; bottom: 0; left: 10px; right: 0;
+    padding: 22px 26px; z-index: 3;
   }
   .int-school-name-tag {
-    font-family: 'Rajdhani', sans-serif; font-size: 17px; font-weight: 700;
-    letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.65);
+    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.48);
   }
   .int-data-panel {
-    position: absolute; left: 680px; right: 0; top: 0; bottom: 0;
+    position: absolute; left: 670px; right: 0; top: 0; bottom: 0;
     display: flex; flex-direction: column; justify-content: center;
-    padding: 80px 90px; background: #030604;
+    padding: 72px 88px; background: #060809;
     border-left: 1px solid rgba(255,255,255,0.04);
+    overflow: hidden;
+  }
+  .int-seat-bg-num {
+    position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+    font-family: 'Rajdhani', sans-serif; font-size: 380px; font-weight: 700;
+    line-height: 1; color: rgba(255,255,255,0.025);
+    user-select: none; pointer-events: none; letter-spacing: -0.05em;
+  }
+  .int-athlete-school-header {
+    font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--ov-accent); margin-bottom: 22px;
   }
   .int-race-tag {
-    font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700;
-    letter-spacing: 0.24em; text-transform: uppercase;
-    color: var(--ov-accent); margin-bottom: 30px;
+    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(255,255,255,0.3); margin-bottom: 28px;
   }
   .int-athlete-firstname {
-    font-family: 'Rajdhani', sans-serif; font-size: 108px; font-weight: 700;
+    font-family: 'Rajdhani', sans-serif; font-size: 100px; font-weight: 700;
     line-height: 0.88; letter-spacing: -0.01em; text-transform: uppercase; color: #fff;
   }
   .int-athlete-lastname {
-    font-family: 'Rajdhani', sans-serif; font-size: 108px; font-weight: 700;
+    font-family: 'Rajdhani', sans-serif; font-size: 100px; font-weight: 700;
     line-height: 0.88; letter-spacing: -0.01em; text-transform: uppercase;
-    color: var(--ov-accent); margin-bottom: 30px;
+    color: var(--ov-accent); margin-bottom: 26px;
   }
-  .int-divider { width: 56px; height: 4px; background: var(--ov-alt); margin-bottom: 22px; }
+  .int-divider { width: 52px; height: 3px; background: rgba(255,255,255,0.2); margin-bottom: 20px; }
   .int-position-row {
-    display: flex; align-items: center; gap: 16px;
-    font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 600;
-    letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.68);
+    display: flex; align-items: center; gap: 14px;
+    font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.6);
   }
-  .int-pos-dot { color: var(--ov-accent); }
-
-  /* ── event open ── */
-  .int-center-stage {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 80px;
-  }
-  .int-event-logo {
-    width: 110px; height: 110px; object-fit: contain;
-    border-radius: 16px; margin-bottom: 28px;
-  }
-  .int-event-org {
-    font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
-    letter-spacing: 0.3em; text-transform: uppercase; color: rgba(255,255,255,0.45);
-    margin-bottom: 16px;
-  }
-  .int-event-title-big {
-    font-family: 'Rajdhani', sans-serif; font-size: 90px; font-weight: 700;
-    line-height: 0.9; letter-spacing: 0.03em; text-transform: uppercase; color: #fff;
-    max-width: 1400px;
-  }
-  .int-event-sub {
-    font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 600;
-    letter-spacing: 0.22em; text-transform: uppercase; color: var(--ov-accent);
-    margin-top: 22px;
-  }
-  .int-horiz-bar {
-    position: absolute; left: 0; right: 0; height: 3px; background: var(--ov-accent);
-  }
-  .int-horiz-bar-top    { top: 96px; }
-  .int-horiz-bar-bottom { bottom: 96px; }
-
-  /* ── race intro ── */
-  .int-race-panel {
-    position: absolute; left: 0; top: 0; bottom: 0; width: 820px;
-    background: var(--ov-accent);
-    display: flex; flex-direction: column; justify-content: center;
-    padding: 80px 72px;
-  }
-  .int-race-panel-label {
-    font-family: 'Rajdhani', sans-serif; font-size: 17px; font-weight: 700;
-    letter-spacing: 0.3em; text-transform: uppercase;
-    color: rgba(255,255,255,0.55); margin-bottom: 14px;
-  }
-  .int-race-panel-name {
-    font-family: 'Rajdhani', sans-serif; font-size: 80px; font-weight: 700;
-    line-height: 0.9; letter-spacing: 0.02em; text-transform: uppercase;
-    color: #fff; margin-bottom: 36px;
-  }
-  .int-race-panel-time {
-    font-family: 'Rajdhani', sans-serif; font-size: 30px; font-weight: 600;
-    letter-spacing: 0.16em; color: rgba(255,255,255,0.72);
-  }
-  .int-race-side {
-    position: absolute; left: 820px; right: 0; top: 0; bottom: 0;
-    background: #030604;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .int-race-side-bg-text {
-    font-family: 'Rajdhani', sans-serif; font-size: 240px; font-weight: 700;
-    color: rgba(255,255,255,0.03); letter-spacing: -0.02em; user-select: none;
-  }
+  .int-pos-dot { color: rgba(255,255,255,0.2); }
 
   /* ── results reveal ── */
   .int-results-stage {
     position: absolute; inset: 0;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 80px;
+    padding: 60px 80px;
   }
   .int-results-eyebrow {
-    font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
-    letter-spacing: 0.3em; text-transform: uppercase; color: var(--ov-accent);
-    margin-bottom: 10px;
+    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+    letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.35);
+    margin-bottom: 8px; align-self: flex-start; padding-left: 4px;
+  }
+  .int-results-header-wrap {
+    width: 100%; max-width: 1100px; margin-bottom: 32px;
+    border-bottom: 2px solid rgba(255,255,255,0.07); padding-bottom: 20px;
   }
   .int-results-race-name {
     font-family: 'Rajdhani', sans-serif; font-size: 52px; font-weight: 700;
-    letter-spacing: 0.05em; text-transform: uppercase; color: #fff;
-    margin-bottom: 48px;
+    letter-spacing: 0.03em; text-transform: uppercase; color: #fff;
   }
-  .int-results-rows { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 10px; }
+  .int-results-rows { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 8px; }
   .int-result-row {
-    display: grid; grid-template-columns: 72px 1fr 180px 120px;
-    align-items: center; gap: 20px; padding: 16px 24px;
-    background: rgba(255,255,255,0.04); border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.07);
-    border-left: 5px solid var(--row-color, rgba(255,255,255,0.15));
+    display: grid; grid-template-columns: 80px 1fr 180px 130px;
+    align-items: center; gap: 16px; padding: 14px 22px;
+    background: rgba(255,255,255,0.03); border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-left: 5px solid var(--row-color, rgba(255,255,255,0.12));
+  }
+  .int-result-row.is-winner {
+    background: rgba(255,215,0,0.05);
+    box-shadow: 0 0 50px rgba(255,215,0,0.07);
   }
   .int-result-place {
-    font-family: 'Rajdhani', sans-serif; font-size: 44px; font-weight: 700;
-    color: var(--row-color, rgba(255,255,255,0.4)); line-height: 1;
+    font-family: 'Rajdhani', sans-serif; font-size: 46px; font-weight: 700;
+    color: var(--row-color, rgba(255,255,255,0.35)); line-height: 1;
   }
+  .int-result-school-wrap { display: flex; flex-direction: column; gap: 2px; }
   .int-result-school {
-    font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 600;
-    letter-spacing: 0.04em; color: #fff;
+    font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700;
+    letter-spacing: 0.02em; color: #fff; text-transform: uppercase;
+  }
+  .int-winner-label {
+    font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.3em; text-transform: uppercase; color: #FFD700;
+    opacity: 0;
   }
   .int-result-time {
     font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 700;
@@ -193,7 +273,7 @@
   }
   .int-result-gap {
     font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 600;
-    color: rgba(255,255,255,0.38); text-align: right;
+    color: rgba(255,255,255,0.32); text-align: right;
   }
   </style>
 </head>
@@ -839,76 +919,102 @@ function introSplitName(fullName) {
 function playIntroEventOpen(race) {
   introActive = true;
   const stage = document.getElementById('intro-stage');
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
   stage.innerHTML = `
     <div class="int-bg"></div>
-    <div class="int-horiz-bar int-horiz-bar-top"></div>
-    <div class="int-horiz-bar int-horiz-bar-bottom"></div>
+    <div class="int-eo-slash"><div class="int-eo-slash-stripes"></div></div>
+    <div class="int-live-badge"><div class="int-live-dot"></div><span>LIVE</span></div>
     <div class="int-center-stage">
       <img class="int-event-logo" src="/images/brooks-logo.png" alt="">
       <div class="int-event-org">Brooks School Crew</div>
       <div class="int-event-title-big">${esc(race?.name || 'Race Day')}</div>
+      <div class="int-event-divider"></div>
       <div class="int-event-sub">${esc(race?.sub || '')}</div>
+    </div>
+    <div class="int-eo-bottom">
+      <div class="int-eo-bottom-item">${dateStr}</div>
+      <div class="int-eo-bottom-sep"></div>
+      <div class="int-eo-bottom-item">Live Broadcast Coverage</div>
     </div>`;
 
-  const bg    = stage.querySelector('.int-bg');
-  const barT  = stage.querySelector('.int-horiz-bar-top');
-  const barB  = stage.querySelector('.int-horiz-bar-bottom');
-  const logo  = stage.querySelector('.int-event-logo');
-  const org   = stage.querySelector('.int-event-org');
-  const title = stage.querySelector('.int-event-title-big');
-  const sub   = stage.querySelector('.int-event-sub');
+  const bg      = stage.querySelector('.int-bg');
+  const slash   = stage.querySelector('.int-eo-slash');
+  const live    = stage.querySelector('.int-live-badge');
+  const logo    = stage.querySelector('.int-event-logo');
+  const org     = stage.querySelector('.int-event-org');
+  const title   = stage.querySelector('.int-event-title-big');
+  const divLine = stage.querySelector('.int-event-divider');
+  const sub     = stage.querySelector('.int-event-sub');
+  const bottom  = stage.querySelector('.int-eo-bottom');
 
   currentIntroTl = gsap.timeline({ onComplete: clearIntroStage });
   currentIntroTl
     .set(stage, { opacity: 1 })
-    .fromTo(bg,   { opacity: 0 }, { opacity: 1, duration: 0.3 })
-    .fromTo(barT, { scaleX: 0, transformOrigin: 'left center' },  { scaleX: 1, duration: 0.65, ease: 'power3.out' }, 0.1)
-    .fromTo(barB, { scaleX: 0, transformOrigin: 'right center' }, { scaleX: 1, duration: 0.65, ease: 'power3.out' }, 0.1)
-    .fromTo(logo,  { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: 'back.out(1.8)' }, 0.35)
-    .fromTo(org,   { y: 20, opacity: 0 },    { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.7)
-    .fromTo(title, { y: 50, opacity: 0 },    { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 0.85)
-    .fromTo(sub,   { y: 24, opacity: 0 },    { y: 0, opacity: 1, duration: 0.38, ease: 'power2.out' }, 1.15)
-    .to({}, { duration: 3 })
-    .to([logo, org, title, sub], { opacity: 0, y: -24, stagger: 0.05, duration: 0.45, ease: 'power2.in' })
-    .to([barT, barB], { scaleX: 0, duration: 0.35, ease: 'power2.in' }, '-=0.3')
-    .to(bg, { opacity: 0, duration: 0.35 }, '-=0.25');
+    .fromTo(bg,     { opacity: 0 }, { opacity: 1, duration: 0.4 })
+    .fromTo(slash,  { x: -600 },    { x: 0, duration: 0.55, ease: 'power4.out' }, 0.05)
+    .fromTo(bottom, { y: 68 },      { y: 0, duration: 0.45, ease: 'power3.out' }, 0.2)
+    .fromTo(live,   { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.38, ease: 'power2.out' }, 0.45)
+    .fromTo(logo,   { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.6)' }, 0.52)
+    .fromTo(org,    { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: 'power2.out' }, 0.84)
+    .fromTo(title,  { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 0.97)
+    .to(divLine,    { width: 280, duration: 0.5, ease: 'power3.out' }, 1.28)
+    .fromTo(sub,    { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: 'power2.out' }, 1.48)
+    .to({}, { duration: 3.5 })
+    .to([logo, org, title, divLine, sub], { opacity: 0, y: -18, stagger: 0.04, duration: 0.4, ease: 'power2.in' })
+    .to(slash,  { x: -600, duration: 0.45, ease: 'power3.in' }, '-=0.3')
+    .to([live, bottom], { opacity: 0, duration: 0.3 }, '-=0.35')
+    .to(bg,     { opacity: 0, duration: 0.3 }, '-=0.18');
 }
 
 // ── 2. Race Intro ──────────────────────────────────────────
 function playIntroRace(race) {
   introActive = true;
   const stage = document.getElementById('intro-stage');
+  const sub = race?.sub || '';
+  const isHeat = /heat/i.test(sub);
+  const isSemi = /semi/i.test(sub);
+  const eventType = isHeat ? 'HEAT' : isSemi ? 'SEMI-FINAL' : 'GRAND FINAL';
+
   stage.innerHTML = `
     <div class="int-bg"></div>
     <div class="int-race-panel">
-      <div class="int-race-panel-label">Next Race</div>
+      <div class="int-race-eyebrow">Up Next</div>
+      <div class="int-race-eyebrow-line"></div>
       <div class="int-race-panel-name">${esc(race?.name || 'Race')}</div>
-      <div class="int-race-panel-time">${esc(race?.sub || '')}</div>
+      <div class="int-race-badges">
+        <div class="int-race-badge">${esc(eventType)}</div>
+        ${sub ? `<div class="int-race-badge">${esc(sub)}</div>` : ''}
+      </div>
     </div>
     <div class="int-race-side">
       <div class="int-race-side-bg-text">GO</div>
+      <div class="int-race-side-tag">On The Water</div>
     </div>`;
 
-  const bg    = stage.querySelector('.int-bg');
-  const panel = stage.querySelector('.int-race-panel');
-  const side  = stage.querySelector('.int-race-side');
-  const label = stage.querySelector('.int-race-panel-label');
-  const name  = stage.querySelector('.int-race-panel-name');
-  const time  = stage.querySelector('.int-race-panel-time');
+  const bg      = stage.querySelector('.int-bg');
+  const panel   = stage.querySelector('.int-race-panel');
+  const side    = stage.querySelector('.int-race-side');
+  const eyebrow = stage.querySelector('.int-race-eyebrow');
+  const eyeLine = stage.querySelector('.int-race-eyebrow-line');
+  const name    = stage.querySelector('.int-race-panel-name');
+  const badges  = stage.querySelector('.int-race-badges');
 
   currentIntroTl = gsap.timeline({ onComplete: clearIntroStage });
   currentIntroTl
     .set(stage, { opacity: 1 })
-    .fromTo(bg,    { opacity: 0 }, { opacity: 1, duration: 0.15 })
-    .fromTo(panel, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.45, ease: 'power4.out' }, 0.05)
-    .fromTo(side,  { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.2)
-    .fromTo(label, { y: -18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' }, 0.35)
-    .fromTo(name,  { x: -50, opacity: 0 }, { x: 0, opacity: 1, duration: 0.42, ease: 'power3.out' }, 0.44)
-    .fromTo(time,  { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.32, ease: 'power2.out' }, 0.6)
-    .to({}, { duration: 3 })
-    .to(panel, { clipPath: 'inset(0 0 0 100%)', duration: 0.4, ease: 'power3.in' })
-    .to(side, { opacity: 0, duration: 0.3 }, '-=0.3')
-    .to(bg,   { opacity: 0, duration: 0.25 }, '-=0.2');
+    .fromTo(bg,    { opacity: 0 }, { opacity: 1, duration: 0.2 })
+    .fromTo(panel, { clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' },
+                   { clipPath: 'polygon(0 0, 95% 0, 100% 100%, 0 100%)', duration: 0.52, ease: 'power4.out' }, 0.05)
+    .fromTo(side,    { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.4, ease: 'power2.out' }, 0.3)
+    .fromTo(eyebrow, { y: -16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' }, 0.42)
+    .to(eyeLine,     { width: 120, duration: 0.48, ease: 'power3.out' }, 0.62)
+    .fromTo(name,    { x: -40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: 'power3.out' }, 0.68)
+    .fromTo(badges,  { y: 14, opacity: 0 },  { y: 0, opacity: 1, duration: 0.35, ease: 'power2.out' }, 0.9)
+    .to({}, { duration: 3.5 })
+    .to(panel, { clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)', duration: 0.45, ease: 'power3.in' })
+    .to(side,  { opacity: 0, duration: 0.3 }, '-=0.38')
+    .to(bg,    { opacity: 0, duration: 0.28 }, '-=0.18');
 }
 
 // ── 3. Athlete Cards ───────────────────────────────────────
@@ -935,6 +1041,7 @@ function showAthleteCard(athlete, race, roster, num, total, onDone) {
   const photoHtml = athlete.photoPath
     ? `<img class="int-photo-img" src="${athlete.photoPath}" alt="">`
     : `<div class="int-photo-fallback">${esc((athlete.name||'?').split(' ').map(w=>w[0]||'').slice(0,2).join(''))}</div>`;
+  const seatNum = String(athlete.seat || '').replace(/\D/g, '') || String(num);
 
   stage.innerHTML = `
     <div class="int-bg"></div>
@@ -947,7 +1054,9 @@ function showAthleteCard(athlete, race, roster, num, total, onDone) {
       </div>
     </div>
     <div class="int-data-panel">
-      <div class="int-race-tag">${num} / ${total}${roster?.boatClass ? '  ·  ' + esc(roster.boatClass).toUpperCase() : ''}</div>
+      <div class="int-seat-bg-num">${esc(seatNum)}</div>
+      <div class="int-athlete-school-header">Brooks School Crew</div>
+      <div class="int-race-tag">${num} OF ${total}${roster?.boatClass ? '  ·  ' + esc(roster.boatClass).toUpperCase() : ''}</div>
       <div class="int-athlete-firstname">${esc(first)}</div>
       <div class="int-athlete-lastname">${esc(last)}</div>
       <div class="int-divider"></div>
@@ -961,6 +1070,7 @@ function showAthleteCard(athlete, race, roster, num, total, onDone) {
   const photo   = stage.querySelector('.int-photo-panel');
   const accent  = stage.querySelector('.int-photo-accent');
   const data    = stage.querySelector('.int-data-panel');
+  const school  = stage.querySelector('.int-athlete-school-header');
   const tag     = stage.querySelector('.int-race-tag');
   const fn      = stage.querySelector('.int-athlete-firstname');
   const ln      = stage.querySelector('.int-athlete-lastname');
@@ -970,18 +1080,19 @@ function showAthleteCard(athlete, race, roster, num, total, onDone) {
   currentIntroTl = gsap.timeline({ onComplete: onDone });
   currentIntroTl
     .set(stage, { opacity: 1 })
-    .fromTo(bg,     { opacity: 0 }, { opacity: 1, duration: 0.15 })
-    .fromTo(photo,  { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.42, ease: 'power3.out' }, 0.05)
-    .fromTo(accent, { scaleY: 0, transformOrigin: 'top center' }, { scaleY: 1, duration: 0.32, ease: 'power3.out' }, 0.08)
-    .fromTo(data,   { x: 50, opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, ease: 'power3.out' }, 0.12)
-    .fromTo(tag,    { y: -16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' }, 0.28)
-    .fromTo(fn,     { x: 80, opacity: 0, skewX: -7 }, { x: 0, opacity: 1, skewX: 0, duration: 0.4, ease: 'power4.out' }, 0.35)
-    .fromTo(ln,     { x: 80, opacity: 0, skewX: -7 }, { x: 0, opacity: 1, skewX: 0, duration: 0.36, ease: 'power4.out' }, 0.44)
-    .fromTo(divLine,{ scaleX: 0, transformOrigin: 'left center' }, { scaleX: 1, duration: 0.36, ease: 'power2.out' }, 0.58)
-    .fromTo(pos,    { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: 'power2.out' }, 0.68)
+    .fromTo(bg,     { opacity: 0 }, { opacity: 1, duration: 0.18 })
+    .fromTo(photo,  { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.48, ease: 'power4.out' }, 0.04)
+    .fromTo(accent, { scaleY: 0, transformOrigin: 'top center' }, { scaleY: 1, duration: 0.36, ease: 'power3.out' }, 0.06)
+    .fromTo(data,   { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.32, ease: 'power3.out' }, 0.1)
+    .fromTo(school, { y: -14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3,  ease: 'power2.out' }, 0.28)
+    .fromTo(tag,    { y: -12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: 'power2.out' }, 0.38)
+    .fromTo(fn,     { x: 70, opacity: 0, skewX: -5 }, { x: 0, opacity: 1, skewX: 0, duration: 0.42, ease: 'power4.out' }, 0.44)
+    .fromTo(ln,     { x: 70, opacity: 0, skewX: -5 }, { x: 0, opacity: 1, skewX: 0, duration: 0.38, ease: 'power4.out' }, 0.54)
+    .fromTo(divLine,{ scaleX: 0, transformOrigin: 'left center' }, { scaleX: 1, duration: 0.38, ease: 'power2.out' }, 0.66)
+    .fromTo(pos,    { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: 'power2.out' }, 0.76)
     .to({}, { duration: 3.5 })
-    .to([photo, data], { y: 56, opacity: 0, stagger: 0.05, duration: 0.38, ease: 'power3.in' })
-    .to(bg, { opacity: 0, duration: 0.25 }, '-=0.22');
+    .to([photo, data], { y: 50, opacity: 0, stagger: 0.06, duration: 0.4, ease: 'power3.in' })
+    .to(bg, { opacity: 0, duration: 0.28 }, '-=0.22');
 }
 
 // ── 4. Results Reveal ──────────────────────────────────────
@@ -992,41 +1103,61 @@ function playIntroResultsReveal(resultsData, race) {
   const PLACE_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
 
   const rowsHtml = rows.map((r, i) => `
-    <div class="int-result-row" style="--row-color:${PLACE_COLORS[i] || 'rgba(255,255,255,0.15)'}">
+    <div class="int-result-row${i === 0 ? ' is-winner' : ''}" style="--row-color:${PLACE_COLORS[i] || 'rgba(255,255,255,0.12)'}">
       <div class="int-result-place">${r.place ?? i + 1}</div>
-      <div class="int-result-school">${esc(r.school || '')}</div>
+      <div class="int-result-school-wrap">
+        <div class="int-result-school">${esc(r.school || '')}</div>
+        ${i === 0 ? '<div class="int-winner-label">Race Winner</div>' : ''}
+      </div>
       <div class="int-result-time">${esc(r.time || '')}</div>
-      <div class="int-result-gap">${r.margin && r.margin !== '-' ? esc(r.margin) : ''}</div>
+      <div class="int-result-gap">${i > 0 && r.margin && r.margin !== '-' ? '+' + esc(r.margin) : ''}</div>
     </div>`).join('');
 
   stage.innerHTML = `
     <div class="int-bg"></div>
     <div class="int-results-stage">
       <div class="int-results-eyebrow">Official Results</div>
-      <div class="int-results-race-name">${esc(race?.name || '')}</div>
+      <div class="int-results-header-wrap">
+        <div class="int-results-race-name">${esc(race?.name || '')}</div>
+      </div>
       <div class="int-results-rows">${rowsHtml}</div>
     </div>`;
 
-  const bg    = stage.querySelector('.int-bg');
-  const eye   = stage.querySelector('.int-results-eyebrow');
-  const rname = stage.querySelector('.int-results-race-name');
-  const rrows = stage.querySelectorAll('.int-result-row');
+  const bg         = stage.querySelector('.int-bg');
+  const eye        = stage.querySelector('.int-results-eyebrow');
+  const headerWrap = stage.querySelector('.int-results-header-wrap');
+  const rrows      = Array.from(stage.querySelectorAll('.int-result-row'));
+  const winnerRow  = rrows[0] || null;
+  const winnerLbl  = winnerRow?.querySelector('.int-winner-label') || null;
+  const otherRows  = rrows.slice(1).reverse(); // last place → 2nd place
 
   currentIntroTl = gsap.timeline({ onComplete: clearIntroStage });
   currentIntroTl
     .set(stage, { opacity: 1 })
-    .fromTo(bg,    { opacity: 0 }, { opacity: 1, duration: 0.25 })
-    .fromTo(eye,   { y: -28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: 'power3.out' }, 0.2)
-    .fromTo(rname, { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: 'power2.out' }, 0.42);
-  rrows.forEach((row, i) => {
+    .fromTo(bg,         { opacity: 0 }, { opacity: 1, duration: 0.3 })
+    .fromTo(eye,        { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: 'power3.out' }, 0.2)
+    .fromTo(headerWrap, { y: -14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4,  ease: 'power2.out' }, 0.38);
+
+  otherRows.forEach((row, i) => {
     currentIntroTl.fromTo(row,
-      { x: -70, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.38, ease: 'power3.out' },
-      0.55 + i * 0.2);
+      { x: -60, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.4, ease: 'power3.out' },
+      0.6 + i * 0.24);
   });
+
+  const winnerT = 0.6 + otherRows.length * 0.24 + 0.7;
+  if (winnerRow) {
+    currentIntroTl
+      .fromTo(winnerRow, { x: -80, opacity: 0, scale: 0.97 },
+              { x: 0, opacity: 1, scale: 1, duration: 0.55, ease: 'back.out(1.3)' }, winnerT);
+    if (winnerLbl) {
+      currentIntroTl.to(winnerLbl, { opacity: 1, duration: 0.35, ease: 'power2.out' }, winnerT + 0.5);
+    }
+  }
+
   currentIntroTl
-    .to({}, { duration: 4 })
-    .to(stage, { opacity: 0, duration: 0.5 });
+    .to({}, { duration: 4.5 })
+    .to(stage, { opacity: 0, duration: 0.55 });
 }
 
 // ── dispatcher ──
