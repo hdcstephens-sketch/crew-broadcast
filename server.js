@@ -207,7 +207,9 @@ const DEFAULT_BOATS = {
   'varsity-1': { id: 'varsity-1', name: 'Varsity 1', boatClass: '', athletes: [] },
   'varsity-2': { id: 'varsity-2', name: 'Varsity 2', boatClass: '', athletes: [] },
   'varsity-3': { id: 'varsity-3', name: 'Varsity 3', boatClass: '', athletes: [] },
-  'varsity-4': { id: 'varsity-4', name: 'Varsity 4', boatClass: '', athletes: [] }
+  'varsity-4': { id: 'varsity-4', name: 'Varsity 4', boatClass: '', athletes: [] },
+  'jv-1':      { id: 'jv-1',     name: 'JV 1',      boatClass: '', athletes: [] },
+  'jv-2':      { id: 'jv-2',     name: 'JV 2',      boatClass: '', athletes: [] }
 };
 
 function getDefaultStore() {

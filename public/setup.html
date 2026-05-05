@@ -330,12 +330,14 @@ let dirty = false;
 let pendingDeleteId = null;
 let parsedImport = [];
 
-const BOAT_ORDER = ['varsity-1','varsity-2','varsity-3','varsity-4'];
+const BOAT_ORDER = ['varsity-1','varsity-2','varsity-3','varsity-4','jv-1','jv-2'];
 const BOAT_LABELS = {
   'varsity-1': 'Varsity 1',
   'varsity-2': 'Varsity 2',
   'varsity-3': 'Varsity 3',
-  'varsity-4': 'Varsity 4'
+  'varsity-4': 'Varsity 4',
+  'jv-1': 'JV 1',
+  'jv-2': 'JV 2'
 };
 const SEAT_OPTIONS = ['Cox','Stroke','7','6','5','4','3','2','Bow','Coach','Custom'];
 const WIDGETS = [
@@ -469,7 +471,8 @@ function normalizeText(value) {
 function boatIdFromNumber(num) {
   const n = Number(num);
   if (n >= 1 && n <= 4) return `varsity-${n}`;
-  if (n === 5 || n === 6) return `jv-${n}`;
+  if (n === 5) return 'jv-1';
+  if (n === 6) return 'jv-2';
   return null;
 }
 
