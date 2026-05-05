@@ -937,7 +937,7 @@ function playIntroEventOpen(race) {
     <div class="int-live-badge"><div class="int-live-dot"></div><span>LIVE</span></div>
     <div class="int-center-stage">
       <img class="int-event-logo" src="/images/brooks-logo.png" alt="">
-      <div class="int-event-org">Brooks School Crew</div>
+      <div class="int-event-org">${esc(teamName())}</div>
       <div class="int-event-title-big">${esc(race?.name || 'Race Day')}</div>
       <div class="int-event-divider"></div>
       <div class="int-event-sub">${esc(race?.sub || '')}</div>
@@ -1064,7 +1064,7 @@ function showAthleteCard(athlete, race, roster, num, total, onDone) {
     </div>
     <div class="int-data-panel">
       <div class="int-seat-bg-num">${esc(seatNum)}</div>
-      <div class="int-athlete-school-header">Brooks School Crew</div>
+      <div class="int-athlete-school-header">${esc(teamName())}</div>
       <div class="int-race-tag">${num} OF ${total}${roster?.boatClass ? '  ·  ' + esc(roster.boatClass).toUpperCase() : ''}</div>
       <div class="int-athlete-firstname">${esc(first)}</div>
       <div class="int-athlete-lastname">${esc(last)}</div>
@@ -1181,6 +1181,10 @@ function handlePlayIntro(introId, race, roster) {
       playIntroResultsReveal(currentOverlayState?.results?.data || [], race);
     }
   });
+}
+
+function teamName() {
+  return currentOverlayState?.watermark?.text || 'Crew Broadcast';
 }
 
 function esc(str) {

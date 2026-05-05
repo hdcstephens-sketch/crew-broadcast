@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CREW Broadcast - Sign In</title>
+  <title>CREW CAST - Sign In</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -83,6 +83,34 @@
     @keyframes sp { to { transform: rotate(360deg); } }
 
     .footer { text-align: center; margin-top: 18px; font-size: 11.5px; color: var(--text3); }
+
+    .register-link { text-align: center; margin-top: 14px; font-size: 12.5px; color: var(--text2); }
+    .register-link a { color: #5bbf94; text-decoration: none; font-weight: 600; }
+    .register-link a:hover { text-decoration: underline; }
+
+    .register-card {
+      display: none;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 32px 28px;
+      margin-top: 14px;
+    }
+    .register-card.open { display: block; }
+    .register-card h2 { font-size: 17px; font-weight: 700; margin-bottom: 5px; }
+    .register-card .hint { font-size: 12.5px; color: var(--text2); margin-bottom: 26px; }
+
+    .success {
+      display: none;
+      background: rgba(91,191,148,0.08);
+      border: 1px solid rgba(91,191,148,0.25);
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 13px; color: #5bbf94;
+      margin-bottom: 16px;
+      align-items: center; gap: 8px;
+    }
+    .success.show { display: flex; }
   </style>
 </head>
 <body>
@@ -90,9 +118,9 @@
   <div class="panel">
 
     <div class="logo">
-      <div class="logo-icon">B</div>
-      <div class="logo-name">BROOKS CREW CAST</div>
-      <div class="logo-sub">Brooks School Athletic Media</div>
+      <div class="logo-icon">C</div>
+      <div class="logo-name">CREW CAST</div>
+      <div class="logo-sub">Broadcast Platform</div>
     </div>
 
     <div class="card">
@@ -123,7 +151,46 @@
       </form>
     </div>
 
-    <div class="footer">coach / crew2024 &nbsp;·&nbsp; admin / admin123 &nbsp;·&nbsp; staff / staff456</div>
+    <div class="register-link">
+      New team? <a href="#" id="toggleRegister">Create an account →</a>
+    </div>
+
+    <div class="register-card" id="registerCard">
+      <h2>Create account</h2>
+      <p class="hint">Set up your team's broadcast workspace.</p>
+
+      <div class="err" id="regErr"><span>⚠</span><span id="regErrMsg">Something went wrong.</span></div>
+      <div class="success" id="regOk"><span>✓</span><span>Account created! Signing you in…</span></div>
+
+      <form id="regForm">
+        <div class="field">
+          <label>Team Name</label>
+          <div class="input-wrap">
+            <span class="input-icon">🏆</span>
+            <input type="text" id="regTeam" placeholder="e.g. Lakewood Crew" autocomplete="organization" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>Username</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" id="regUser" placeholder="Choose a username" autocomplete="username" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="regPass" placeholder="Choose a password" autocomplete="new-password" required>
+          </div>
+        </div>
+        <button type="submit" id="regBtn" class="btn-submit">
+          <div class="spin" id="regSpin"></div>
+          <span id="regBtnTxt">CREATE ACCOUNT</span>
+        </button>
+      </form>
+    </div>
+
   </div>
 </div>
 
@@ -173,7 +240,11 @@
         localStorage.setItem('crew_user',  JSON.stringify(data.user));
         txt.textContent = '✓ Welcome';
         setTimeout(() => {
-          location.href = getNextPath(data.user.role);
+          if (data.user.firstLogin) {
+            location.href = '/onboarding.html';
+          } else {
+            location.href = getNextPath(data.user.role);
+          }
         }, 350);
       } catch(ex) {
         errM.textContent = ex.message;
@@ -183,6 +254,64 @@
         txt.textContent = 'SIGN IN';
         document.getElementById('pass').value = '';
         document.getElementById('pass').focus();
+      }
+    });
+    // Register form
+    const toggleRegister = document.getElementById('toggleRegister');
+    const registerCard   = document.getElementById('registerCard');
+    toggleRegister.addEventListener('click', (e) => {
+      e.preventDefault();
+      registerCard.classList.toggle('open');
+      if (registerCard.classList.contains('open')) {
+        registerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+
+    const regForm = document.getElementById('regForm');
+    const regBtn  = document.getElementById('regBtn');
+    const regSpin = document.getElementById('regSpin');
+    const regTxt  = document.getElementById('regBtnTxt');
+    const regErr  = document.getElementById('regErr');
+    const regErrM = document.getElementById('regErrMsg');
+    const regOk   = document.getElementById('regOk');
+
+    regForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      regErr.classList.remove('show');
+      regOk.classList.remove('show');
+      regBtn.disabled = true;
+      regSpin.style.display = 'block';
+      regTxt.textContent = 'Creating…';
+
+      try {
+        const res  = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('regUser').value.trim(),
+            password: document.getElementById('regPass').value,
+            teamName: document.getElementById('regTeam').value.trim()
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Registration failed');
+        localStorage.setItem('crew_token', data.token);
+        localStorage.setItem('crew_user',  JSON.stringify(data.user));
+        regOk.classList.add('show');
+        regTxt.textContent = '✓ Done';
+        setTimeout(() => {
+          if (data.user.firstLogin) {
+            location.href = '/onboarding.html';
+          } else {
+            location.href = getNextPath(data.user.role);
+          }
+        }, 600);
+      } catch (ex) {
+        regErrM.textContent = ex.message;
+        regErr.classList.add('show');
+        regBtn.disabled = false;
+        regSpin.style.display = 'none';
+        regTxt.textContent = 'CREATE ACCOUNT';
       }
     });
   })();

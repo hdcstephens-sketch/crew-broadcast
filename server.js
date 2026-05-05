@@ -16,9 +16,9 @@ const STORE_DIR = path.join(__dirname, 'data');
 const STORE_FILE = path.join(STORE_DIR, 'state.json');
 
 const USERS = {
-  admin:  { password: 'admin123',  role: 'admin',  name: 'Administrator' },
-  coach:  { password: 'crew2024',  role: 'coach',  name: 'Head Coach'    },
-  staff:  { password: 'staff456',  role: 'staff',  name: 'Staff'         }
+  admin:  { password: 'admin123',  role: 'admin',  name: 'Administrator', teamName: 'Brooks School', firstLogin: false },
+  coach:  { password: 'crew2024',  role: 'coach',  name: 'Head Coach',    teamName: 'Brooks School', firstLogin: false },
+  staff:  { password: 'staff456',  role: 'staff',  name: 'Staff',         teamName: 'Brooks School', firstLogin: false }
 };
 
 const DEFAULT_TEAM_PRESETS = {
@@ -95,8 +95,8 @@ function defaultOverlayState() {
   return {
     eventHeader: {
       active: false,
-      text: "Men's Varsity 8+ - Finals",
-      subtitle: 'Spring Invitational 2026'
+      text: '',
+      subtitle: ''
     },
     timer: { active: false, running: false, startTime: null, elapsed: 0 },
     countdown: { active: false, duration: 300, startTime: null },
@@ -153,7 +153,7 @@ function defaultOverlayState() {
     strokeRate: { active: false, value: 36, label: 'Leading Boat' },
     distance: { active: false, covered: 0, total: 2000 },
     lowerThird: { active: false, name: '', title: '', school: '' },
-    watermark: { active: true, text: 'Brooks School Crew' },
+    watermark: { active: true, text: '' },
     conditions: { active: false, wind: 'NW 8 mph', temp: '65°F', water: '58°F' }
   };
 }
@@ -221,7 +221,8 @@ function getDefaultStore() {
     raceSchedule: [],
     raceRosters: {},
     currentRaceId: null,
-    boats: { ...DEFAULT_BOATS }
+    boats: { ...DEFAULT_BOATS },
+    users: {}
   };
 }
 
@@ -239,7 +240,8 @@ function loadStore() {
       raceSchedule: Array.isArray(parsed.raceSchedule) ? parsed.raceSchedule : [],
       raceRosters: isPlainObject(parsed.raceRosters) ? parsed.raceRosters : {},
       currentRaceId: parsed.currentRaceId || null,
-      boats: isPlainObject(parsed.boats) ? { ...DEFAULT_BOATS, ...parsed.boats } : { ...DEFAULT_BOATS }
+      boats: isPlainObject(parsed.boats) ? { ...DEFAULT_BOATS, ...parsed.boats } : { ...DEFAULT_BOATS },
+      users: isPlainObject(parsed.users) ? parsed.users : {}
     };
   } catch (error) {
     console.error('Failed to load persisted state, using defaults.', error);
@@ -247,10 +249,10 @@ function loadStore() {
   }
 }
 
-let { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId, boats } = loadStore();
+let { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId, boats, users } = loadStore();
 
 function persistStore() {
-  const data = { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId, boats };
+  const data = { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId, boats, users };
   fs.mkdirSync(STORE_DIR, { recursive: true });
   fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2));
 }
@@ -298,21 +300,87 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body || {};
-  const user = USERS[username?.toLowerCase()];
+  const id = username?.toLowerCase();
+  const legacyUser = USERS[id];
+  const dynamicUser = !legacyUser ? users[id] : null;
+  const user = legacyUser || dynamicUser;
+
   if (!user || user.password !== password) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
-  const token = jwt.sign(
-    { username: username.toLowerCase(), role: user.role, name: user.name },
-    JWT_SECRET,
-    { expiresIn: '8h' }
-  );
+  const payload = {
+    username: id,
+    role: user.role,
+    name: user.name,
+    teamName: user.teamName || '',
+    firstLogin: Boolean(user.firstLogin)
+  };
 
-  res.json({
-    token,
-    user: { username: username.toLowerCase(), role: user.role, name: user.name }
-  });
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
+
+  res.json({ token, user: payload });
+});
+
+app.post('/api/register', (req, res) => {
+  const { username, password, teamName } = req.body || {};
+
+  if (!username || !password || !teamName) {
+    return res.status(400).json({ error: 'username, password, and teamName are required' });
+  }
+
+  const id = String(username).toLowerCase();
+
+  if (!/^[a-z0-9_]{3,30}$/.test(id)) {
+    return res.status(400).json({ error: 'username must be 3-30 characters: letters, numbers, underscores only' });
+  }
+
+  if (String(password).length < 6) {
+    return res.status(400).json({ error: 'password must be at least 6 characters' });
+  }
+
+  if (String(teamName).trim().length === 0 || String(teamName).length > 60) {
+    return res.status(400).json({ error: 'teamName must be 1-60 characters' });
+  }
+
+  if (USERS[id] || users[id]) {
+    return res.status(409).json({ error: 'Username already taken' });
+  }
+
+  const name = String(teamName).trim() + ' Admin';
+  const record = {
+    username: id,
+    password: String(password),
+    role: 'admin',
+    name,
+    teamName: String(teamName).trim(),
+    firstLogin: true
+  };
+
+  users[id] = record;
+  persistStore();
+
+  const payload = {
+    username: id,
+    role: record.role,
+    name: record.name,
+    teamName: record.teamName,
+    firstLogin: true
+  };
+
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
+
+  res.json({ token, user: payload });
+});
+
+app.post('/api/me/onboarded', requireAuth, (req, res) => {
+  const { username } = req.user;
+  if (!users[username]) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  users[username].firstLogin = false;
+  persistStore();
+  res.json({ ok: true });
 });
 
 app.get('/api/state', requireAuth, (req, res) => {

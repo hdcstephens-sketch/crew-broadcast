@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CREW CAST - Welcome</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg:#050807; --card:#0F1D17; --gold:#004830; --text:#FFFFFF; --text2:rgba(255,255,255,0.72); --text3:rgba(255,255,255,0.38); --line:rgba(255,255,255,0.06); --line2:rgba(255,255,255,0.12); --red:#F87171; --green:#5bbf94; }
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+    .page {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 60%, rgba(0,72,48,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 70% at 85% 30%, rgba(255,255,255,0.06) 0%, transparent 60%),
+        var(--bg);
+    }
+
+    .panel { width: 100%; max-width: 480px; }
+
+    .logo { text-align: center; margin-bottom: 32px; }
+    .logo-icon { width: 54px; height: 54px; background: var(--gold); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-family: 'Rajdhani', sans-serif; font-size: 30px; font-weight: 700; margin-bottom: 14px; box-shadow: 0 8px 28px rgba(0,72,48,0.35); }
+    .logo-name { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.09em; }
+    .logo-sub  { font-size: 12px; color: var(--text2); margin-top: 5px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 36px 32px 32px;
+    }
+
+    .welcome-head { margin-bottom: 28px; }
+    .welcome-head h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .welcome-head p { font-size: 13.5px; color: var(--text2); line-height: 1.55; }
+
+    .steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 32px; }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .step:last-child { border-bottom: none; padding-bottom: 0; }
+    .step:first-child { padding-top: 0; }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: rgba(0,72,48,0.45);
+      border: 1px solid rgba(91,191,148,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px; font-weight: 700;
+      color: var(--green);
+      margin-top: 1px;
+    }
+
+    .step-body { flex: 1; }
+    .step-title { font-size: 14px; font-weight: 700; margin-bottom: 5px; }
+    .step-desc { font-size: 13px; color: var(--text2); line-height: 1.55; }
+
+    .step-code {
+      display: inline-block;
+      background: #0A120E;
+      border: 1px solid var(--line2);
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 11.5px;
+      color: var(--green);
+      margin-top: 7px;
+      word-break: break-all;
+    }
+
+    .step-tag {
+      display: inline-block;
+      background: rgba(0,72,48,0.35);
+      border: 1px solid rgba(91,191,148,0.2);
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+      margin-left: 6px;
+      vertical-align: middle;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .btn-go {
+      width: 100%; padding: 13px;
+      background: var(--gold); color: #FFFFFF;
+      border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 800;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 0.07em; cursor: pointer;
+      transition: 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-go:hover { filter: brightness(1.12); }
+    .btn-go:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+
+    .spin { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.25); border-top-color: #FFFFFF; border-radius: 50%; animation: sp 0.7s linear infinite; display: none; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+
+    .err {
+      display: none;
+      background: rgba(248,113,113,0.08);
+      border: 1px solid rgba(248,113,113,0.2);
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 13px; color: var(--red);
+      margin-bottom: 16px;
+      align-items: center; gap: 8px;
+    }
+    .err.show { display: flex; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="panel">
+
+    <div class="logo">
+      <div class="logo-icon">C</div>
+      <div class="logo-name">CREW CAST</div>
+      <div class="logo-sub">Broadcast Platform</div>
+    </div>
+
+    <div class="card">
+      <div class="welcome-head">
+        <h2>Welcome aboard.</h2>
+        <p>Here's how to get your broadcast up and running in four steps.</p>
+      </div>
+
+      <div class="steps">
+
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Set up your team</div>
+            <div class="step-desc">
+              Head to <strong>Setup</strong> to name your event, build your athlete roster, and configure your boats and lineups. Everything the overlay uses comes from here.
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Add the overlay to OBS</div>
+            <div class="step-desc">
+              In OBS, add a <strong>Browser Source</strong> and paste in your overlay URL. Set the resolution to match your stream (1920×1080 recommended).
+              <br>
+              <span class="step-code">https://your-app.railway.app/overlay.html</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Use the Deck to go live <span class="step-tag">Live</span></div>
+            <div class="step-desc">
+              Open <strong>/deck.html</strong> on any device during your race. Use it to start timers, trigger animated intros, and display results — all in real time without touching OBS.
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">You're ready</div>
+            <div class="step-desc">
+              Hit the button below to open the broadcast control panel and start your first session. You can revisit Setup and Deck any time from the navigation.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="err" id="err"><span>⚠</span><span id="errMsg">Something went wrong. Redirecting anyway…</span></div>
+
+      <button id="goBtn" class="btn-go">
+        <div class="spin" id="spin"></div>
+        <span id="goTxt">GET STARTED →</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  (() => {
+    const token = localStorage.getItem('crew_token');
+    if (!token) {
+      location.href = '/index.html';
+      return;
+    }
+
+    const btn  = document.getElementById('goBtn');
+    const spin = document.getElementById('spin');
+    const txt  = document.getElementById('goTxt');
+    const err  = document.getElementById('err');
+    const errM = document.getElementById('errMsg');
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      spin.style.display = 'block';
+      txt.textContent = 'Almost there…';
+
+      try {
+        await fetch('/api/me/onboarded', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+      } catch (ex) {
+        // Non-blocking — still redirect even if the API call fails
+        errM.textContent = 'Could not update onboarding status — continuing anyway.';
+        err.classList.add('show');
+      }
+
+      setTimeout(() => {
+        location.href = '/control.html';
+      }, 300);
+    });
+  })();
+</script>
+</body>
+</html>
