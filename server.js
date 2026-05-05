@@ -720,6 +720,18 @@ function handleMessage(clientId, msg) {
       break;
     }
 
+    case 'conditions-save': {
+      if (!client.authenticated) return;
+      const wind  = String(msg.wind  || '').slice(0, 40);
+      const air   = String(msg.air   || '').slice(0, 40);
+      const water = String(msg.water || '').slice(0, 40);
+      overlayState.conditions = { ...overlayState.conditions, wind, temp: air, water };
+      persistStore();
+      broadcast('overlay',     { type: 'conditions', wind, air, water });
+      broadcast('controller',  { type: 'conditions', wind, air, water });
+      break;
+    }
+
     case 'current-race-set': {
       if (!client.authenticated) return;
       const nextRaceId = msg.raceId ? String(msg.raceId) : null;

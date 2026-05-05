@@ -486,15 +486,15 @@
     <div class="quick-pane" data-pane="id">
       <div class="quick-field">
         <label for="qLtName">Lower Third Name</label>
-        <input id="qLtName" class="quick-input" placeholder="Name">
+        <input id="qLtName" class="quick-input" placeholder="Name" maxlength="40">
       </div>
       <div class="quick-field">
         <label for="qLtTitle">Lower Third Title</label>
-        <input id="qLtTitle" class="quick-input" placeholder="Title">
+        <input id="qLtTitle" class="quick-input" placeholder="Title" maxlength="50">
       </div>
       <div class="quick-field">
         <label for="qLtSchool">Lower Third School</label>
-        <input id="qLtSchool" class="quick-input" placeholder="School">
+        <input id="qLtSchool" class="quick-input" placeholder="School" maxlength="50">
       </div>
       <div class="quick-field full">
         <div class="quick-row">
@@ -746,11 +746,20 @@
   let quickFieldsReady = false;
 
   // ── WebSocket ──
+  let _reconnectDelay = 1000;
+
   function connect() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
     ws = new WebSocket(`${proto}//${location.host}`);
-    ws.onopen  = () => ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' }));
-    ws.onclose = () => { setConn(false); setTimeout(connect, 3000); };
+    ws.onopen  = () => {
+      _reconnectDelay = 1000;
+      ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' }));
+    };
+    ws.onclose = () => {
+      setConn(false);
+      setTimeout(connect, _reconnectDelay);
+      _reconnectDelay = Math.min(_reconnectDelay * 2, 30000);
+    };
     ws.onmessage = e => onMsg(JSON.parse(e.data));
   }
 
@@ -893,6 +902,7 @@
     const duration = Math.max(5, getNum('qCdDur', 300));
     document.getElementById('qCdDur').value = duration;
     send({ type: 'countdown-control', action, duration });
+    if (action === 'stop') send({ type: 'hide-countdown' });
     toast('Countdown ' + action, 'ok');
   }
 

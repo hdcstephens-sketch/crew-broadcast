@@ -195,6 +195,7 @@
   <button class="tab-btn active" onclick="switchTab('schedule')">📋 Schedule</button>
   <button class="tab-btn" onclick="switchTab('boats')">🚣 Boats</button>
   <button class="tab-btn" onclick="switchTab('presets')">🎛 Presets</button>
+  <button class="tab-btn" onclick="switchTab('conditions')">🌤 Conditions</button>
 </div>
 
 <!-- ═══════════════════════════════════ SCHEDULE TAB ═══ -->
@@ -242,6 +243,31 @@
   <p class="presets-intro">Check which overlay widgets each race preset button activates. Changes apply immediately — no save needed.</p>
   <div class="preset-table-wrap">
     <table class="preset-table" id="presetTable"></table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ CONDITIONS TAB ═══ -->
+<div class="tab-content" id="tab-conditions" style="padding:24px;overflow-y:auto">
+  <p class="presets-intro">Set the live conditions displayed on the overlay. Press Save to push the update immediately.</p>
+  <div style="max-width:480px;display:flex;flex-direction:column;gap:16px">
+    <div class="block">
+      <div class="block-header"><span class="block-title">Weather Conditions</span></div>
+      <div class="block-body">
+        <div class="field">
+          <label>Wind</label>
+          <input type="text" id="cond-wind" placeholder="NW 8 mph" maxlength="40">
+        </div>
+        <div class="field">
+          <label>Air Temp</label>
+          <input type="text" id="cond-air" placeholder="65°F" maxlength="40">
+        </div>
+        <div class="field">
+          <label>Water Temp</label>
+          <input type="text" id="cond-water" placeholder="58°F" maxlength="40">
+        </div>
+        <button class="btn-save" style="width:auto;padding:8px 22px" onclick="saveConditions()">Save Conditions</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -351,6 +377,15 @@ function onMsg(msg) {
     if (msg.boats)        boats = msg.boats;
     if (msg.presetConfigs) presetCfgs = msg.presetConfigs;
     if ('currentRaceId' in msg) currentRaceId = msg.currentRaceId;
+    const conds = msg.overlayState?.conditions || msg.conditions;
+    if (conds) {
+      const w = document.getElementById('cond-wind');
+      const a = document.getElementById('cond-air');
+      const wa = document.getElementById('cond-water');
+      if (w && !w.value)  w.value  = conds.wind  || '';
+      if (a && !a.value)  a.value  = conds.temp   || '';
+      if (wa && !wa.value) wa.value = conds.water  || '';
+    }
     ensureBoatObjects();
     if (!selectedRaceId || !races.some(r => r.id === selectedRaceId)) {
       selectedRaceId = (currentRaceId && races.some(r => r.id === currentRaceId)) ? currentRaceId : (races[0]?.id || null);
@@ -388,7 +423,7 @@ function setDirty(val) {
 /* ── Tabs ── */
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['schedule','boats','presets'][i] === name);
+    b.classList.toggle('active', ['schedule','boats','presets','conditions'][i] === name);
   });
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
@@ -938,6 +973,15 @@ function togglePreset(presetKey, widgetKey, checked) {
   if (checked) els.add(widgetKey); else els.delete(widgetKey);
   presetCfgs[presetKey].elements = Array.from(els);
   wsSend({ type: 'preset-config', name: presetKey, elements: Array.from(els) });
+}
+
+/* ── Conditions ── */
+function saveConditions() {
+  const wind  = document.getElementById('cond-wind').value.trim().slice(0, 40);
+  const air   = document.getElementById('cond-air').value.trim().slice(0, 40);
+  const water = document.getElementById('cond-water').value.trim().slice(0, 40);
+  wsSend({ type: 'conditions-save', wind, air, water });
+  toast('Conditions saved', 'ok');
 }
 
 /* ══════════════════════════════════════════════════════

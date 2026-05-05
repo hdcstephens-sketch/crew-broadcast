@@ -779,10 +779,20 @@ function handle(message) {
     }
   } else if (message.type === 'countdown-control') {
     if (message.action === 'start') startCountdown(message.duration || 300, message.startTime || Date.now());
-    if (message.action === 'stop') stopCountdown(message.duration || 300);
-    if (message.action === 'reset') stopCountdown(message.duration || 300);
+    if (message.action === 'stop') { stopCountdown(message.duration || 300); hide(document.getElementById('ov-countdown')); }
+    if (message.action === 'reset') { stopCountdown(message.duration || 300); hide(document.getElementById('ov-countdown')); }
+  } else if (message.type === 'stop-countdown') {
+    stopCountdown(message.duration || countdownDuration);
+    hide(document.getElementById('ov-countdown'));
+  } else if (message.type === 'hide-countdown') {
+    stopCountdown(message.duration || countdownDuration);
+    hide(document.getElementById('ov-countdown'));
   } else if (message.type === 'design') {
     if (message.config) applyDesign(message.config);
+  } else if (message.type === 'conditions') {
+    document.getElementById('ov-cw').textContent  = message.wind  || '';
+    document.getElementById('ov-ca').textContent  = message.air   || '';
+    document.getElementById('ov-cwa').textContent = message.water || '';
   } else if (message.type === 'alert') {
     showAlert(message.text, message.duration);
   } else if (message.type === 'broadcaster-online') {
