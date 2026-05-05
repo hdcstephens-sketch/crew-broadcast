@@ -281,7 +281,7 @@
 <div id="overlay-root">
   <div class="ov" id="ov-header">
     <div class="ov-box ov-header-box">
-      <img src="/images/brooks-logo.png" alt="Brooks School Crew" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-bottom:6px;">
+      <img id="ov-header-logo" src="" alt="" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-bottom:6px;display:none;">
       <div class="ov-event-title" id="ov-et">MEN'S VARSITY 8+ FINAL</div>
       <div class="ov-event-sub" id="ov-es">Spring Invitational 2026</div>
     </div>
@@ -523,6 +523,12 @@ function applyContent(state) {
   if (state.eventHeader) {
     document.getElementById('ov-et').textContent = (state.eventHeader.text || '').toUpperCase();
     document.getElementById('ov-es').textContent = state.eventHeader.subtitle || '';
+  }
+  const headerLogo = document.getElementById('ov-header-logo');
+  if (headerLogo) {
+    const logoUrl = state.watermark?.teamLogo || null;
+    headerLogo.src = logoUrl || '';
+    headerLogo.style.display = logoUrl ? '' : 'none';
   }
 
   if (state.results?.data) renderResults(state.results.data);
@@ -936,7 +942,7 @@ function playIntroEventOpen(race) {
     <div class="int-eo-slash"><div class="int-eo-slash-stripes"></div></div>
     <div class="int-live-badge"><div class="int-live-dot"></div><span>LIVE</span></div>
     <div class="int-center-stage">
-      <img class="int-event-logo" src="/images/brooks-logo.png" alt="">
+      ${currentOverlayState?.watermark?.teamLogo ? `<img class="int-event-logo" src="${currentOverlayState.watermark.teamLogo}" alt="">` : ''}
       <div class="int-event-org">${esc(teamName())}</div>
       <div class="int-event-title-big">${esc(race?.name || 'Race Day')}</div>
       <div class="int-event-divider"></div>

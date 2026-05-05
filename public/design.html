@@ -663,9 +663,9 @@
 <div class="app-shell">
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-mark">B</div>
+      <div class="brand-mark" id="designBrandMark">C</div>
       <div class="brand-text">
-        <div class="brand-name">BROOKS CREW CAST</div>
+        <div class="brand-name" id="designBrandName">CREW CAST</div>
         <div class="brand-sub">Design Studio</div>
       </div>
     </div>
@@ -970,6 +970,11 @@ if (!token || !user) {
 
 document.getElementById('uAv').textContent = (user?.name || user?.username || '?')[0].toUpperCase();
 document.getElementById('uName').textContent = user?.name || user?.username || '-';
+if (user?.teamName) {
+  const tn = user.teamName.toUpperCase();
+  document.getElementById('designBrandName').textContent = tn + ' CAST';
+  document.getElementById('designBrandMark').textContent = tn[0];
+}
 document.getElementById('uRole').textContent = user?.role || '-';
 
 function signOut() {

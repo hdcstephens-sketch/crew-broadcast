@@ -153,7 +153,7 @@ function defaultOverlayState() {
     strokeRate: { active: false, value: 36, label: 'Leading Boat' },
     distance: { active: false, covered: 0, total: 2000 },
     lowerThird: { active: false, name: '', title: '', school: '' },
-    watermark: { active: true, text: '' },
+    watermark: { active: true, text: '', teamLogo: null },
     conditions: { active: false, wind: 'NW 8 mph', temp: '65°F', water: '58°F' }
   };
 }

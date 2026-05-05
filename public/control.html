@@ -359,8 +359,7 @@
 
 <div class="topbar">
   <div class="topbar-brand" style="display:flex;align-items:center;gap:9px;">
-    <img src="/images/brooks-logo.png" alt="" style="height:30px;width:30px;border-radius:7px;object-fit:cover;flex-shrink:0;">
-    BROOKS CREW
+    <span id="topbarBrandName">CREW</span>
   </div>
   <div class="topbar-links">
     <span id="connLabel"><span class="status-dot" id="connDot"></span> Connecting</span>
@@ -640,6 +639,7 @@ const token = localStorage.getItem('crew_token');
 const user = JSON.parse(localStorage.getItem('crew_user') || 'null');
 if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
 if (user && user.role !== 'admin') location.href = user.role === 'coach' ? '/audio.html' : '/';
+if (user && user.teamName) document.getElementById('topbarBrandName').textContent = user.teamName.toUpperCase();
 
 const TOGGLES = [
   ['eventHeader', 'Event Header'],
