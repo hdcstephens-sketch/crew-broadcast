@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const { Pool } = require('pg');
 
 const app = express();
 const server = http.createServer(app);
@@ -14,6 +15,13 @@ const JWT_SECRET = 'crew-broadcast-secret-key-2024';
 const PORT = process.env.PORT || 3000;
 const STORE_DIR = path.join(__dirname, 'data');
 const STORE_FILE = path.join(STORE_DIR, 'state.json');
+
+const dbPool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    })
+  : null;
 
 const USERS = {
   admin:  { password: 'admin123',  role: 'admin',  name: 'Administrator', teamName: 'Brooks School', firstLogin: false },
@@ -226,33 +234,60 @@ function getDefaultStore() {
   };
 }
 
-function loadStore() {
+function parseStoreData(parsed, defaults) {
+  return {
+    overlayState: deepMerge(defaults.overlayState, parsed.overlayState),
+    designConfig: deepMerge(defaults.designConfig, parsed.designConfig),
+    presetConfigs: deepMerge(defaults.presetConfigs, parsed.presetConfigs),
+    teamPresets: deepMerge(defaults.teamPresets, parsed.teamPresets),
+    raceSchedule: Array.isArray(parsed.raceSchedule) ? parsed.raceSchedule : [],
+    raceRosters: isPlainObject(parsed.raceRosters) ? parsed.raceRosters : {},
+    currentRaceId: parsed.currentRaceId || null,
+    boats: isPlainObject(parsed.boats) ? { ...DEFAULT_BOATS, ...parsed.boats } : { ...DEFAULT_BOATS },
+    users: isPlainObject(parsed.users) ? parsed.users : {}
+  };
+}
+
+async function loadStore() {
   const defaults = getDefaultStore();
+
+  if (dbPool) {
+    try {
+      const result = await dbPool.query("SELECT value FROM app_state WHERE key = 'state'");
+      if (result.rows.length > 0) {
+        console.log('State loaded from database.');
+        return parseStoreData(result.rows[0].value, defaults);
+      }
+      console.log('No saved state in database, using defaults.');
+      return defaults;
+    } catch (err) {
+      console.error('DB load failed, falling back to file:', err.message);
+    }
+  }
+
   try {
     if (!fs.existsSync(STORE_FILE)) return defaults;
     const raw = fs.readFileSync(STORE_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    return {
-      overlayState: deepMerge(defaults.overlayState, parsed.overlayState),
-      designConfig: deepMerge(defaults.designConfig, parsed.designConfig),
-      presetConfigs: deepMerge(defaults.presetConfigs, parsed.presetConfigs),
-      teamPresets: deepMerge(defaults.teamPresets, parsed.teamPresets),
-      raceSchedule: Array.isArray(parsed.raceSchedule) ? parsed.raceSchedule : [],
-      raceRosters: isPlainObject(parsed.raceRosters) ? parsed.raceRosters : {},
-      currentRaceId: parsed.currentRaceId || null,
-      boats: isPlainObject(parsed.boats) ? { ...DEFAULT_BOATS, ...parsed.boats } : { ...DEFAULT_BOATS },
-      users: isPlainObject(parsed.users) ? parsed.users : {}
-    };
+    return parseStoreData(JSON.parse(raw), defaults);
   } catch (error) {
     console.error('Failed to load persisted state, using defaults.', error);
     return defaults;
   }
 }
 
-let { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId, boats, users } = loadStore();
+let overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId, boats, users;
 
 function persistStore() {
   const data = { overlayState, designConfig, presetConfigs, teamPresets, raceSchedule, raceRosters, currentRaceId, boats, users };
+
+  if (dbPool) {
+    dbPool.query(
+      "INSERT INTO app_state (key, value) VALUES ('state', $1::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+      [JSON.stringify(data)]
+    ).catch(err => console.error('DB persist error:', err.message));
+    return;
+  }
+
   fs.mkdirSync(STORE_DIR, { recursive: true });
   fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2));
 }
@@ -919,8 +954,38 @@ function applyPreset(preset) {
   broadcast('controller', payload);
 }
 
-server.listen(PORT, () => {
-  console.log('\nCREW Broadcast System');
-  console.log(`   Running at http://localhost:${PORT}`);
-  console.log(`   OBS Overlay: http://localhost:${PORT}/overlay.html\n`);
+async function startServer() {
+  if (dbPool) {
+    await dbPool.query(`
+      CREATE TABLE IF NOT EXISTS app_state (
+        key TEXT PRIMARY KEY,
+        value JSONB NOT NULL
+      )
+    `);
+    console.log('PostgreSQL connected — state will save to cloud database.');
+  }
+
+  const state = await loadStore();
+  overlayState  = state.overlayState;
+  designConfig  = state.designConfig;
+  presetConfigs = state.presetConfigs;
+  teamPresets   = state.teamPresets;
+  raceSchedule  = state.raceSchedule;
+  raceRosters   = state.raceRosters;
+  currentRaceId = state.currentRaceId;
+  boats         = state.boats;
+  users         = state.users;
+
+  server.listen(PORT, () => {
+    console.log('\nCREW Broadcast System');
+    console.log(`   Running at http://localhost:${PORT}`);
+    console.log(`   OBS Overlay: http://localhost:${PORT}/overlay.html\n`);
+    if (!dbPool) console.log('   Storage: local file (data/state.json)');
+    else         console.log('   Storage: cloud PostgreSQL database');
+  });
+}
+
+startServer().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
