@@ -212,12 +212,18 @@ function deepMerge(base, override) {
 }
 
 const DEFAULT_BOATS = {
-  'varsity-1': { id: 'varsity-1', name: 'Varsity 1', boatClass: '', athletes: [] },
-  'varsity-2': { id: 'varsity-2', name: 'Varsity 2', boatClass: '', athletes: [] },
-  'varsity-3': { id: 'varsity-3', name: 'Varsity 3', boatClass: '', athletes: [] },
-  'varsity-4': { id: 'varsity-4', name: 'Varsity 4', boatClass: '', athletes: [] },
-  'jv-1':      { id: 'jv-1',     name: 'JV 1',      boatClass: '', athletes: [] },
-  'jv-2':      { id: 'jv-2',     name: 'JV 2',      boatClass: '', athletes: [] }
+  'boys-varsity-1': { id: 'boys-varsity-1', name: 'Boys Varsity 1', boatClass: '', athletes: [] },
+  'boys-varsity-2': { id: 'boys-varsity-2', name: 'Boys Varsity 2', boatClass: '', athletes: [] },
+  'boys-varsity-3': { id: 'boys-varsity-3', name: 'Boys Varsity 3', boatClass: '', athletes: [] },
+  'boys-varsity-4': { id: 'boys-varsity-4', name: 'Boys Varsity 4', boatClass: '', athletes: [] },
+  'boys-jv-1':      { id: 'boys-jv-1',      name: 'Boys JV 1',      boatClass: '', athletes: [] },
+  'boys-jv-2':      { id: 'boys-jv-2',      name: 'Boys JV 2',      boatClass: '', athletes: [] },
+  'girls-varsity-1': { id: 'girls-varsity-1', name: 'Girls Varsity 1', boatClass: '', athletes: [] },
+  'girls-varsity-2': { id: 'girls-varsity-2', name: 'Girls Varsity 2', boatClass: '', athletes: [] },
+  'girls-varsity-3': { id: 'girls-varsity-3', name: 'Girls Varsity 3', boatClass: '', athletes: [] },
+  'girls-varsity-4': { id: 'girls-varsity-4', name: 'Girls Varsity 4', boatClass: '', athletes: [] },
+  'girls-jv-1':      { id: 'girls-jv-1',      name: 'Girls JV 1',      boatClass: '', athletes: [] },
+  'girls-jv-2':      { id: 'girls-jv-2',      name: 'Girls JV 2',      boatClass: '', athletes: [] }
 };
 
 function getDefaultStore() {

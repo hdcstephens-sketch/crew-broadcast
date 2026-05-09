@@ -125,6 +125,7 @@
     /* ── boats tab ── */
     .boats-layout { display: grid; grid-template-columns: 290px 1fr; height: calc(100vh - 100px); }
     .boat-item { position: relative; }
+    .list-section-header { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: var(--text2); text-transform: uppercase; padding: 10px 4px 4px; }
     .boat-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: rgba(0,168,107,0.12); color: var(--accent); letter-spacing: 0.06em; margin-top: 2px; }
 
     /* ── presets tab ── */
@@ -330,14 +331,25 @@ let dirty = false;
 let pendingDeleteId = null;
 let parsedImport = [];
 
-const BOAT_ORDER = ['varsity-1','varsity-2','varsity-3','varsity-4','jv-1','jv-2'];
+const BOAT_ORDER = [
+  'boys-varsity-1','boys-varsity-2','boys-varsity-3','boys-varsity-4',
+  'boys-jv-1','boys-jv-2',
+  'girls-varsity-1','girls-varsity-2','girls-varsity-3','girls-varsity-4',
+  'girls-jv-1','girls-jv-2'
+];
 const BOAT_LABELS = {
-  'varsity-1': 'Varsity 1',
-  'varsity-2': 'Varsity 2',
-  'varsity-3': 'Varsity 3',
-  'varsity-4': 'Varsity 4',
-  'jv-1': 'JV 1',
-  'jv-2': 'JV 2'
+  'boys-varsity-1': 'Boys Varsity 1',
+  'boys-varsity-2': 'Boys Varsity 2',
+  'boys-varsity-3': 'Boys Varsity 3',
+  'boys-varsity-4': 'Boys Varsity 4',
+  'boys-jv-1': 'Boys JV 1',
+  'boys-jv-2': 'Boys JV 2',
+  'girls-varsity-1': 'Girls Varsity 1',
+  'girls-varsity-2': 'Girls Varsity 2',
+  'girls-varsity-3': 'Girls Varsity 3',
+  'girls-varsity-4': 'Girls Varsity 4',
+  'girls-jv-1': 'Girls JV 1',
+  'girls-jv-2': 'Girls JV 2'
 };
 const SEAT_OPTIONS = ['Cox','Stroke','7','6','5','4','3','2','Bow','Coach','Custom'];
 const WIDGETS = [
@@ -468,36 +480,29 @@ function normalizeText(value) {
     .trim();
 }
 
-function boatIdFromNumber(num) {
-  const n = Number(num);
-  if (n >= 1 && n <= 4) return `varsity-${n}`;
-  if (n === 5) return 'jv-1';
-  if (n === 6) return 'jv-2';
-  return null;
-}
-
 function parseBoatHint(text) {
   const value = normalizeText(text);
-  let match = value.match(/\b(?:boat|b)\s*([1-6])\b/);
-  if (match) return boatIdFromNumber(match[1]);
+  const isBoys = /\b(?:boys|mens|men)\b/.test(value);
+  const isGirls = /\b(?:girls|womens|women)\b/.test(value);
+  const prefix = isBoys ? 'boys' : isGirls ? 'girls' : null;
 
-  match = value.match(/\b(?:varsity|v)\s*([1-4])\b/);
-  if (match) return `varsity-${match[1]}`;
+  let match = value.match(/\b(?:varsity|v)\s*([1-4])\b/);
+  if (match) return prefix ? `${prefix}-varsity-${match[1]}` : `varsity-${match[1]}`;
 
   match = value.match(/\b([1-4])\s*v\b/);
-  if (match) return `varsity-${match[1]}`;
+  if (match) return prefix ? `${prefix}-varsity-${match[1]}` : `varsity-${match[1]}`;
 
   match = value.match(/\b([1-4])v\b/);
-  if (match) return `varsity-${match[1]}`;
+  if (match) return prefix ? `${prefix}-varsity-${match[1]}` : `varsity-${match[1]}`;
 
-  match = value.match(/\bjv\s*([5-6])\b/);
-  if (match) return `jv-${match[1]}`;
+  match = value.match(/\bjv\s*([1-2])\b/);
+  if (match) return prefix ? `${prefix}-jv-${match[1]}` : `jv-${match[1]}`;
 
-  match = value.match(/\b([5-6])\s*jv\b/);
-  if (match) return `jv-${match[1]}`;
+  match = value.match(/\b([1-2])\s*jv\b/);
+  if (match) return prefix ? `${prefix}-jv-${match[1]}` : `jv-${match[1]}`;
 
-  if (/\bjunior varsity\b|\bjv\b/.test(value)) return 'jv';
-  if (/\bvarsity\b/.test(value)) return 'varsity';
+  if (/\bjunior varsity\b|\bjv\b/.test(value)) return prefix ? `${prefix}-jv` : 'jv';
+  if (/\bvarsity\b/.test(value)) return prefix ? `${prefix}-varsity` : 'varsity';
   return null;
 }
 
@@ -702,8 +707,10 @@ function suggestBoat(raceName) {
   const hintedBoat = parseBoatHint(name);
 
   if (hintedBoat && boats[hintedBoat]) return hintedBoat;
-  if (hintedBoat === 'varsity') return nextUnusedBoat('varsity', usedIds);
-  if (hintedBoat === 'jv') return nextUnusedBoat('jv', usedIds);
+  if (hintedBoat === 'boys-varsity') return nextUnusedBoat('boys-varsity', usedIds);
+  if (hintedBoat === 'boys-jv')     return nextUnusedBoat('boys-jv', usedIds);
+  if (hintedBoat === 'girls-varsity') return nextUnusedBoat('girls-varsity', usedIds);
+  if (hintedBoat === 'girls-jv')    return nextUnusedBoat('girls-jv', usedIds);
 
   // 1. match on boatClass substring
   for (const b of boatList) {
@@ -713,10 +720,11 @@ function suggestBoat(raceName) {
     if (cls && name.includes(cls)) return b.id;
     if (boatName && name.includes(boatName)) return b.id;
   }
-  // 2. varsity keyword → next open Varsity slot
-  if (/varsity|v8|v4|v2|v1x/i.test(name)) return nextUnusedBoat('varsity', usedIds);
-  // 3. jv keyword → next open JV slot
-  if (/\bjv\b|junior varsity/i.test(name)) return nextUnusedBoat('jv', usedIds);
+  // 2. gender + level keywords
+  if (/\b(?:boys|mens|men)\b/.test(name) && /varsity|v8|v4|v2|v1x/i.test(name)) return nextUnusedBoat('boys-varsity', usedIds);
+  if (/\b(?:girls|womens|women)\b/.test(name) && /varsity|v8|v4|v2|v1x/i.test(name)) return nextUnusedBoat('girls-varsity', usedIds);
+  if (/\b(?:boys|mens|men)\b/.test(name) && /\bjv\b|junior varsity/i.test(name)) return nextUnusedBoat('boys-jv', usedIds);
+  if (/\b(?:girls|womens|women)\b/.test(name) && /\bjv\b|junior varsity/i.test(name)) return nextUnusedBoat('girls-jv', usedIds);
   return null;
 }
 
@@ -774,12 +782,24 @@ function applyImport() {
 function renderBoatList() {
   const list = document.getElementById('boatList');
   list.innerHTML = '';
-  BOAT_ORDER.forEach((bid, idx) => {
+  let lastGender = null;
+  let sectionIdx = 0;
+  BOAT_ORDER.forEach(bid => {
+    const gender = bid.startsWith('girls-') ? 'girls' : 'boys';
+    if (gender !== lastGender) {
+      lastGender = gender;
+      sectionIdx = 0;
+      const hdr = document.createElement('div');
+      hdr.className = 'list-section-header';
+      hdr.textContent = gender === 'boys' ? 'Boys' : 'Girls';
+      list.appendChild(hdr);
+    }
+    sectionIdx++;
     const b = boats[bid] || getDefaultBoat(bid);
     const div = document.createElement('div');
     div.className = 'list-item boat-item' + (bid === selectedBoatId ? ' selected' : '');
     div.innerHTML = `
-      <div class="item-num">${idx + 1}</div>
+      <div class="item-num">${sectionIdx}</div>
       <div class="item-info">
         <div class="item-name">${esc(boatDisplayName(bid))}</div>
         <div class="item-sub">${b.boatClass ? esc(b.boatClass) : '<em style="color:var(--text3)">No class set</em>'}</div>
