@@ -235,6 +235,10 @@ let recorder = null;
 let selectedMicId = '';
 let isMuted = false, mode = 'idle';
 
+// Background-audio lock state
+let wakeLock = null;
+let keepAliveEl = null;
+
 // Results / schedule state
 let raceSchedule = [];
 let firstStateReceived = false;
@@ -378,6 +382,64 @@ function wsSend(data) {
   if (ws?.readyState === 1) ws.send(JSON.stringify(data));
 }
 
+// ── background audio lock ─────────────────────────────────────────────
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch {}
+}
+
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
+
+// Plays a zero-gain oscillator through an <audio> element — the only
+// reliable way to keep the iOS audio session alive when the screen locks.
+function startKeepAlive() {
+  if (keepAliveEl) return;
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    const dest = ctx.createMediaStreamDestination();
+    osc.connect(gain);
+    gain.connect(dest);
+    osc.start();
+    keepAliveEl = document.createElement('audio');
+    keepAliveEl.srcObject = dest.stream;
+    keepAliveEl.volume = 0;
+    keepAliveEl.play().catch(() => {});
+    document.body.appendChild(keepAliveEl);
+  } catch {}
+
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: 'Live Commentary', artist: 'CREW' });
+    navigator.mediaSession.playbackState = 'playing';
+    navigator.mediaSession.setActionHandler('play',  () => {});
+    navigator.mediaSession.setActionHandler('pause', () => {});
+    navigator.mediaSession.setActionHandler('stop',  () => releaseMic());
+  }
+}
+
+function stopKeepAlive() {
+  if (keepAliveEl) { keepAliveEl.pause(); keepAliveEl.remove(); keepAliveEl = null; }
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = 'none';
+    navigator.mediaSession.metadata = null;
+  }
+}
+
+// Re-acquire wake lock and resume AudioContext whenever the screen turns back on.
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && mode !== 'idle') {
+    if (audioCtx?.state === 'suspended') audioCtx.resume().catch(() => {});
+    await requestWakeLock();
+  }
+});
+
 // ── microphone ────────────────────────────────────────────────────────
 async function acquireMic() {
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -398,6 +460,9 @@ function buildGraph(stream) {
   tearGraph();
   audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
   audioCtx.resume();
+  audioCtx.onstatechange = () => {
+    if (audioCtx?.state === 'suspended' && mode !== 'idle') audioCtx.resume().catch(() => {});
+  };
   micSource = audioCtx.createMediaStreamSource(stream);
   analyser  = audioCtx.createAnalyser();
   analyser.fftSize = 256;
@@ -467,10 +532,12 @@ async function startOutput() {
       if (e.data.size > 0 && ws?.readyState === 1) ws.send(e.data);
     };
 
-    recorder.onstart = () => {
+    recorder.onstart = async () => {
       setMode(isMuted ? 'muted' : 'live');
       document.getElementById('liveControls').style.display = 'flex';
       addLog('Output to receiver active ✓  [' + mimeType + ']');
+      startKeepAlive();
+      await requestWakeLock();
     };
 
     recorder.onerror = e => {
@@ -512,6 +579,8 @@ function releaseMic() {
   setMode('idle');
   document.getElementById('liveControls').style.display = 'none';
   document.getElementById('btnMute').textContent = 'Mute';
+  releaseWakeLock();
+  stopKeepAlive();
   addLog('Mic released');
 }
 
