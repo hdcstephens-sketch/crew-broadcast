@@ -221,6 +221,7 @@ let meterRaf = null;
 let connState = 'waiting';
 let activeMimeType = 'audio/webm;codecs=opus';
 let selectedOutId = '';
+let audioGraphBuilt = false;
 const chunkQueue = [];
 
 // ── websocket ─────────────────────────────────────────────────────────
@@ -328,10 +329,8 @@ function tearDown() {
   if (mediaSource?.readyState === 'open') { try { mediaSource.endOfStream(); } catch {} }
   mediaSource = null;
   stopMeter();
-  if (meterSourceNode) { try { meterSourceNode.disconnect(); } catch {} meterSourceNode = null; }
-  if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
-  analyser = null;
-  if (outputAudioEl) { outputAudioEl.pause(); outputAudioEl.srcObject = null; outputAudioEl = null; }
+  // Keep audioCtx, analyser, meterSourceNode, and outputAudioEl alive —
+  // createMediaElementSource can only be called once per element.
   const audioEl = document.getElementById('remoteAudio');
   audioEl.pause();
   audioEl.src = '';
@@ -341,18 +340,23 @@ function tearDown() {
 
 // ── meter ─────────────────────────────────────────────────────────────
 function buildMeter(audioEl) {
-  if (audioCtx) audioCtx.close().catch(() => {});
-  audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
-  analyser  = audioCtx.createAnalyser();
-  analyser.fftSize = 256;
-  meterSourceNode = audioCtx.createMediaElementSource(audioEl);
-  const outDest   = audioCtx.createMediaStreamDestination();
-  meterSourceNode.connect(analyser);
-  meterSourceNode.connect(outDest);
+  if (!audioGraphBuilt) {
+    audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+    analyser  = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    meterSourceNode = audioCtx.createMediaElementSource(audioEl);
+    const outDest   = audioCtx.createMediaStreamDestination();
+    meterSourceNode.connect(analyser);
+    meterSourceNode.connect(outDest);
 
-  outputAudioEl = document.createElement('audio');
-  outputAudioEl.autoplay = true;
-  outputAudioEl.srcObject = outDest.stream;
+    outputAudioEl = document.createElement('audio');
+    outputAudioEl.autoplay = true;
+    outputAudioEl.srcObject = outDest.stream;
+    document.body.appendChild(outputAudioEl);
+    audioGraphBuilt = true;
+  }
+
+  audioCtx.resume().catch(() => {});
   if (selectedOutId && typeof outputAudioEl.setSinkId === 'function') {
     outputAudioEl.setSinkId(selectedOutId).catch(() => {});
   }
@@ -400,11 +404,23 @@ async function refreshOutputDevices() {
     const outputs = devices.filter(d => d.kind === 'audiooutput');
     if (!outputs.length) { note.textContent = 'No output devices found.'; return; }
 
-    const prev = sel.value;
     sel.innerHTML = '<option value="">Default Output</option>' +
       outputs.map(d => `<option value="${d.deviceId}">${d.label || 'Speaker'}</option>`).join('');
     sel.disabled = false;
-    if (prev) sel.value = prev;
+
+    // Restore saved preference, or auto-detect BlackHole
+    const saved = localStorage.getItem('crew_monitorOutput');
+    const savedOption = saved && Array.from(sel.options).find(o => o.value === saved);
+    if (savedOption) {
+      sel.value = saved;
+      await changeOutput(saved);
+    } else {
+      const blackhole = Array.from(sel.options).find(o => o.text.toLowerCase().includes('blackhole'));
+      if (blackhole) {
+        sel.value = blackhole.value;
+        await changeOutput(blackhole.value);
+      }
+    }
 
     note.textContent = 'Select BlackHole 2ch to route audio to Audio Hijack without going through Chrome\'s main output.';
   } catch (e) {
@@ -414,6 +430,7 @@ async function refreshOutputDevices() {
 
 async function changeOutput(deviceId) {
   selectedOutId = deviceId;
+  localStorage.setItem('crew_monitorOutput', deviceId);
   const label = document.getElementById('outSelect').selectedOptions[0]?.text || 'Default';
   if (!outputAudioEl) { addLog('Output → ' + label + ' (applies on next stream)'); return; }
   try {
