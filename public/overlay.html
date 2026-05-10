@@ -4,1200 +4,315 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0">
   <title>OBS Overlay</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@500;700;800&family=Antonio:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/overlay.css">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --ov-accent: #004830;
-      --ov-alt: #D1D1D1;
-      --ov-text: #FFFFFF;
-      --ov-head-text: #FFFFFF;
-      --ov-font: 'Rajdhani';
-      --ov-bg: rgba(0, 0, 0, 0.92);
-      --ov-radius: 12px;
-      --ov-outline: rgba(255,255,255,0.08);
-      --ov-muted: rgba(255,255,255,0.58);
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 1920px; height: 1080px;
+      overflow: hidden; background: transparent;
+      font-family: 'Rajdhani', sans-serif;
     }
 
-  /* ═══════════════════════════════════════════
-     INTRO STAGE
-  ═══════════════════════════════════════════ */
-  #intro-stage {
-    position: absolute; inset: 0; z-index: 90;
-    overflow: hidden; pointer-events: none;
-  }
-  .int-bg {
-    position: absolute; inset: 0;
-    background: #06080a;
-  }
+    #overlay-root {
+      position: relative;
+      width: 1920px; height: 1080px;
+      transform-origin: top left;
+    }
 
-  /* ── LIVE badge ── */
-  .int-live-badge {
-    position: absolute; top: 44px; right: 56px;
-    display: flex; align-items: center; gap: 9px;
-    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-    letter-spacing: 0.22em; color: #fff; z-index: 10;
-    background: rgba(0,0,0,0.45); padding: 7px 16px 6px; border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.1);
-  }
-  .int-live-dot {
-    width: 9px; height: 9px; border-radius: 50%;
-    background: #ef4444;
-    animation: livePulse 1.4s ease-in-out infinite;
-  }
-  @keyframes livePulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.55); }
-    50%       { box-shadow: 0 0 0 5px rgba(239,68,68,0); }
-  }
+    /* ── race bar (bottom) ─────────────────────────────────── */
+    #ov-racebar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 96px;
+      visibility: hidden;
+    }
+    .racebar-inner {
+      position: absolute; inset: 0;
+      display: flex; align-items: center;
+      background: rgba(3, 9, 5, 0.92);
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .racebar-accent {
+      width: 7px; height: 100%;
+      background: linear-gradient(180deg, #00c07a 0%, #004830 100%);
+      flex-shrink: 0;
+    }
+    .racebar-content {
+      display: flex; align-items: center;
+      padding: 0 52px; gap: 32px; flex: 1; min-width: 0;
+    }
+    .racebar-name {
+      font-size: 46px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: #fff; white-space: nowrap; line-height: 1;
+    }
+    .racebar-sep {
+      width: 1.5px; height: 42px;
+      background: rgba(255,255,255,0.15);
+      flex-shrink: 0;
+    }
+    .racebar-sub {
+      font-size: 24px; font-weight: 600;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.50);
+      white-space: nowrap;
+    }
+    .racebar-live {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 9px;
+      padding-right: 52px;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.24em; text-transform: uppercase;
+      color: rgba(255,255,255,0.38);
+      flex-shrink: 0;
+    }
+    .racebar-live-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #00a86b;
+      animation: livePulse 1.4s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,168,107,0.6); }
+      50%       { box-shadow: 0 0 0 6px rgba(0,168,107,0); }
+    }
 
-  /* ── diagonal accent slash (event open) ── */
-  .int-eo-slash {
-    position: absolute; left: -80px; top: 0; bottom: 0; width: 520px;
-    background: var(--ov-accent);
-    clip-path: polygon(0 0, 86% 0, 100% 100%, 0 100%);
-    z-index: 1;
-  }
-  .int-eo-slash-stripes {
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(
-      -55deg, transparent, transparent 18px,
-      rgba(255,255,255,0.03) 18px, rgba(255,255,255,0.03) 20px
-    );
-  }
+    /* ── timer (top-right) ─────────────────────────────────── */
+    #ov-timer {
+      position: absolute;
+      top: 40px; right: 44px;
+      visibility: hidden;
+    }
+    .timer-card {
+      background: rgba(3, 9, 5, 0.92);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-top: 3px solid #00a86b;
+      border-radius: 14px;
+      padding: 18px 40px 22px;
+      text-align: center;
+      min-width: 230px;
+    }
+    .timer-label {
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.24em; text-transform: uppercase;
+      color: rgba(255,255,255,0.36);
+      margin-bottom: 6px;
+    }
+    .timer-val {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 62px; font-weight: 700;
+      color: #fff; line-height: 1;
+      letter-spacing: 0.01em;
+    }
+    .timer-ms {
+      font-size: 38px;
+      color: rgba(255,255,255,0.52);
+    }
 
-  /* ── event open ── */
-  .int-center-stage {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 80px; z-index: 2;
-  }
-  .int-event-logo {
-    width: 120px; height: 120px; object-fit: contain;
-    border-radius: 18px; margin-bottom: 30px;
-    filter: drop-shadow(0 0 48px rgba(0,72,48,0.65));
-  }
-  .int-event-org {
-    font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
-    letter-spacing: 0.32em; text-transform: uppercase; color: rgba(255,255,255,0.42);
-    margin-bottom: 16px;
-  }
-  .int-event-title-big {
-    font-family: 'Rajdhani', sans-serif; font-size: 96px; font-weight: 700;
-    line-height: 0.88; letter-spacing: 0.02em; text-transform: uppercase; color: #fff;
-    max-width: 1300px;
-  }
-  .int-event-divider {
-    width: 0; height: 3px; background: var(--ov-accent); margin: 26px 0;
-  }
-  .int-event-sub {
-    font-family: 'Rajdhani', sans-serif; font-size: 30px; font-weight: 600;
-    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.68);
-  }
-  .int-eo-bottom {
-    position: absolute; bottom: 0; left: 0; right: 0; height: 68px;
-    background: rgba(0,0,0,0.5); border-top: 2px solid var(--ov-accent);
-    display: flex; align-items: center; justify-content: center; gap: 40px;
-    padding: 0 80px; z-index: 3;
-  }
-  .int-eo-bottom-item {
-    font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600;
-    letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.48);
-  }
-  .int-eo-bottom-sep { width: 1px; height: 26px; background: rgba(255,255,255,0.14); }
+    /* ── schools (upper-center, pre-race) ──────────────────── */
+    #ov-schools {
+      position: absolute;
+      top: 148px; left: 0; right: 0;
+      display: flex; justify-content: center;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .schools-row {
+      display: flex; gap: 28px;
+    }
+    .school-card {
+      background: rgba(3, 9, 5, 0.90);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      overflow: hidden;
+      min-width: 250px;
+      text-align: center;
+    }
+    .school-color-bar {
+      height: 10px; width: 100%;
+    }
+    .school-name {
+      font-size: 38px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: #fff;
+      padding: 24px 36px 28px;
+    }
 
-  /* ── race intro ── */
-  .int-race-panel {
-    position: absolute; left: 0; top: 0; bottom: 0; width: 840px;
-    background: linear-gradient(108deg, var(--ov-accent) 0%, #002a1c 100%);
-    display: flex; flex-direction: column; justify-content: center;
-    padding: 80px 90px 80px 80px;
-    clip-path: polygon(0 0, 95% 0, 100% 100%, 0 100%);
-  }
-  .int-race-eyebrow {
-    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-    letter-spacing: 0.38em; text-transform: uppercase;
-    color: rgba(255,255,255,0.5); margin-bottom: 10px;
-  }
-  .int-race-eyebrow-line {
-    width: 0; height: 2px; background: rgba(255,255,255,0.28); margin-bottom: 32px;
-  }
-  .int-race-panel-name {
-    font-family: 'Rajdhani', sans-serif; font-size: 72px; font-weight: 700;
-    line-height: 0.88; letter-spacing: 0.01em; text-transform: uppercase;
-    color: #fff; margin-bottom: 30px;
-  }
-  .int-race-badges {
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  }
-  .int-race-badge {
-    font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700;
-    letter-spacing: 0.2em; text-transform: uppercase;
-    padding: 6px 16px; border-radius: 4px;
-    border: 1.5px solid rgba(255,255,255,0.28); color: rgba(255,255,255,0.78);
-    background: rgba(0,0,0,0.15);
-  }
-  .int-race-side {
-    position: absolute; left: 840px; right: 0; top: 0; bottom: 0;
-    background: #04080a;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
-  }
-  .int-race-side-bg-text {
-    font-family: 'Rajdhani', sans-serif; font-size: 220px; font-weight: 700;
-    color: rgba(255,255,255,0.025); letter-spacing: -0.02em; user-select: none;
-  }
-  .int-race-side-tag {
-    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-    letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.18);
-  }
-
-  /* ── athlete card ── */
-  .int-photo-panel {
-    position: absolute; left: 0; top: 0; bottom: 0; width: 670px;
-    overflow: hidden;
-  }
-  .int-photo-accent {
-    position: absolute; left: 0; top: 0; bottom: 0; width: 10px;
-    background: var(--ov-accent); z-index: 3;
-  }
-  .int-photo-frame {
-    position: absolute; left: 10px; right: 0; top: 0; bottom: 0; overflow: hidden;
-  }
-  .int-photo-img    { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .int-photo-fallback {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    background: #0c130e;
-    font-family: 'Rajdhani', sans-serif; font-size: 220px; font-weight: 700;
-    color: rgba(255,255,255,0.05); text-transform: uppercase;
-  }
-  .int-photo-gradient {
-    position: absolute; bottom: 0; left: 10px; right: 0; height: 65%;
-    background: linear-gradient(to top, #060809 0%, transparent 100%); z-index: 2;
-  }
-  .int-photo-school-bar {
-    position: absolute; bottom: 0; left: 10px; right: 0;
-    padding: 22px 26px; z-index: 3;
-  }
-  .int-school-name-tag {
-    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.48);
-  }
-  .int-data-panel {
-    position: absolute; left: 670px; right: 0; top: 0; bottom: 0;
-    display: flex; flex-direction: column; justify-content: center;
-    padding: 72px 88px; background: #060809;
-    border-left: 1px solid rgba(255,255,255,0.04);
-    overflow: hidden;
-  }
-  .int-seat-bg-num {
-    position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
-    font-family: 'Rajdhani', sans-serif; font-size: 380px; font-weight: 700;
-    line-height: 1; color: rgba(255,255,255,0.025);
-    user-select: none; pointer-events: none; letter-spacing: -0.05em;
-  }
-  .int-athlete-school-header {
-    font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700;
-    letter-spacing: 0.32em; text-transform: uppercase;
-    color: var(--ov-accent); margin-bottom: 22px;
-  }
-  .int-race-tag {
-    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    color: rgba(255,255,255,0.3); margin-bottom: 28px;
-  }
-  .int-athlete-firstname {
-    font-family: 'Rajdhani', sans-serif; font-size: 100px; font-weight: 700;
-    line-height: 0.88; letter-spacing: -0.01em; text-transform: uppercase; color: #fff;
-  }
-  .int-athlete-lastname {
-    font-family: 'Rajdhani', sans-serif; font-size: 100px; font-weight: 700;
-    line-height: 0.88; letter-spacing: -0.01em; text-transform: uppercase;
-    color: var(--ov-accent); margin-bottom: 26px;
-  }
-  .int-divider { width: 52px; height: 3px; background: rgba(255,255,255,0.2); margin-bottom: 20px; }
-  .int-position-row {
-    display: flex; align-items: center; gap: 14px;
-    font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 600;
-    letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.6);
-  }
-  .int-pos-dot { color: rgba(255,255,255,0.2); }
-
-  /* ── results reveal ── */
-  .int-results-stage {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 60px 80px;
-  }
-  .int-results-eyebrow {
-    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-    letter-spacing: 0.34em; text-transform: uppercase; color: rgba(255,255,255,0.35);
-    margin-bottom: 8px; align-self: flex-start; padding-left: 4px;
-  }
-  .int-results-header-wrap {
-    width: 100%; max-width: 1100px; margin-bottom: 32px;
-    border-bottom: 2px solid rgba(255,255,255,0.07); padding-bottom: 20px;
-  }
-  .int-results-race-name {
-    font-family: 'Rajdhani', sans-serif; font-size: 52px; font-weight: 700;
-    letter-spacing: 0.03em; text-transform: uppercase; color: #fff;
-  }
-  .int-results-rows { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 8px; }
-  .int-result-row {
-    display: grid; grid-template-columns: 80px 1fr 180px 130px;
-    align-items: center; gap: 16px; padding: 14px 22px;
-    background: rgba(255,255,255,0.03); border-radius: 6px;
-    border: 1px solid rgba(255,255,255,0.05);
-    border-left: 5px solid var(--row-color, rgba(255,255,255,0.12));
-  }
-  .int-result-row.is-winner {
-    background: rgba(255,215,0,0.05);
-    box-shadow: 0 0 50px rgba(255,215,0,0.07);
-  }
-  .int-result-place {
-    font-family: 'Rajdhani', sans-serif; font-size: 46px; font-weight: 700;
-    color: var(--row-color, rgba(255,255,255,0.35)); line-height: 1;
-  }
-  .int-result-school-wrap { display: flex; flex-direction: column; gap: 2px; }
-  .int-result-school {
-    font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700;
-    letter-spacing: 0.02em; color: #fff; text-transform: uppercase;
-  }
-  .int-winner-label {
-    font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700;
-    letter-spacing: 0.3em; text-transform: uppercase; color: #FFD700;
-    opacity: 0;
-  }
-  .int-result-time {
-    font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 700;
-    color: rgba(255,255,255,0.82); text-align: right; letter-spacing: 0.04em;
-  }
-  .int-result-gap {
-    font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 600;
-    color: rgba(255,255,255,0.32); text-align: right;
-  }
+    /* ── alert flash (center) ──────────────────────────────── */
+    #ov-alert {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0; pointer-events: none; z-index: 20;
+    }
+    .alert-text {
+      background: rgba(0, 168, 107, 0.96);
+      border-radius: 14px;
+      padding: 24px 60px;
+      font-size: 48px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: #fff; white-space: nowrap;
+    }
   </style>
 </head>
 <body>
 <div id="overlay-root">
-  <div class="ov" id="ov-header">
-    <div class="ov-box ov-header-box">
-      <img id="ov-header-logo" src="" alt="" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-bottom:6px;display:none;">
-      <div class="ov-event-title" id="ov-et">MEN'S VARSITY 8+ FINAL</div>
-      <div class="ov-event-sub" id="ov-es">Spring Invitational 2026</div>
-    </div>
-  </div>
 
-  <div class="ov" id="ov-timer">
-    <div class="ov-box ov-timer-box">
-      <div class="ov-label">RACE TIME</div>
-      <div class="ov-timer-val"><span id="ov-tm">00:00</span><span class="ms" id="ov-ms">.0</span></div>
-    </div>
-  </div>
-
-  <div class="ov" id="ov-countdown">
-    <div class="ov-box ov-countdown-box">
-      <div class="ov-sub-label">Race Starts In</div>
-      <div class="ov-countdown-val" id="ov-cdv">5:00</div>
-    </div>
-  </div>
-
-  <div class="ov" id="ov-results">
-    <div class="ov-results-head">LEADERBOARD</div>
-    <div class="ov-box ov-results-body" id="ov-rb"></div>
-  </div>
-
-  <div class="ov" id="ov-lanes">
-    <div class="ov-box ov-lanes-row" id="ov-lr"></div>
-  </div>
-
-  <div class="ov" id="ov-school-logos">
-    <div class="ov-box ov-logo-strip">
-      <div class="ov-strip-title" id="ov-sct">Schools</div>
-      <div class="ov-logo-row" id="ov-scr"></div>
-    </div>
-  </div>
-
-  <div class="ov" id="ov-spm">
-    <div class="ov-box ov-spm-box">
-      <div class="ov-label" id="ov-sl">STROKE RATE</div>
-      <div class="ov-spm-val" id="ov-sv">36</div>
-      <div class="ov-sub-label">spm</div>
-    </div>
-  </div>
-
-  <div class="ov" id="ov-dist">
-    <div class="ov-box ov-dist-box">
-      <div class="ov-dist-top">
-        <span class="ov-sub-label">Distance</span>
-        <span class="ov-dist-text" id="ov-dt">0 / 1500m</span>
+  <!-- Race bar — slides up from bottom -->
+  <div id="ov-racebar">
+    <div class="racebar-inner">
+      <div class="racebar-accent"></div>
+      <div class="racebar-content">
+        <div class="racebar-name" id="rb-name">BOYS VARSITY 1X</div>
+        <div class="racebar-sep" id="rb-sep"></div>
+        <div class="racebar-sub" id="rb-sub">Spring Invitational 2026</div>
       </div>
-      <div class="ov-dist-track"><div class="ov-dist-fill" id="ov-df"></div></div>
+      <div class="racebar-live">
+        <div class="racebar-live-dot"></div>LIVE
+      </div>
     </div>
   </div>
 
-  <div class="ov" id="ov-lt">
-    <div class="ov-box ov-lt-box">
-      <div class="ov-lt-name" id="ov-ltn">Head Coach</div>
-      <div class="ov-lt-title" id="ov-ltt">Brooks School</div>
-      <div class="ov-lt-school" id="ov-lts">Broadcast Guest</div>
+  <!-- Timer — slides in from top-right -->
+  <div id="ov-timer">
+    <div class="timer-card">
+      <div class="timer-label">Race Time</div>
+      <div class="timer-val"><span id="ov-tm">00:00</span><span class="timer-ms" id="ov-ms">.0</span></div>
     </div>
   </div>
 
-  <div class="ov" id="ov-conditions">
-    <div class="ov-box ov-cond-box">
-      <div class="ov-cond-item"><div class="ov-sub-label">Wind</div><div class="ov-cond-val" id="ov-cw">NW 8 mph</div></div>
-      <div class="ov-cond-item"><div class="ov-sub-label">Air</div><div class="ov-cond-val" id="ov-ca">65F</div></div>
-      <div class="ov-cond-item"><div class="ov-sub-label">Water</div><div class="ov-cond-val" id="ov-cwa">58F</div></div>
-    </div>
+  <!-- Schools — drops in from top, pre-race -->
+  <div id="ov-schools">
+    <div class="schools-row" id="ov-schools-row"></div>
   </div>
 
-  <div id="ov-alert"><div class="ov-alert-text" id="ov-at"></div></div>
+  <!-- Alert flash -->
+  <div id="ov-alert"><div class="alert-text" id="ov-at"></div></div>
 
-  <!-- ── intro stage (renders on top of everything) ── -->
-  <div id="intro-stage"></div>
-
-  <div class="ov" id="ov-watermark">
-    <div class="ov-box ov-watermark-box" id="ov-wt">BROOKS SCHOOL CREW</div>
-  </div>
 </div>
 
-<audio id="audio" autoplay playsinline></audio>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>
 'use strict';
 
-// Scale overlay to fill viewport while locking to 16:9
+// ── scale to viewport ──────────────────────────────────────────────────
 (function scaleOverlay() {
   const root = document.getElementById('overlay-root');
   function fit() {
-    const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-    root.style.transform = `scale(${scale})`;
+    root.style.transform = `scale(${Math.min(window.innerWidth / 1920, window.innerHeight / 1080)})`;
   }
   window.addEventListener('resize', fit);
   fit();
 })();
 
-let cfg = {
-  primaryColor: '#004830',
-  secondaryColor: '#000000',
-  accentColor: '#D1D1D1',
-  textColor: '#FFFFFF',
-  fontFamily: 'Rajdhani',
-  animationStyle: 'slide',
-  animationDuration: 0.6,
-  borderRadius: 10,
-  opacity: 0.92,
-  elementLayout: {}
-};
-
-const EL = {
-  eventHeader: 'ov-header',
-  timer: 'ov-timer',
-  countdown: 'ov-countdown',
-  results: 'ov-results',
-  lanes: 'ov-lanes',
-  schoolLogos: 'ov-school-logos',
-  strokeRate: 'ov-spm',
-  distance: 'ov-dist',
-  lowerThird: 'ov-lt',
-  watermark: 'ov-watermark',
-  conditions: 'ov-conditions'
-};
-
-const LAYOUT_PRESETS = {
-  'ov-header': {
-    'top-center': { top: '0', left: '50%', right: '', bottom: '', transform: 'translateX(-50%)' },
-    'bottom-center': { top: '', left: '50%', right: '', bottom: '20px', transform: 'translateX(-50%)' }
-  },
-  'ov-timer': {
-    'top-left': { top: '24px', left: '28px', right: '', bottom: '', transform: '' },
-    'top-right': { top: '24px', right: '28px', left: '', bottom: '', transform: '' },
-    'bottom-left': { top: '', left: '28px', right: '', bottom: '96px', transform: '' }
-  },
-  'ov-countdown': {
-    center: { top: '50%', left: '50%', right: '', bottom: '', transform: 'translate(-50%, -50%)' },
-    'top-center': { top: '64px', left: '50%', right: '', bottom: '', transform: 'translateX(-50%)' }
-  },
-  'ov-results': {
-    right: { top: '92px', right: '28px', left: '', bottom: '', transform: '' },
-    left: { top: '92px', left: '28px', right: '', bottom: '', transform: '' }
-  },
-  'ov-lanes': {
-    'bottom-center': { top: '', left: '50%', right: '', bottom: '68px', transform: 'translateX(-50%)' },
-    'top-center': { top: '74px', left: '50%', right: '', bottom: '', transform: 'translateX(-50%)' }
-  },
-  'ov-school-logos': {
-    'top-left': { top: '100px', left: '28px', right: '', bottom: '', transform: '' },
-    'top-right': { top: '100px', right: '28px', left: '', bottom: '', transform: '' },
-    'bottom-left': { top: '', left: '28px', right: '', bottom: '122px', transform: '' }
-  },
-  'ov-sponsor-logos': {
-    'bottom-right': { top: '', left: '', right: '28px', bottom: '122px', transform: '' },
-    'bottom-left': { top: '', left: '28px', right: '', bottom: '122px', transform: '' },
-    'top-right': { top: '100px', left: '', right: '28px', bottom: '', transform: '' }
-  },
-  'ov-spm': {
-    'top-right': { top: '24px', right: '28px', left: '', bottom: '', transform: '' },
-    'top-left': { top: '24px', left: '28px', right: '', bottom: '', transform: '' }
-  },
-  'ov-dist': {
-    bottom: { top: '', left: '28px', right: '28px', bottom: '20px', transform: '' },
-    top: { top: '20px', left: '28px', right: '28px', bottom: '', transform: '' }
-  },
-  'ov-lt': {
-    'bottom-left': { top: '', left: '28px', right: '', bottom: '84px', transform: '' },
-    'bottom-right': { top: '', left: '', right: '28px', bottom: '84px', transform: '' }
-  },
-  'ov-conditions': {
-    'bottom-right': { top: '', left: '', right: '28px', bottom: '84px', transform: '' },
-    'bottom-left': { top: '', left: '28px', right: '', bottom: '84px', transform: '' }
-  },
-  'ov-watermark': {
-    'bottom-right': { top: '', left: '', right: '24px', bottom: '18px', transform: '' },
-    'bottom-left': { top: '', left: '24px', right: '', bottom: '18px', transform: '' }
-  }
-};
-
-function rgbaFromHex(hex, alpha) {
-  const clean = String(hex || '#000000').replace('#', '');
-  const r = parseInt(clean.slice(0, 2), 16);
-  const g = parseInt(clean.slice(2, 4), 16);
-  const b = parseInt(clean.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function contrastColor(hex) {
-  const clean = String(hex || '#000000').replace('#', '');
-  const r = parseInt(clean.slice(0, 2), 16);
-  const g = parseInt(clean.slice(2, 4), 16);
-  const b = parseInt(clean.slice(4, 6), 16);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 160 ? '#111111' : '#FFFFFF';
-}
-
-function initials(name) {
-  const words = String(name || '').trim().split(/\s+/).filter(Boolean);
-  return (words[0]?.[0] || '') + (words[1]?.[0] || words[0]?.[1] || '');
-}
-
-function show(el) {
-  if (!el) return;
+// ── show / hide with purpose-built animations ──────────────────────────
+function showRacebar() {
+  const el = document.getElementById('ov-racebar');
   gsap.killTweensOf(el);
   el.style.visibility = 'visible';
-  const duration = cfg.animationDuration || 0.6;
-  const style = cfg.animationStyle || 'slide';
-
-  if (style === 'fade') {
-    gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration, ease: 'power2.out', clearProps: 'x,y,scale,rotationX,skewX' });
-  } else if (style === 'scale') {
-    gsap.fromTo(el, { opacity: 0, scale: 0.88 }, { opacity: 1, scale: 1, duration, ease: 'back.out(1.4)', clearProps: 'x,y,scale,rotationX,skewX' });
-  } else if (style === 'elastic') {
-    gsap.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: duration * 1.15, ease: 'elastic.out(1,0.55)', clearProps: 'x,y,scale,rotationX,skewX' });
-  } else if (style === 'flip') {
-    gsap.fromTo(el, { opacity: 0, rotationX: -80, transformOrigin: 'top center' }, { opacity: 1, rotationX: 0, duration, ease: 'power3.out', clearProps: 'x,y,scale,rotationX,skewX' });
-  } else if (style === 'power') {
-    gsap.fromTo(el, { opacity: 0, x: -60, skewX: -10 }, { opacity: 1, x: 0, skewX: 0, duration: duration * 0.7, ease: 'power4.out', clearProps: 'x,y,scale,rotationX,skewX' });
-  } else {
-    gsap.fromTo(el, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration, ease: 'power3.out', clearProps: 'x,y,scale,rotationX,skewX' });
-  }
+  gsap.fromTo(el, { y: 96 }, { y: 0, duration: 0.55, ease: 'power3.out', clearProps: 'y' });
 }
-
-function hide(el) {
-  if (!el) return;
+function hideRacebar() {
+  const el = document.getElementById('ov-racebar');
   gsap.killTweensOf(el);
-  gsap.to(el, {
-    opacity: 0,
-    y: -8,
-    duration: Math.max(0.2, (cfg.animationDuration || 0.6) * 0.45),
-    ease: 'power2.in',
-    onComplete: () => {
-      el.style.visibility = 'hidden';
-      gsap.set(el, { clearProps: 'x,y,scale,rotationX,skewX' });
-    }
+  gsap.to(el, { y: 96, duration: 0.38, ease: 'power2.in',
+    onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { clearProps: 'y' }); }
   });
 }
 
+function showTimer() {
+  const el = document.getElementById('ov-timer');
+  gsap.killTweensOf(el);
+  el.style.visibility = 'visible';
+  gsap.fromTo(el, { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: 'power3.out', clearProps: 'x,opacity' });
+}
+function hideTimer() {
+  const el = document.getElementById('ov-timer');
+  gsap.killTweensOf(el);
+  gsap.to(el, { x: 60, opacity: 0, duration: 0.3, ease: 'power2.in',
+    onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { clearProps: 'x,opacity' }); }
+  });
+}
+
+function showSchools() {
+  const el = document.getElementById('ov-schools');
+  gsap.killTweensOf(el);
+  el.style.visibility = 'visible';
+  const cards = el.querySelectorAll('.school-card');
+  if (cards.length) {
+    gsap.fromTo(cards,
+      { y: -50, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.52, stagger: 0.1, ease: 'back.out(1.5)', clearProps: 'y,opacity' }
+    );
+  }
+}
+function hideSchools() {
+  const el = document.getElementById('ov-schools');
+  gsap.killTweensOf(el);
+  const cards = el.querySelectorAll('.school-card');
+  if (cards.length) {
+    gsap.to(cards, { y: -30, opacity: 0, duration: 0.28, stagger: 0.06, ease: 'power2.in',
+      onComplete: () => { el.style.visibility = 'hidden'; gsap.set(cards, { clearProps: 'y,opacity' }); }
+    });
+  } else {
+    el.style.visibility = 'hidden';
+  }
+}
+
+const SHOW = { eventHeader: showRacebar, timer: showTimer, lanes: showSchools };
+const HIDE = { eventHeader: hideRacebar, timer: hideTimer, lanes: hideSchools };
+
+// ── content ────────────────────────────────────────────────────────────
 function applyContent(state) {
   if (!state) return;
-
-  if (state.eventHeader) {
-    document.getElementById('ov-et').textContent = (state.eventHeader.text || '').toUpperCase();
-    document.getElementById('ov-es').textContent = state.eventHeader.subtitle || '';
+  if (state.eventHeader !== undefined) {
+    const name = (state.eventHeader?.text || '').toUpperCase();
+    const sub  = state.eventHeader?.subtitle || '';
+    document.getElementById('rb-name').textContent = name;
+    document.getElementById('rb-sub').textContent  = sub;
+    document.getElementById('rb-sep').style.display = sub ? '' : 'none';
   }
-  const headerLogo = document.getElementById('ov-header-logo');
-  if (headerLogo) {
-    const logoUrl = state.watermark?.teamLogo || null;
-    headerLogo.src = logoUrl || '';
-    headerLogo.style.display = logoUrl ? '' : 'none';
-  }
-
-  if (state.results?.data) renderResults(state.results.data);
-  if (state.lanes?.data) renderLanes(state.lanes.data);
-  if (state.schoolLogos) renderLogoStrip('ov-sct', 'ov-scr', state.schoolLogos);
-
-  if (state.strokeRate) {
-    document.getElementById('ov-sv').textContent = state.strokeRate.value ?? '36';
-    document.getElementById('ov-sl').textContent = (state.strokeRate.label || 'Stroke Rate').toUpperCase();
-  }
-
-  if (state.distance) {
-    const covered = Number(state.distance.covered) || 0;
-    const total = Number(state.distance.total) || 2000;
-    document.getElementById('ov-dt').textContent = `${covered} / ${total}m`;
-    document.getElementById('ov-df').style.width = `${Math.min(100, (covered / total) * 100)}%`;
-  }
-
-  if (state.lowerThird) {
-    document.getElementById('ov-ltn').textContent = state.lowerThird.name || '';
-    document.getElementById('ov-ltt').textContent = state.lowerThird.title || '';
-    document.getElementById('ov-lts').textContent = state.lowerThird.school || '';
-  }
-
-  if (state.watermark) {
-    document.getElementById('ov-wt').textContent = (state.watermark.text || '').toUpperCase();
-  }
-
-  if (state.conditions) {
-    document.getElementById('ov-cw').textContent = state.conditions.wind || '';
-    document.getElementById('ov-ca').textContent = state.conditions.temp || '';
-    document.getElementById('ov-cwa').textContent = state.conditions.water || '';
-  }
+  if (state.lanes?.data) renderSchools(state.lanes.data);
 }
 
-function renderResults(rows) {
-  const body = document.getElementById('ov-rb');
-  body.innerHTML = '';
-  rows.forEach((row, index) => {
-    const node = document.createElement('div');
-    node.className = 'ov-result-row';
-    const logo = row.logo ? `<img src="${row.logo}" class="ov-result-logo" alt="">` : '';
-    node.innerHTML = `
-      <div class="ov-result-rank">${row.place ?? ''}</div>
-      ${logo}
-      <div class="ov-result-school">${row.school || ''}</div>
-      <div class="ov-result-time">${row.time || ''}</div>
-      <div class="ov-result-gap">${row.margin || ''}</div>
-    `;
-    body.appendChild(node);
-    gsap.fromTo(node, { opacity: 0, x: 12 }, { opacity: 1, x: 0, duration: 0.24, delay: index * 0.05, ease: 'power2.out' });
-  });
+function renderSchools(lanes) {
+  const row = document.getElementById('ov-schools-row');
+  const items = (lanes || []).filter(l => (l.school || '').trim());
+  row.innerHTML = items.map(lane => `
+    <div class="school-card">
+      <div class="school-color-bar" style="background:${esc(lane.color || '#004830')};"></div>
+      <div class="school-name">${esc(lane.school)}</div>
+    </div>
+  `).join('');
 }
 
-function renderLanes(lanes) {
-  const holder = document.getElementById('ov-lr');
-  holder.innerHTML = '';
-  lanes.forEach(lane => {
-    const node = document.createElement('div');
-    node.className = 'ov-lane';
-    const logo = lane.logo ? `<img src="${lane.logo}" class="ov-lane-logo" alt="">` : '';
-    node.innerHTML = `
-      <span class="ov-lane-num">${lane.lane}</span>
-      <span class="ov-lane-dot" style="background:${lane.color || cfg.primaryColor};"></span>
-      ${logo}
-      <span class="ov-lane-name">${lane.school || ''}</span>
-    `;
-    holder.appendChild(node);
-  });
-}
-
-function renderLogoStrip(titleId, rowId, payload) {
-  document.getElementById(titleId).textContent = payload.title || '';
-  const row = document.getElementById(rowId);
-  row.innerHTML = '';
-  (payload.items || []).forEach(item => {
-    const node = document.createElement('div');
-    node.className = 'ov-logo-cell';
-    node.innerHTML = item.logo
-      ? `<img src="${item.logo}" class="ov-logo-img" alt="${item.name || ''}">`
-      : `<span class="ov-logo-fallback">${initials(item.name || '') || 'LG'}</span>`;
-    row.appendChild(node);
-  });
-}
-
-function applyLayout(layouts) {
-  Object.keys(LAYOUT_PRESETS).forEach(elId => {
-    const node = document.getElementById(elId);
-    if (!node) return;
-    node.style.left = '';
-    node.style.right = '';
-    node.style.top = '';
-    node.style.bottom = '';
-    node.style.transform = '';
-
-    const layout = layouts?.[elId];
-    if (layout && typeof layout === 'object' && layout.mode === 'custom') {
-      node.style.left = `${layout.x * 100}%`;
-      node.style.top = `${layout.y * 100}%`;
-      node.style.transform = 'none';
-      return;
-    }
-
-    const preset = typeof layout === 'string' ? layout : Object.keys(LAYOUT_PRESETS[elId])[0];
-    const coords = LAYOUT_PRESETS[elId]?.[preset];
-    if (!coords) return;
-    Object.entries(coords).forEach(([key, value]) => {
-      node.style[key] = value;
-    });
-  });
-}
-
-function applyDesign(nextCfg) {
-  cfg = Object.assign({}, cfg, nextCfg || {});
-  const root = document.documentElement;
-  root.style.setProperty('--ov-accent', cfg.primaryColor || '#004830');
-  root.style.setProperty('--ov-alt', cfg.accentColor || '#D1D1D1');
-  root.style.setProperty('--ov-text', cfg.textColor || '#FFFFFF');
-  root.style.setProperty('--ov-head-text', contrastColor(cfg.primaryColor || '#004830'));
-  root.style.setProperty('--ov-font', `'${cfg.fontFamily || 'Rajdhani'}'`);
-  root.style.setProperty('--ov-bg', rgbaFromHex(cfg.secondaryColor || '#000000', cfg.opacity ?? 0.92));
-  root.style.setProperty('--ov-radius', `${cfg.borderRadius || 10}px`);
-  root.style.setProperty('--ov-outline', rgbaFromHex(cfg.textColor || '#FFFFFF', 0.1));
-  root.style.setProperty('--ov-muted', rgbaFromHex(cfg.textColor || '#FFFFFF', 0.62));
-  applyLayout(cfg.elementLayout || {});
-}
-
-let timerRunning = false;
-let timerStart = null;
-let timerFrame = null;
+// ── timer ──────────────────────────────────────────────────────────────
+let timerRunning = false, timerStart = null, timerFrame = null;
 
 function startTimer(elapsed) {
   timerRunning = true;
   timerStart = Date.now() - elapsed;
-  show(document.getElementById('ov-timer'));
   cancelAnimationFrame(timerFrame);
   (function tick() {
     if (!timerRunning) return;
-    const ms = Date.now() - timerStart;
-    const mins = Math.floor(ms / 60000);
-    const secs = Math.floor((ms % 60000) / 1000);
-    const tenths = Math.floor((ms % 1000) / 100);
-    document.getElementById('ov-tm').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    document.getElementById('ov-ms').textContent = `.${tenths}`;
+    const ms    = Date.now() - timerStart;
+    const mins  = Math.floor(ms / 60000);
+    const secs  = Math.floor((ms % 60000) / 1000);
+    const tenth = Math.floor((ms % 1000) / 100);
+    document.getElementById('ov-tm').textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+    document.getElementById('ov-ms').textContent = `.${tenth}`;
     timerFrame = requestAnimationFrame(tick);
   })();
 }
 
-let countdownRunning = false;
-let countdownDuration = 300;
-let countdownStart = null;
-
-function startCountdown(duration, startTime) {
-  countdownRunning = true;
-  countdownDuration = duration || countdownDuration || 300;
-  countdownStart = startTime || Date.now();
-  show(document.getElementById('ov-countdown'));
-  (function tick() {
-    if (!countdownRunning) return;
-    const remaining = Math.max(0, countdownDuration - (Date.now() - countdownStart) / 1000);
-    const mins = Math.floor(remaining / 60);
-    const secs = Math.floor(remaining % 60);
-    document.getElementById('ov-cdv').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
-    if (remaining <= 0) {
-      countdownRunning = false;
-      hide(document.getElementById('ov-countdown'));
-      return;
-    }
-    requestAnimationFrame(tick);
-  })();
+function stopTimer()  { timerRunning = false; cancelAnimationFrame(timerFrame); }
+function resetTimer() {
+  stopTimer();
+  document.getElementById('ov-tm').textContent = '00:00';
+  document.getElementById('ov-ms').textContent = '.0';
 }
 
-function stopCountdown(resetToDuration) {
-  countdownRunning = false;
-  if (resetToDuration) {
-    const mins = Math.floor(resetToDuration / 60);
-    const secs = Math.floor(resetToDuration % 60);
-    document.getElementById('ov-cdv').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
-  }
-  hide(document.getElementById('ov-countdown'));
-}
-
-const ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
-];
-
-let ws;
-let audioPc = null;
-let broadcasterPresent = false;
-let audioRetryTimer = null;
-
-function connect() {
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  ws = new WebSocket(`${proto}//${location.host}`);
-  ws.onopen = () => ws.send(JSON.stringify({ type: 'register', role: 'overlay' }));
-  ws.onclose = () => {
-    clearAudioRetry();
-    closeAudioPc();
-    setTimeout(connect, 3000);
-  };
-  ws.onmessage = event => {
-    if (typeof event.data !== 'string') return;
-    handle(JSON.parse(event.data));
-  };
-}
-
-function handle(message) {
-  if (message.type === 'play-intro') {
-    handlePlayIntro(message.intro, message.race, message.roster);
-    return;
-  }
-
-  if (message.type === 'state') {
-    if (message.designConfig) applyDesign(message.designConfig);
-    broadcasterPresent = Boolean(message.activeBroadcaster);
-    const state = message.overlayState;
-    currentOverlayState = state || {};
-    if (!state) return;
-    Object.keys(EL).forEach(key => {
-      const el = document.getElementById(EL[key]);
-      if (!el || !state[key]) return;
-      if (state[key].active) show(el); else hide(el);
-    });
-    applyContent(state);
-    if (state.timer?.running && state.timer?.startTime) startTimer(Date.now() - state.timer.startTime);
-    if (state.countdown?.active && state.countdown?.startTime) {
-      startCountdown(state.countdown.duration || 300, state.countdown.startTime);
-    }
-    if (broadcasterPresent) requestAudio(true);
-  } else if (message.type === 'toggle') {
-    const el = document.getElementById(EL[message.element]);
-    if (!el) return;
-    if (message.active) show(el); else hide(el);
-  } else if (message.type === 'update') {
-    if (message.element && message.data) applyContent({ [message.element]: message.data });
-  } else if (message.type === 'timer-control') {
-    if (message.action === 'start') {
-      const skew = message.serverTime ? Date.now() - message.serverTime : 0;
-      startTimer((message.elapsed || 0) + skew);
-    }
-    if (message.action === 'stop') {
-      timerRunning = false;
-      cancelAnimationFrame(timerFrame);
-    }
-    if (message.action === 'reset') {
-      timerRunning = false;
-      cancelAnimationFrame(timerFrame);
-      document.getElementById('ov-tm').textContent = '00:00';
-      document.getElementById('ov-ms').textContent = '.0';
-    }
-  } else if (message.type === 'countdown-control') {
-    if (message.action === 'start') startCountdown(message.duration || 300, message.startTime || Date.now());
-    if (message.action === 'stop') { stopCountdown(message.duration || 300); hide(document.getElementById('ov-countdown')); }
-    if (message.action === 'reset') { stopCountdown(message.duration || 300); hide(document.getElementById('ov-countdown')); }
-  } else if (message.type === 'stop-countdown') {
-    stopCountdown(message.duration || countdownDuration);
-    hide(document.getElementById('ov-countdown'));
-  } else if (message.type === 'hide-countdown') {
-    stopCountdown(message.duration || countdownDuration);
-    hide(document.getElementById('ov-countdown'));
-  } else if (message.type === 'design') {
-    if (message.config) applyDesign(message.config);
-  } else if (message.type === 'conditions') {
-    document.getElementById('ov-cw').textContent  = message.wind  || '';
-    document.getElementById('ov-ca').textContent  = message.air   || '';
-    document.getElementById('ov-cwa').textContent = message.water || '';
-  } else if (message.type === 'alert') {
-    showAlert(message.text, message.duration);
-  } else if (message.type === 'broadcaster-online') {
-    broadcasterPresent = true;
-    requestAudio(true);
-  } else if (message.type === 'audio-offer') {
-    handleOffer(message.offer, message.from).catch(() => scheduleAudioRetry());
-  } else if (message.type === 'ice-candidate') {
-    if (audioPc) audioPc.addIceCandidate(new RTCIceCandidate(message.candidate)).catch(() => {});
-  } else if (message.type === 'broadcaster-left') {
-    broadcasterPresent = false;
-    clearAudioRetry();
-    closeAudioPc();
-  }
-}
-
-function requestAudio(force = false) {
-  if (!broadcasterPresent || ws?.readyState !== 1) return;
-  if (!force && audioPc && (audioPc.connectionState === 'connecting' || audioPc.connectionState === 'connected')) return;
-  clearAudioRetry();
-  ws.send(JSON.stringify({ type: 'request-audio' }));
-}
-
-function scheduleAudioRetry() {
-  if (!broadcasterPresent) return;
-  clearAudioRetry();
-  closeAudioPc();
-  audioRetryTimer = setTimeout(() => {
-    audioRetryTimer = null;
-    requestAudio(true);
-  }, 1000);
-}
-
-function clearAudioRetry() {
-  if (audioRetryTimer) {
-    clearTimeout(audioRetryTimer);
-    audioRetryTimer = null;
-  }
-}
-
-async function handleOffer(offer, fromId) {
-  clearAudioRetry();
-  closeAudioPc();
-
-  audioPc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-  const currentPc = audioPc;
-
-  audioPc.ontrack = ({ streams }) => {
-    const audio = document.getElementById('audio');
-    audio.srcObject = streams[0];
-    audio.volume = 1;
-    const tryPlay = () => audio.play().catch(() => setTimeout(tryPlay, 500));
-    tryPlay();
-  };
-
-  audioPc.onicecandidate = ({ candidate }) => {
-    if (candidate && ws?.readyState === 1) {
-      ws.send(JSON.stringify({ type: 'ice-candidate', candidate, to: fromId }));
-    }
-  };
-
-  audioPc.onconnectionstatechange = () => {
-    if (audioPc !== currentPc) return;
-    const state = audioPc.connectionState;
-    if (state === 'connected') {
-      clearAudioRetry();
-      return;
-    }
-    if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-      scheduleAudioRetry();
-    }
-  };
-
-  audioPc.oniceconnectionstatechange = () => {
-    if (audioPc !== currentPc) return;
-    if (audioPc.iceConnectionState === 'failed') scheduleAudioRetry();
-  };
-
-  await audioPc.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer = await audioPc.createAnswer();
-  await audioPc.setLocalDescription(answer);
-  if (ws?.readyState === 1) {
-    ws.send(JSON.stringify({ type: 'audio-answer', answer, to: fromId }));
-  }
-}
-
-function closeAudioPc() {
-  if (audioPc) {
-    audioPc.ontrack = null;
-    audioPc.onicecandidate = null;
-    audioPc.onconnectionstatechange = null;
-    audioPc.oniceconnectionstatechange = null;
-    audioPc.close();
-    audioPc = null;
-  }
-  const audio = document.getElementById('audio');
-  audio.pause();
-  audio.srcObject = null;
-}
-
-function scaleOverlay() {
-  const root = document.getElementById('overlay-root');
-  const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-  root.style.transform = `scale(${scale})`;
-}
-window.addEventListener('resize', scaleOverlay);
-scaleOverlay();
-
-/* ═══════════════════════════════════════════
-   INTRO SEQUENCES
-═══════════════════════════════════════════ */
-let currentOverlayState = {};
-let introActive = false;
-let currentIntroTl = null;
-
-function clearIntroStage() {
-  introActive = false;
-  if (currentIntroTl) { currentIntroTl.kill(); currentIntroTl = null; }
-  const stage = document.getElementById('intro-stage');
-  if (!stage.children.length) return;
-  gsap.to(Array.from(stage.children), {
-    opacity: 0, duration: 0.35,
-    onComplete: () => { stage.innerHTML = ''; }
-  });
-}
-
-function introSplitName(fullName) {
-  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
-  if (parts.length <= 1) return { first: '', last: parts[0] || '' };
-  return { first: parts.slice(0, -1).join(' '), last: parts[parts.length - 1] };
-}
-
-// ── 1. Event Open ──────────────────────────────────────────
-function playIntroEventOpen(race) {
-  introActive = true;
-  const stage = document.getElementById('intro-stage');
-  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-
-  stage.innerHTML = `
-    <div class="int-bg"></div>
-    <div class="int-eo-slash"><div class="int-eo-slash-stripes"></div></div>
-    <div class="int-live-badge"><div class="int-live-dot"></div><span>LIVE</span></div>
-    <div class="int-center-stage">
-      ${currentOverlayState?.watermark?.teamLogo ? `<img class="int-event-logo" src="${currentOverlayState.watermark.teamLogo}" alt="">` : ''}
-      <div class="int-event-org">${esc(teamName())}</div>
-      <div class="int-event-title-big">${esc(race?.name || 'Race Day')}</div>
-      <div class="int-event-divider"></div>
-      <div class="int-event-sub">${esc(race?.sub || '')}</div>
-    </div>
-    <div class="int-eo-bottom">
-      <div class="int-eo-bottom-item">${dateStr}</div>
-      <div class="int-eo-bottom-sep"></div>
-      <div class="int-eo-bottom-item">Live Broadcast Coverage</div>
-    </div>`;
-
-  const bg      = stage.querySelector('.int-bg');
-  const slash   = stage.querySelector('.int-eo-slash');
-  const live    = stage.querySelector('.int-live-badge');
-  const logo    = stage.querySelector('.int-event-logo');
-  const org     = stage.querySelector('.int-event-org');
-  const title   = stage.querySelector('.int-event-title-big');
-  const divLine = stage.querySelector('.int-event-divider');
-  const sub     = stage.querySelector('.int-event-sub');
-  const bottom  = stage.querySelector('.int-eo-bottom');
-
-  currentIntroTl = gsap.timeline({ onComplete: clearIntroStage });
-  currentIntroTl
-    .set(stage, { opacity: 1 })
-    .fromTo(bg,     { opacity: 0 }, { opacity: 1, duration: 0.4 })
-    .fromTo(slash,  { x: -600 },    { x: 0, duration: 0.55, ease: 'power4.out' }, 0.05)
-    .fromTo(bottom, { y: 68 },      { y: 0, duration: 0.45, ease: 'power3.out' }, 0.2)
-    .fromTo(live,   { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.38, ease: 'power2.out' }, 0.45)
-    .fromTo(logo,   { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.6)' }, 0.52)
-    .fromTo(org,    { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: 'power2.out' }, 0.84)
-    .fromTo(title,  { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 0.97)
-    .to(divLine,    { width: 280, duration: 0.5, ease: 'power3.out' }, 1.28)
-    .fromTo(sub,    { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: 'power2.out' }, 1.48)
-    .to({}, { duration: 3.5 })
-    .to([logo, org, title, divLine, sub], { opacity: 0, y: -18, stagger: 0.04, duration: 0.4, ease: 'power2.in' })
-    .to(slash,  { x: -600, duration: 0.45, ease: 'power3.in' }, '-=0.3')
-    .to([live, bottom], { opacity: 0, duration: 0.3 }, '-=0.35')
-    .to(bg,     { opacity: 0, duration: 0.3 }, '-=0.18');
-}
-
-// ── 2. Race Intro ──────────────────────────────────────────
-function playIntroRace(race) {
-  introActive = true;
-  const stage = document.getElementById('intro-stage');
-  const sub = race?.sub || '';
-  const isHeat = /heat/i.test(sub);
-  const isSemi = /semi/i.test(sub);
-  const eventType = isHeat ? 'HEAT' : isSemi ? 'SEMI-FINAL' : 'GRAND FINAL';
-
-  stage.innerHTML = `
-    <div class="int-bg"></div>
-    <div class="int-race-panel">
-      <div class="int-race-eyebrow">Up Next</div>
-      <div class="int-race-eyebrow-line"></div>
-      <div class="int-race-panel-name">${esc(race?.name || 'Race')}</div>
-      <div class="int-race-badges">
-        <div class="int-race-badge">${esc(eventType)}</div>
-        ${sub ? `<div class="int-race-badge">${esc(sub)}</div>` : ''}
-      </div>
-    </div>
-    <div class="int-race-side">
-      <div class="int-race-side-tag">On The Water</div>
-    </div>`;
-
-  const bg      = stage.querySelector('.int-bg');
-  const panel   = stage.querySelector('.int-race-panel');
-  const side    = stage.querySelector('.int-race-side');
-  const eyebrow = stage.querySelector('.int-race-eyebrow');
-  const eyeLine = stage.querySelector('.int-race-eyebrow-line');
-  const name    = stage.querySelector('.int-race-panel-name');
-  const badges  = stage.querySelector('.int-race-badges');
-
-  currentIntroTl = gsap.timeline({ onComplete: clearIntroStage });
-  currentIntroTl
-    .set(stage, { opacity: 1 })
-    .fromTo(bg,    { opacity: 0 }, { opacity: 1, duration: 0.2 })
-    .fromTo(panel, { clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' },
-                   { clipPath: 'polygon(0 0, 95% 0, 100% 100%, 0 100%)', duration: 0.52, ease: 'power4.out' }, 0.05)
-    .fromTo(side,    { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.4, ease: 'power2.out' }, 0.3)
-    .fromTo(eyebrow, { y: -16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' }, 0.42)
-    .to(eyeLine,     { width: 120, duration: 0.48, ease: 'power3.out' }, 0.62)
-    .fromTo(name,    { x: -40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: 'power3.out' }, 0.68)
-    .fromTo(badges,  { y: 14, opacity: 0 },  { y: 0, opacity: 1, duration: 0.35, ease: 'power2.out' }, 0.9)
-    .to({}, { duration: 3.5 })
-    .to(panel, { clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)', duration: 0.45, ease: 'power3.in' })
-    .to(side,  { opacity: 0, duration: 0.3 }, '-=0.38')
-    .to(bg,    { opacity: 0, duration: 0.28 }, '-=0.18');
-}
-
-// ── 3. Athlete Cards ───────────────────────────────────────
-function playIntroAthletes(roster, race) {
-  introActive = true;
-  const athletes = (roster?.athletes || []).filter(a => a.name);
-  if (!athletes.length) { clearIntroStage(); return; }
-
-  let idx = 0;
-  function showNext() {
-    if (!introActive) return;
-    if (idx >= athletes.length) { clearIntroStage(); return; }
-    showAthleteCard(athletes[idx], race, roster, idx + 1, athletes.length, () => {
-      idx++;
-      showNext();
-    });
-  }
-  showNext();
-}
-
-function showAthleteCard(athlete, race, roster, num, total, onDone) {
-  const stage = document.getElementById('intro-stage');
-  const { first, last } = introSplitName(athlete.name);
-  const photoHtml = athlete.photoPath
-    ? `<img class="int-photo-img" src="${athlete.photoPath}" alt="">`
-    : `<div class="int-photo-fallback">${esc((athlete.name||'?').split(' ').map(w=>w[0]||'').slice(0,2).join(''))}</div>`;
-  const seatNum = String(athlete.seat || '').replace(/\D/g, '') || String(num);
-
-  stage.innerHTML = `
-    <div class="int-bg"></div>
-    <div class="int-photo-panel">
-      <div class="int-photo-accent"></div>
-      <div class="int-photo-frame">${photoHtml}</div>
-      <div class="int-photo-gradient"></div>
-      <div class="int-photo-school-bar">
-        <div class="int-school-name-tag">${esc(race?.name || '')}</div>
-      </div>
-    </div>
-    <div class="int-data-panel">
-      <div class="int-seat-bg-num">${esc(seatNum)}</div>
-      <div class="int-athlete-school-header">${esc(teamName())}</div>
-      <div class="int-race-tag">${num} OF ${total}${roster?.boatClass ? '  ·  ' + esc(roster.boatClass).toUpperCase() : ''}</div>
-      <div class="int-athlete-firstname">${esc(first)}</div>
-      <div class="int-athlete-lastname">${esc(last)}</div>
-      <div class="int-divider"></div>
-      <div class="int-position-row">
-        <span>${esc(athlete.seat || '').toUpperCase()}</span>
-        ${athlete.seat && roster?.boatClass ? '<span class="int-pos-dot">·</span><span>' + esc(roster.boatClass).toUpperCase() + '</span>' : ''}
-      </div>
-    </div>`;
-
-  const bg      = stage.querySelector('.int-bg');
-  const photo   = stage.querySelector('.int-photo-panel');
-  const accent  = stage.querySelector('.int-photo-accent');
-  const data    = stage.querySelector('.int-data-panel');
-  const school  = stage.querySelector('.int-athlete-school-header');
-  const tag     = stage.querySelector('.int-race-tag');
-  const fn      = stage.querySelector('.int-athlete-firstname');
-  const ln      = stage.querySelector('.int-athlete-lastname');
-  const divLine = stage.querySelector('.int-divider');
-  const pos     = stage.querySelector('.int-position-row');
-
-  currentIntroTl = gsap.timeline({ onComplete: onDone });
-  currentIntroTl
-    .set(stage, { opacity: 1 })
-    .fromTo(bg,     { opacity: 0 }, { opacity: 1, duration: 0.18 })
-    .fromTo(photo,  { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.48, ease: 'power4.out' }, 0.04)
-    .fromTo(accent, { scaleY: 0, transformOrigin: 'top center' }, { scaleY: 1, duration: 0.36, ease: 'power3.out' }, 0.06)
-    .fromTo(data,   { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.32, ease: 'power3.out' }, 0.1)
-    .fromTo(school, { y: -14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3,  ease: 'power2.out' }, 0.28)
-    .fromTo(tag,    { y: -12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: 'power2.out' }, 0.38)
-    .fromTo(fn,     { x: 70, opacity: 0, skewX: -5 }, { x: 0, opacity: 1, skewX: 0, duration: 0.42, ease: 'power4.out' }, 0.44)
-    .fromTo(ln,     { x: 70, opacity: 0, skewX: -5 }, { x: 0, opacity: 1, skewX: 0, duration: 0.38, ease: 'power4.out' }, 0.54)
-    .fromTo(divLine,{ scaleX: 0, transformOrigin: 'left center' }, { scaleX: 1, duration: 0.38, ease: 'power2.out' }, 0.66)
-    .fromTo(pos,    { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, ease: 'power2.out' }, 0.76)
-    .to({}, { duration: 3.5 })
-    .to([photo, data], { y: 50, opacity: 0, stagger: 0.06, duration: 0.4, ease: 'power3.in' })
-    .to(bg, { opacity: 0, duration: 0.28 }, '-=0.22');
-}
-
-// ── 4. Results Reveal ──────────────────────────────────────
-function playIntroResultsReveal(resultsData, race) {
-  introActive = true;
-  const stage = document.getElementById('intro-stage');
-  const rows  = resultsData || [];
-  const PLACE_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
-
-  const rowsHtml = rows.map((r, i) => `
-    <div class="int-result-row${i === 0 ? ' is-winner' : ''}" style="--row-color:${PLACE_COLORS[i] || 'rgba(255,255,255,0.12)'}">
-      <div class="int-result-place">${r.place ?? i + 1}</div>
-      <div class="int-result-school-wrap">
-        <div class="int-result-school">${esc(r.school || '')}</div>
-        ${i === 0 ? '<div class="int-winner-label">Race Winner</div>' : ''}
-      </div>
-      <div class="int-result-time">${esc(r.time || '')}</div>
-      <div class="int-result-gap">${i > 0 && r.margin && r.margin !== '-' ? '+' + esc(r.margin) : ''}</div>
-    </div>`).join('');
-
-  stage.innerHTML = `
-    <div class="int-bg"></div>
-    <div class="int-results-stage">
-      <div class="int-results-eyebrow">Official Results</div>
-      <div class="int-results-header-wrap">
-        <div class="int-results-race-name">${esc(race?.name || '')}</div>
-      </div>
-      <div class="int-results-rows">${rowsHtml}</div>
-    </div>`;
-
-  const bg         = stage.querySelector('.int-bg');
-  const eye        = stage.querySelector('.int-results-eyebrow');
-  const headerWrap = stage.querySelector('.int-results-header-wrap');
-  const rrows      = Array.from(stage.querySelectorAll('.int-result-row'));
-  const winnerRow  = rrows[0] || null;
-  const winnerLbl  = winnerRow?.querySelector('.int-winner-label') || null;
-  const otherRows  = rrows.slice(1).reverse(); // last place → 2nd place
-
-  currentIntroTl = gsap.timeline({ onComplete: clearIntroStage });
-  currentIntroTl
-    .set(stage, { opacity: 1 })
-    .fromTo(bg,         { opacity: 0 }, { opacity: 1, duration: 0.3 })
-    .fromTo(eye,        { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: 'power3.out' }, 0.2)
-    .fromTo(headerWrap, { y: -14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4,  ease: 'power2.out' }, 0.38);
-
-  otherRows.forEach((row, i) => {
-    currentIntroTl.fromTo(row,
-      { x: -60, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.4, ease: 'power3.out' },
-      0.6 + i * 0.24);
-  });
-
-  const winnerT = 0.6 + otherRows.length * 0.24 + 0.7;
-  if (winnerRow) {
-    currentIntroTl
-      .fromTo(winnerRow, { x: -80, opacity: 0, scale: 0.97 },
-              { x: 0, opacity: 1, scale: 1, duration: 0.55, ease: 'back.out(1.3)' }, winnerT);
-    if (winnerLbl) {
-      currentIntroTl.to(winnerLbl, { opacity: 1, duration: 0.35, ease: 'power2.out' }, winnerT + 0.5);
-    }
-  }
-
-  currentIntroTl
-    .to({}, { duration: 4.5 })
-    .to(stage, { opacity: 0, duration: 0.55 });
-}
-
-// ── dispatcher ──
-function handlePlayIntro(introId, race, roster) {
-  clearIntroStage();
-  if (introId === 'clear') return;
-  gsap.delayedCall(0.1, () => {
-    if (introId === 'event-open')     playIntroEventOpen(race);
-    else if (introId === 'race-intro') playIntroRace(race);
-    else if (introId === 'athletes')   playIntroAthletes(roster, race);
-    else if (introId === 'results-reveal') {
-      playIntroResultsReveal(currentOverlayState?.results?.data || [], race);
-    }
-  });
-}
-
-function teamName() {
-  return currentOverlayState?.watermark?.text || 'Crew Broadcast';
-}
-
-function esc(str) {
-  return String(str || '')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
+// ── alert ──────────────────────────────────────────────────────────────
 let alertTimer = null;
 function showAlert(text, duration) {
   const el = document.getElementById('ov-alert');
@@ -1205,12 +320,71 @@ function showAlert(text, duration) {
   if (alertTimer) clearTimeout(alertTimer);
   gsap.killTweensOf(el);
   gsap.fromTo(el,
-    { opacity: 0, scale: 0.88, xPercent: -50, yPercent: -50 },
-    { opacity: 1, scale: 1,    xPercent: -50, yPercent: -50, duration: 0.35, ease: 'back.out(1.6)' }
+    { opacity: 0, scale: 0.88 },
+    { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(1.6)' }
   );
-  alertTimer = setTimeout(() => {
-    gsap.to(el, { opacity: 0, scale: 0.95, xPercent: -50, yPercent: -50, duration: 0.5, ease: 'power2.in' });
-  }, Math.max(1, duration || 3) * 1000);
+  alertTimer = setTimeout(() =>
+    gsap.to(el, { opacity: 0, scale: 0.95, duration: 0.45, ease: 'power2.in' }),
+    Math.max(1, duration || 3) * 1000
+  );
+}
+
+// ── websocket ──────────────────────────────────────────────────────────
+let ws;
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen  = () => ws.send(JSON.stringify({ type: 'register', role: 'overlay' }));
+  ws.onclose = () => setTimeout(connect, 3000);
+  ws.onerror = () => {};
+  ws.onmessage = e => { try { handle(JSON.parse(e.data)); } catch {} };
+}
+
+function handle(msg) {
+  switch (msg.type) {
+
+    case 'state': {
+      const s = msg.overlayState;
+      if (!s) return;
+      ['eventHeader', 'timer', 'lanes'].forEach(key => {
+        if (s[key]?.active) SHOW[key]?.(); else HIDE[key]?.();
+      });
+      applyContent(s);
+      if (s.timer?.running && s.timer?.startTime) startTimer(Date.now() - s.timer.startTime);
+      break;
+    }
+
+    case 'toggle': {
+      if (msg.active) SHOW[msg.element]?.(); else HIDE[msg.element]?.();
+      break;
+    }
+
+    case 'update': {
+      if (msg.element && msg.data) applyContent({ [msg.element]: msg.data });
+      break;
+    }
+
+    case 'timer-control': {
+      if (msg.action === 'start') {
+        const skew = msg.serverTime ? Date.now() - msg.serverTime : 0;
+        startTimer((msg.elapsed || 0) + skew);
+      } else if (msg.action === 'stop') {
+        stopTimer();
+      } else if (msg.action === 'reset') {
+        resetTimer();
+      }
+      break;
+    }
+
+    case 'alert':
+      showAlert(msg.text, msg.duration);
+      break;
+  }
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 connect();

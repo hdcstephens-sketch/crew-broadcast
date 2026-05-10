@@ -3,1280 +3,544 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CREW Broadcast - Control</title>
+  <title>CREW — Control</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0f0c;
-      --card: #111813;
-      --card2: #181f1b;
-      --accent: #00a86b;
-      --accent-dim: rgba(0,168,107,0.15);
-      --danger: #e53935;
-      --text: #f0f0f0;
-      --text2: #8a9a90;
-      --line: rgba(255,255,255,0.07);
-      --r: 14px;
+      --bg:         #060c09;
+      --card:       #0f1510;
+      --card2:      #161e18;
+      --accent:     #00a86b;
+      --accent-dim: rgba(0,168,107,0.14);
+      --danger:     #e53935;
+      --text:       #f0f0f0;
+      --text2:      #8a9a90;
+      --line:       rgba(255,255,255,0.07);
+      --r:          14px;
     }
 
     body {
-      background: var(--bg);
-      color: var(--text);
+      background: var(--bg); color: var(--text);
       font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-      padding: 0 0 80px;
+      min-height: 100vh; padding-bottom: 60px;
     }
 
     /* ── top bar ── */
     .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(10,15,12,0.96);
-      backdrop-filter: blur(12px);
+      width: 100%; position: sticky; top: 0; z-index: 50;
+      background: rgba(6,12,9,0.97); backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      gap: 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; gap: 10px;
     }
     .topbar-brand {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      color: var(--accent);
+      font-family: 'Rajdhani', sans-serif; font-size: 17px; font-weight: 700;
+      letter-spacing: 0.06em; color: var(--accent);
     }
-    .topbar-links { display: flex; gap: 8px; align-items: center; }
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
     .pill {
-      font-size: 12px;
-      font-weight: 600;
-      padding: 5px 11px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      color: var(--text2);
-      text-decoration: none;
-      background: var(--card);
+      font-size: 12px; font-weight: 600; padding: 5px 11px;
+      border-radius: 999px; border: 1px solid var(--line);
+      color: var(--text2); text-decoration: none; background: var(--card);
       white-space: nowrap;
     }
     .pill:hover { border-color: var(--accent); color: var(--accent); }
-    .status-dot {
-      display: inline-block;
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #555;
-      margin-right: 5px;
-      flex-shrink: 0;
-    }
-    .status-dot.live { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-    .status-dot.err  { background: var(--danger); }
-    #connLabel { font-size: 12px; color: var(--text2); display: flex; align-items: center; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; flex-shrink: 0; }
+    .dot.live { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .dot.err  { background: var(--danger); }
+    #wsLabel { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
 
     /* ── page ── */
-    .page { max-width: 640px; margin: 0 auto; padding: 18px 14px; display: flex; flex-direction: column; gap: 20px; }
+    .page { max-width: 480px; margin: 0 auto; padding: 20px 14px; display: flex; flex-direction: column; gap: 20px; }
 
-    /* ── section label ── */
+    /* ── section ── */
     .sec-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text2);
-      margin-bottom: 8px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--text2); margin-bottom: 10px;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--r); padding: 16px;
     }
 
-    /* ── presets ── */
-    .preset-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+    /* ── active race display ── */
+    .active-race-box {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--r); padding: 18px 20px;
+      border-left: 4px solid var(--accent);
     }
-    .preset-btn {
-      padding: 13px 6px;
-      border-radius: var(--r);
-      border: 1px solid var(--line);
-      background: var(--card);
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.14s;
-      text-align: center;
+    .active-race-name {
+      font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase; color: var(--text);
+      line-height: 1.1;
     }
-    .preset-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-    .preset-btn.danger { border-color: rgba(229,57,53,0.3); color: #ef9a9a; }
-    .preset-btn.danger:hover { background: rgba(229,57,53,0.15); border-color: var(--danger); color: var(--danger); }
+    .active-race-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
 
-    /* ── live cards ── */
-    .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .live-card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--r);
-      padding: 16px;
+    /* ── race list ── */
+    .race-btn {
+      width: 100%; text-align: left; padding: 11px 14px;
+      background: var(--card2); border: 1px solid var(--line);
+      border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: 0.13s;
+      display: flex; align-items: center; gap: 8px;
     }
-    .live-card-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--text2);
-      margin-bottom: 10px;
+    .race-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .race-btn.is-active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+    .race-btn .race-sub { font-size: 11px; color: var(--text2); font-weight: 400; margin-left: auto; white-space: nowrap; }
+    .race-btn.is-active .race-sub { color: var(--accent); opacity: 0.7; }
+    .race-del {
+      background: none; border: none; color: var(--danger); opacity: 0.5;
+      font-size: 16px; cursor: pointer; line-height: 1; padding: 0 2px; flex-shrink: 0;
     }
-    .big-num {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 52px;
-      font-weight: 700;
-      line-height: 1;
-      color: var(--text);
-      letter-spacing: 0.02em;
-      margin-bottom: 12px;
+    .race-del:hover { opacity: 1; }
+    .empty-row {
+      font-size: 12px; color: var(--text2); padding: 12px;
+      text-align: center; border: 1px dashed var(--line); border-radius: 10px;
     }
-    .big-num .sub { font-size: 28px; color: var(--text2); }
-    .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── mode buttons ── */
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .mode-btn {
+      padding: 16px 8px; border-radius: var(--r); border: 1px solid var(--line);
+      background: var(--card); color: var(--text2);
+      font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+      letter-spacing: 0.08em; cursor: pointer; transition: 0.15s; text-align: center;
+    }
+    .mode-btn:hover { border-color: var(--accent); color: var(--text); }
+    .mode-btn.is-active-prerace {
+      border-color: rgba(0,168,107,0.5); background: var(--accent-dim); color: var(--accent);
+    }
+    .mode-btn.is-active-racing {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+    }
+    .mode-btn.is-active-break {
+      border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); color: var(--text);
+    }
+    .mode-sub { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; opacity: 0.6; display: block; margin-top: 3px; }
+
+    /* ── timer ── */
+    .timer-display {
+      font-family: 'Rajdhani', sans-serif; font-size: 68px; font-weight: 700;
+      line-height: 1; color: var(--text); letter-spacing: 0.02em;
+      text-align: center; padding: 10px 0 14px;
+    }
+    .timer-display .sub { font-size: 40px; color: var(--text2); }
+    .btn-row { display: flex; gap: 8px; }
     .btn {
-      flex: 1;
-      padding: 9px 8px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: var(--card2);
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.13s;
-      text-align: center;
-      min-width: 0;
+      flex: 1; padding: 12px 8px; border-radius: 12px; border: 1px solid var(--line);
+      background: var(--card2); color: var(--text); font-size: 14px; font-weight: 600;
+      font-family: inherit; cursor: pointer; transition: 0.13s; text-align: center;
     }
-    .btn:hover { border-color: var(--accent); }
-    .btn:disabled { opacity: 0.32; cursor: default; pointer-events: none; }
+    .btn:hover   { border-color: var(--accent); }
+    .btn:disabled { opacity: 0.3; pointer-events: none; }
     .btn-go  { background: var(--accent); border-color: var(--accent); color: #fff; }
     .btn-go:hover { background: #00c07a; }
-    .btn-stop { background: rgba(229,57,53,0.18); border-color: rgba(229,57,53,0.4); color: #ef9a9a; }
-    .btn-stop:hover { background: rgba(229,57,53,0.3); }
-    .btn-xl {
-      flex: none;
-      width: 46px;
-      height: 46px;
-      font-size: 20px;
-      padding: 0;
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .spm-val-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-    .spm-input {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 52px;
-      font-weight: 700;
-      line-height: 1;
-      width: 100%;
-      background: transparent;
-      border: none;
-      color: var(--text);
-      outline: none;
-    }
-    .spm-input::-webkit-inner-spin-button { display: none; }
+    .btn-stop { background: rgba(229,57,53,0.14); border-color: rgba(229,57,53,0.4); color: #ef9a9a; }
+    .btn-stop:hover { background: rgba(229,57,53,0.26); }
+    .btn-icon { flex: none; width: 46px; height: 46px; font-size: 20px; padding: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
 
-    /* ── event header quick edit ── */
+    /* ── schools editor ── */
+    .school-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--line);
+    }
+    .school-row:last-child { border-bottom: none; }
+    .color-swatch {
+      width: 38px; height: 38px; border-radius: 9px; border: 1px solid var(--line);
+      padding: 3px; cursor: pointer; background: var(--card2); flex-shrink: 0;
+    }
+    .school-input {
+      flex: 1; background: var(--card2); border: 1px solid var(--line);
+      border-radius: 10px; padding: 9px 12px; color: var(--text);
+      font-size: 14px; font-family: inherit; outline: none;
+    }
+    .school-input:focus { border-color: var(--accent); }
+    .school-input::placeholder { color: var(--text2); }
+
+    /* ── quick inputs ── */
     .quick-input {
-      width: 100%;
-      background: var(--card2);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 12px;
-      color: var(--text);
-      font-size: 14px;
-      font-family: inherit;
-      outline: none;
-      margin-bottom: 8px;
+      width: 100%; background: var(--card2); border: 1px solid var(--line);
+      border-radius: 10px; padding: 10px 12px; color: var(--text);
+      font-size: 14px; font-family: inherit; outline: none; margin-bottom: 8px;
     }
     .quick-input:focus { border-color: var(--accent); }
     .quick-input::placeholder { color: var(--text2); }
+    .quick-input:last-child { margin-bottom: 0; }
 
-    /* ── element toggles ── */
-    .tog-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
+    /* ── alert presets ── */
+    .alert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .alert-btn {
+      padding: 11px 8px; border-radius: 12px; border: 1px solid var(--line);
+      background: var(--card2); color: var(--text); font-size: 13px; font-weight: 600;
+      font-family: inherit; cursor: pointer; transition: 0.13s; text-align: center;
     }
-    .tog-card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--r);
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      cursor: pointer;
-      transition: 0.14s;
-    }
-    .tog-card.is-on { border-color: rgba(0,168,107,0.35); background: rgba(0,168,107,0.07); }
-    .tog-card-name { font-size: 13px; font-weight: 600; }
-    .tog-card-status { font-size: 11px; color: var(--text2); }
-    .tog-card.is-on .tog-card-status { color: var(--accent); }
-    .tog-switch {
-      width: 38px; height: 22px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.1);
-      position: relative;
-      flex-shrink: 0;
-      transition: 0.2s;
-    }
-    .tog-switch::after {
-      content: '';
-      position: absolute;
-      top: 3px; left: 3px;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: #fff;
-      transition: 0.2s;
-    }
-    .tog-card.is-on .tog-switch { background: var(--accent); }
-    .tog-card.is-on .tog-switch::after { transform: translateX(16px); }
-    .tog-apply-btn {
-      font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
-      padding: 4px 9px; border-radius: 6px; border: none; cursor: pointer;
-      white-space: nowrap; transition: 0.12s; flex-shrink: 0;
-    }
+    .alert-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
-    /* ── setup accordion ── */
-    .setup-toggle {
-      width: 100%;
-      padding: 13px 16px;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--r);
-      color: var(--text2);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .setup-toggle:hover { color: var(--text); border-color: var(--accent); }
-    .setup-body { display: none; padding-top: 14px; display: flex; flex-direction: column; gap: 16px; }
-    .setup-body.hidden { display: none; }
-
-    .field-label { font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; }
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .field-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+    /* ── action button ── */
     .action-btn {
-      padding: 9px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--accent);
-      background: var(--accent-dim);
-      color: var(--accent);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.13s;
+      padding: 10px 16px; border-radius: 11px; border: 1px solid var(--accent);
+      background: var(--accent-dim); color: var(--accent);
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: 0.13s;
     }
     .action-btn:hover { background: var(--accent); color: #fff; }
     .action-btn.ghost { border-color: var(--line); background: var(--card2); color: var(--text2); }
     .action-btn.ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .action-btn.full { width: 100%; text-align: center; padding: 13px; font-size: 14px; }
 
-    .lane-row-simple {
-      display: grid;
-      grid-template-columns: 28px 1fr auto auto;
-      gap: 8px;
-      align-items: center;
+    /* ── schedule (collapsed) ── */
+    .collapse-btn {
+      width: 100%; padding: 13px 16px; background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--r); color: var(--text2); font-size: 13px; font-weight: 600;
+      cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between;
+      font-family: inherit;
     }
-    .lane-num { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--text2); text-align: center; }
-    .color-swatch { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); padding: 3px; cursor: pointer; background: var(--card2); }
-    .mini-up { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--card2); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text2); font-size: 14px; position: relative; overflow: hidden; }
-    .mini-up input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .mini-up img { width: 100%; height: 100%; object-fit: contain; }
+    .collapse-btn:hover { color: var(--text); border-color: var(--accent); }
+    .collapse-body { padding-top: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .collapse-body.hidden { display: none; }
 
-    .tbl-simple { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .tbl-simple th { text-align: left; padding: 6px 8px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text2); border-bottom: 1px solid var(--line); }
-    .tbl-simple td { padding: 4px; }
-    .tbl-simple input { background: var(--card2); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; color: var(--text); font-size: 13px; width: 100%; font-family: inherit; outline: none; }
-    .tbl-simple input:focus { border-color: var(--accent); }
+    /* ── toasts ── */
+    #toasts { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 999; }
+    .toast { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #fff; }
+    .toast.ok  { background: var(--accent); }
+    .toast.err { background: var(--danger); }
 
-    .empty-msg { font-size: 12px; color: var(--text2); padding: 12px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
-
-    .logo-card {
-      background: var(--card2); border: 1px solid var(--line); border-radius: 12px;
-      padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;
-      cursor: pointer; position: relative; overflow: hidden; transition: 0.14s;
-    }
-    .logo-card:hover { border-color: var(--accent); }
-    .logo-card input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .logo-card-img {
-      width: 64px; height: 64px; border-radius: 10px; object-fit: contain;
-      background: rgba(255,255,255,0.04); border: 1px solid var(--line);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; font-weight: 700; color: var(--text2); overflow: hidden;
-    }
-    .logo-card-img img { width: 100%; height: 100%; object-fit: contain; }
-    .logo-card-name { font-size: 11px; font-weight: 600; color: var(--text2); text-align: center; line-height: 1.3; }
-    .logo-card.has-logo { border-color: rgba(0,168,107,0.3); }
-    .logo-card.has-logo .logo-card-name { color: var(--accent); }
+    /* ── preview modal ── */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .modal-inner { width: 100%; max-width: 960px; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .modal-close { background: none; border: none; color: var(--text2); font-size: 24px; cursor: pointer; line-height: 1; }
+    .preview-aspect { width: 100%; aspect-ratio: 16/9; position: relative; overflow: hidden; border-radius: 12px; background: #000; border: 1px solid var(--line); }
+    .preview-aspect iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: none; transform-origin: 0 0; }
 
     @media (max-width: 420px) {
-      .live-grid { grid-template-columns: 1fr; }
-      .preset-grid { grid-template-columns: repeat(2, 1fr); }
-      .tog-grid { grid-template-columns: 1fr; }
-      .field-row, .field-row.col3 { grid-template-columns: 1fr; }
+      .mode-grid { grid-template-columns: 1fr 1fr 1fr; }
+      .alert-grid { grid-template-columns: 1fr 1fr; }
     }
-
-    /* ── import modal ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; }
-    .modal-box { background: var(--card); border: 1px solid var(--line); border-radius: 18px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column; }
-    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
-    .modal-head h3 { font-size: 15px; font-weight: 700; }
-    .modal-close { background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px; }
-    .modal-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
-    .upload-zone { border: 2px dashed rgba(0,168,107,0.35); border-radius: 14px; padding: 36px 20px; text-align: center; cursor: pointer; transition: 0.15s; background: var(--card2); }
-    .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(0,168,107,0.05); }
-    .upload-zone .uz-icon { font-size: 36px; margin-bottom: 8px; }
-    .upload-zone p { font-size: 13px; color: var(--text2); margin-top: 4px; }
-    .upload-preview { width: 100%; border-radius: 10px; max-height: 200px; object-fit: contain; background: #000; display: none; }
-    .ocr-progress { background: var(--card2); border-radius: 10px; padding: 12px 14px; font-size: 12px; color: var(--text2); }
-    .ocr-bar-wrap { height: 6px; background: rgba(255,255,255,0.07); border-radius: 999px; margin-top: 8px; overflow: hidden; }
-    .ocr-bar { height: 100%; background: var(--accent); border-radius: inherit; transition: width 0.2s; width: 0%; }
-    .parsed-race { background: var(--card2); border-radius: 12px; padding: 12px 14px; border: 1px solid var(--line); }
-    .parsed-race-name { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
-    .parsed-race-sub { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
-    .parsed-lanes { display: flex; flex-direction: column; gap: 4px; }
-    .parsed-lane { display: flex; gap: 8px; align-items: center; font-size: 12px; }
-    .lane-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-dim); border: 1px solid rgba(0,168,107,0.3); color: var(--accent); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .delete-race { background: none; border: none; color: var(--danger); font-size: 16px; cursor: pointer; margin-left: auto; opacity: 0.6; }
-    .delete-race:hover { opacity: 1; }
-    .import-btn { background: var(--accent); border: none; color: #fff; font-size: 14px; font-weight: 700; padding: 12px; border-radius: 12px; cursor: pointer; font-family: inherit; }
-    .import-btn:hover { background: #00c07a; }
-    .import-btn:disabled { opacity: 0.4; pointer-events: none; }
-    .no-races-msg { font-size: 13px; color: var(--text2); text-align: center; padding: 12px 0; }
   </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-brand" style="display:flex;align-items:center;gap:9px;">
-    <span id="topbarBrandName">CREW</span>
-  </div>
-  <div class="topbar-links">
-    <span id="connLabel"><span class="status-dot" id="connDot"></span> Connecting</span>
-    <a class="pill" href="/setup.html">⚙ Setup</a>
-    <a class="pill" href="/deck.html">🎛 Deck</a>
-    <a class="pill" href="/times.html">Times</a>
-    <a class="pill" href="/water.html">Water SPM</a>
-    <a class="pill" href="/audio.html">Commentary</a>
-    <a class="pill" href="/monitor.html" target="_blank">Audio Monitor ↗</a>
-    <a class="pill" href="/viewer.html" target="_blank">Viewer ↗</a>
-    <a class="pill" href="/overlay.html" target="_blank">Overlay ↗</a>
+  <div class="topbar-brand" id="brandName">CREW</div>
+  <div class="topbar-right">
+    <span id="wsLabel"><span class="dot" id="wsDot"></span>Connecting</span>
+    <a class="pill" href="/audio.html">Mic</a>
+    <a class="pill" href="/monitor.html" target="_blank">Monitor ↗</a>
+    <button class="pill" onclick="openPreview()" style="cursor:pointer;">Preview</button>
+    <button class="pill" onclick="logout()" style="cursor:pointer;border-color:rgba(229,57,53,0.4);color:#ef9a9a;">Out</button>
   </div>
 </div>
 
 <div class="page">
 
-  <!-- ── Flash Alert ── -->
+  <!-- ── 1. Current Race ─────────────────────────────────── -->
+  <div>
+    <div class="sec-label">Current Race</div>
+    <div class="active-race-box" id="activeRaceBox">
+      <div class="active-race-name" id="activeRaceName">No race selected</div>
+      <div class="active-race-sub" id="activeRaceSub">Tap a race below to load it</div>
+    </div>
+    <div id="raceList" style="display:flex;flex-direction:column;gap:6px;margin-top:10px;"></div>
+  </div>
+
+  <!-- ── 2. Mode ──────────────────────────────────────────── -->
+  <div>
+    <div class="sec-label">Mode</div>
+    <div class="mode-grid">
+      <button class="mode-btn" id="mode-prerace" onclick="setMode('prerace')">
+        PRE-RACE
+        <span class="mode-sub">Bar + Schools</span>
+      </button>
+      <button class="mode-btn" id="mode-racing" onclick="setMode('racing')">
+        RACING
+        <span class="mode-sub">Bar + Timer</span>
+      </button>
+      <button class="mode-btn" id="mode-break" onclick="setMode('break')">
+        BREAK
+        <span class="mode-sub">Clear all</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 3. Timer ─────────────────────────────────────────── -->
+  <div class="card">
+    <div class="sec-label" style="margin-bottom:0;">Race Timer</div>
+    <div class="timer-display" id="timerDisp">00:00<span class="sub">.0</span></div>
+    <div class="btn-row">
+      <button class="btn btn-go"   id="tStartBtn" onclick="tStart()">Start</button>
+      <button class="btn btn-stop" id="tStopBtn"  onclick="tStop()" disabled>Stop</button>
+      <button class="btn btn-icon" onclick="tReset()" title="Reset">↺</button>
+    </div>
+  </div>
+
+  <!-- ── 4. Schools ───────────────────────────────────────── -->
+  <div class="card">
+    <div class="sec-label">Schools Racing</div>
+    <div id="schoolsEd">
+      <div class="school-row">
+        <input type="color" class="color-swatch" value="#004830">
+        <input type="text" class="school-input" placeholder="School name">
+      </div>
+      <div class="school-row">
+        <input type="color" class="color-swatch" value="#8B0000">
+        <input type="text" class="school-input" placeholder="School name">
+      </div>
+      <div class="school-row">
+        <input type="color" class="color-swatch" value="#2E7D32">
+        <input type="text" class="school-input" placeholder="School name">
+      </div>
+      <div class="school-row">
+        <input type="color" class="color-swatch" value="#4A148C">
+        <input type="text" class="school-input" placeholder="School name">
+      </div>
+    </div>
+    <button class="action-btn full" style="margin-top:14px;" onclick="pushSchools()">Push Schools to Overlay</button>
+  </div>
+
+  <!-- ── 5. Flash Alert ───────────────────────────────────── -->
   <div>
     <div class="sec-label">Flash Alert</div>
-    <div class="preset-grid" style="grid-template-columns:repeat(2,1fr); margin-bottom:8px;">
-      <button class="preset-btn" onclick="sendAlert('PHOTO FINISH',5)">📸 Photo Finish</button>
-      <button class="preset-btn" onclick="sendAlert('COURSE RECORD',5)">🏆 Course Record</button>
-      <button class="preset-btn" onclick="sendAlert('RACE COMPLETE',4)">✅ Race Complete</button>
-      <button class="preset-btn" onclick="sendAlert('FALSE START',4)">⚠️ False Start</button>
+    <div class="alert-grid">
+      <button class="alert-btn" onclick="sendAlert('PHOTO FINISH', 5)">📸 Photo Finish</button>
+      <button class="alert-btn" onclick="sendAlert('RACE COMPLETE', 4)">✅ Race Complete</button>
+      <button class="alert-btn" onclick="sendAlert('FALSE START', 4)">⚠️ False Start</button>
+      <button class="alert-btn" onclick="sendAlert('COURSE RECORD', 5)">🏆 Course Record</button>
     </div>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <input class="quick-input" id="alertText" placeholder="Custom message…" style="margin:0; flex:1;">
-      <input class="quick-input" id="alertDur" type="number" value="4" min="1" max="15" style="margin:0; width:64px;" title="Seconds">
+    <div style="display:flex;gap:8px;">
+      <input class="quick-input" id="alertText" placeholder="Custom alert…" style="margin:0;flex:1;">
       <button class="action-btn" onclick="sendCustomAlert()">Flash</button>
     </div>
   </div>
 
-  <!-- ── Live Controls ── -->
+  <!-- ── 6. Schedule ──────────────────────────────────────── -->
   <div>
-    <div class="sec-label">Live Controls</div>
-    <div class="live-grid">
-
-      <!-- Timer -->
-      <div class="live-card">
-        <div class="live-card-label">Race Timer</div>
-        <div class="big-num" id="timerDisp">00:00<span class="sub">.0</span></div>
-        <div class="btn-row">
-          <button class="btn btn-go" id="tStart" onclick="tStart()">Start</button>
-          <button class="btn btn-stop" id="tStop" onclick="tStop()" disabled>Stop</button>
-          <button class="btn btn-xl" onclick="tReset()" title="Reset">↺</button>
-        </div>
-      </div>
-
-      <!-- SPM -->
-      <div class="live-card">
-        <div class="live-card-label">Stroke Rate</div>
-        <input class="spm-input" id="spmVal" type="number" min="10" max="60" value="36" onchange="pushSpm()">
-        <div class="btn-row">
-          <button class="btn btn-xl" onclick="nudgeSpm(-1)">−</button>
-          <button class="btn btn-xl" onclick="nudgeSpm(1)">+</button>
-          <button class="btn" onclick="pushSpm()" style="flex:2;">Push</button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ── Finish Times ── -->
-  <div>
-    <div class="sec-label">Finish Times</div>
-    <div class="live-card" style="padding:12px 16px;">
-      <div id="finishRows" style="display:flex;flex-direction:column;"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="btn" onclick="clearFinishTimes()">Clear</button>
-        <button class="btn btn-go" onclick="pushFinishResults()" style="flex:2;">Push to Overlay</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Event Header Quick Edit ── -->
-  <div>
-    <div class="sec-label">Event Header</div>
-    <input class="quick-input" id="evTitle" type="text" placeholder="Race Title — e.g. Men's Varsity 8+ Final" onblur="pushEvent()">
-    <input class="quick-input" id="evSub" type="text" placeholder="Subtitle — e.g. Spring Invitational 2026" onblur="pushEvent()" style="margin-bottom:0;">
-  </div>
-
-  <!-- ── Element Toggles ── -->
-  <div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-      <div class="sec-label" style="margin:0;">Overlay</div>
-      <button class="action-btn ghost" onclick="openPreview()" style="padding:5px 12px; font-size:11px;">Preview</button>
-    </div>
-    <div class="tog-grid" id="togGrid"></div>
-    <button id="overlayMainBtn" onclick="overlayMainAction()" style="width:100%; margin-top:10px; padding:16px; border-radius:var(--r); border:none; background:var(--accent); color:#fff; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; letter-spacing:0.04em; transition:background 0.15s;">Send Up ↑</button>
-  </div>
-
-  <!-- ── Countdown quick row ── -->
-  <div>
-    <div class="sec-label">Countdown</div>
-    <div class="live-card" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-      <div class="big-num" id="countdownDisp" style="font-size:38px; margin:0;">5:00</div>
-      <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:180px;">
-        <input class="quick-input" id="countdownDur" type="number" value="300" min="5" style="margin:0; width:90px;" placeholder="sec">
-        <button class="btn btn-go" id="cStart" onclick="cStart()">Start</button>
-        <button class="btn btn-stop" id="cStop" onclick="cStop()" disabled>Stop</button>
-        <button class="btn btn-xl" onclick="cReset()" title="Reset">↺</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Setup (collapsed) ── -->
-  <div>
-    <button class="setup-toggle" onclick="toggleSetup(this)">
-      <span>Setup — Lanes, Results, Logos, Lower Third, Conditions</span>
-      <span id="setupArrow">▼</span>
+    <button class="collapse-btn" onclick="toggleSchedule(this)">
+      <span>Manage Schedule</span><span id="schedArrow">▼</span>
     </button>
-    <div class="setup-body hidden" id="setupBody">
+    <div class="collapse-body hidden" id="schedBody">
 
-      <!-- Race Schedule -->
-      <div>
-        <div class="sec-label">Race Schedule</div>
-        <div id="raceScheduleList" style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;"></div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <input class="quick-input" id="newRaceName" placeholder="Men's Varsity 8+ Final" style="margin:0; flex:2; min-width:140px;">
-          <input class="quick-input" id="newRaceSub" placeholder="Spring Invitational 2026" style="margin:0; flex:2; min-width:140px;">
-          <button class="action-btn ghost" onclick="addRace()">+ Add</button>
-          <button class="action-btn ghost" onclick="openImport()" style="white-space:nowrap;">📸 Import Photo</button>
-        </div>
-        <p style="font-size:11px; color:var(--text2); margin-top:6px;">Tap a race to instantly load it into the Event Header.</p>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <input class="quick-input" id="newRaceName" placeholder="Race name — e.g. Boys Varsity 1x">
+        <input class="quick-input" id="newRaceSub"  placeholder="Subtitle — e.g. Spring Invitational 2026">
+        <button class="action-btn ghost" style="align-self:flex-start;" onclick="addRace()">+ Add Race</button>
       </div>
 
-      <!-- Schedule PDF Upload -->
-      <div>
-        <div class="sec-label">Schedule PDF</div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <label style="flex:1;min-width:160px;">
-            <input type="file" id="pdfFileInput" accept="application/pdf" style="display:none;" onchange="uploadPDF(this)">
-            <span class="action-btn ghost" style="display:inline-block;cursor:pointer;" onclick="document.getElementById('pdfFileInput').click()">📄 Upload PDF</span>
-          </label>
-          <button class="action-btn ghost" id="viewPdfBtn" onclick="window.open('/uploads/schedule.pdf','_blank')" style="display:none;">View PDF ↗</button>
-          <button class="action-btn ghost" id="deletePdfBtn" onclick="deletePDF()" style="display:none;color:#ef9a9a;">Remove</button>
-        </div>
-        <p id="pdfStatus" style="font-size:11px;color:var(--text2);margin-top:6px;">No schedule PDF uploaded. Viewers can see it at <strong>/viewer.html</strong>.</p>
-      </div>
-
-      <!-- School Logos -->
-      <div>
-        <div class="sec-label">School Logos</div>
-        <div id="schoolLogosGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px;"></div>
-        <p style="font-size:11px; color:var(--text2); margin-top:8px;">Logos are saved to each school's team preset and used automatically in lanes, results, and overlays.</p>
-      </div>
-
-      <!-- Lanes -->
-      <div>
-        <div class="sec-label">Lane Assignments</div>
-        <div id="lanesEd" style="display:flex; flex-direction:column; gap:8px;"></div>
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button class="action-btn ghost" onclick="addLane()">+ Lane</button>
-          <button class="action-btn" onclick="pushLanes()">Push Lanes</button>
-        </div>
-      </div>
-
-      <!-- Results -->
-      <div>
-        <div class="sec-label">Leaderboard / Results</div>
-        <table class="tbl-simple">
-          <thead><tr><th>#</th><th>School</th><th>Time</th><th>Gap</th></tr></thead>
-          <tbody id="resBdy"></tbody>
-        </table>
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button class="action-btn ghost" onclick="addRow()">+ Row</button>
-          <button class="action-btn" onclick="pushResults()">Push Results</button>
-        </div>
-      </div>
-
-      <!-- Lower Third -->
-      <div>
-        <div class="sec-label">Lower Third</div>
-        <div class="field-row col3" style="margin-bottom:8px;">
-          <div>
-            <div class="field-label">Name</div>
-            <input class="quick-input" id="ltName" placeholder="Henry Stephens" style="margin:0;">
-          </div>
-          <div>
-            <div class="field-label">Title</div>
-            <input class="quick-input" id="ltTitle" placeholder="Head Coach" style="margin:0;">
-          </div>
-          <div>
-            <div class="field-label">School</div>
-            <input class="quick-input" id="ltSchool" placeholder="Brooks School" style="margin:0;">
-          </div>
-        </div>
-        <button class="action-btn" onclick="pushLT()">Push Lower Third</button>
-      </div>
-
-      <!-- Conditions -->
-      <div>
-        <div class="sec-label">Conditions</div>
-        <div class="field-row col3" style="margin-bottom:8px;">
-          <div>
-            <div class="field-label">Wind</div>
-            <input class="quick-input" id="cWind" placeholder="NW 8 mph" style="margin:0;">
-          </div>
-          <div>
-            <div class="field-label">Air Temp</div>
-            <input class="quick-input" id="cTemp" placeholder="65F" style="margin:0;">
-          </div>
-          <div>
-            <div class="field-label">Water Temp</div>
-            <input class="quick-input" id="cWater" placeholder="58F" style="margin:0;">
-          </div>
-        </div>
-        <button class="action-btn" onclick="pushCond()">Push Conditions</button>
-      </div>
-
-      <!-- Watermark -->
-      <div>
-        <div class="sec-label">Watermark</div>
-        <div style="display:flex; gap:8px;">
-          <input class="quick-input" id="wmText" placeholder="Brooks School Crew" style="margin:0; flex:1;">
-          <button class="action-btn" onclick="pushWM()">Push</button>
-        </div>
-      </div>
-
-      <!-- SPM Label -->
-      <div>
-        <div class="sec-label">Stroke Rate Label</div>
-        <div style="display:flex; gap:8px;">
-          <input class="quick-input" id="spmLbl" placeholder="Leading Boat" style="margin:0; flex:1;">
-          <button class="action-btn" onclick="pushSpm()">Push</button>
-        </div>
-      </div>
-
-      <!-- Distance -->
-      <div>
-        <div class="sec-label">Distance Tracker</div>
-        <div class="field-row" style="margin-bottom:8px;">
-          <div>
-            <div class="field-label">Covered (m) <span id="distAutoLabel" style="color:var(--accent);display:none;">AUTO</span></div>
-            <input class="quick-input" id="dstCov" type="number" value="0" style="margin:0;" oninput="stopDistAuto()">
-          </div>
-          <div>
-            <div class="field-label">Total (m)</div>
-            <input class="quick-input" id="dstTot" type="number" value="1500" style="margin:0;">
-          </div>
-        </div>
-        <div class="field-row" style="margin-bottom:8px;">
-          <div>
-            <div class="field-label">Target Time (m:ss)</div>
-            <input class="quick-input" id="paceTime" value="5:05" style="margin:0;" placeholder="5:05">
-          </div>
-          <div style="display:flex;align-items:flex-end;gap:8px;">
-            <button class="action-btn ghost" onclick="startDistAuto()" style="flex:1;">Auto from Timer</button>
-            <button class="action-btn" onclick="pushDist()" style="flex:1;">Push</button>
-          </div>
-        </div>
-      </div>
+      <div id="schedList" style="display:flex;flex-direction:column;gap:6px;"></div>
 
     </div>
   </div>
 
 </div>
 
-<div id="toasts" style="position:fixed;bottom:20px;right:16px;display:flex;flex-direction:column;gap:6px;z-index:999;"></div>
+<div id="toasts"></div>
 
-<!-- ── Overlay Preview Panel ── -->
-<div id="previewPanel" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:300; flex-direction:column; align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this)closePreview()">
-  <div style="width:100%; max-width:960px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <div style="font-size:14px; font-weight:700; color:var(--text);">Overlay Preview</div>
-      <button onclick="closePreview()" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
+<!-- Preview modal -->
+<div id="previewModal" style="display:none;" class="modal-bg" onclick="if(event.target===this)closePreview()">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <div style="font-size:14px;font-weight:700;">Overlay Preview</div>
+      <button class="modal-close" onclick="closePreview()">✕</button>
     </div>
-    <div id="previewContainer" style="width:100%; aspect-ratio:16/9; position:relative; overflow:hidden; border-radius:12px; background:#000; border:1px solid var(--line);">
-      <iframe id="previewFrame" src="/overlay.html" style="position:absolute;top:0;left:0;width:1920px;height:1080px;border:none;transform-origin:0 0;display:block;" scrolling="no"></iframe>
+    <div class="preview-aspect" id="previewContainer">
+      <iframe id="previewFrame" src="/overlay.html" scrolling="no"></iframe>
     </div>
-    <p style="font-size:11px; color:var(--text2); margin-top:8px; text-align:center;">Live overlay — 16:9 preview.</p>
   </div>
 </div>
 
 <script>
+// ── auth ──────────────────────────────────────────────────────────────
 const token = localStorage.getItem('crew_token');
-const user = JSON.parse(localStorage.getItem('crew_user') || 'null');
+const user  = JSON.parse(localStorage.getItem('crew_user') || 'null');
 if (!token || !user) location.href = `/?next=${encodeURIComponent(location.pathname)}`;
 if (user && user.role !== 'admin') location.href = user.role === 'coach' ? '/audio.html' : '/';
-if (user && user.teamName) document.getElementById('topbarBrandName').textContent = user.teamName.toUpperCase();
+if (user?.teamName) document.getElementById('brandName').textContent = user.teamName.toUpperCase();
 
-const TOGGLES = [
-  ['eventHeader', 'Event Header'],
-  ['timer', 'Timer'],
-  ['lanes', 'Lane List'],
-  ['results', 'Leaderboard'],
-  ['strokeRate', 'Stroke Rate'],
-  ['distance', 'Distance Bar'],
-  ['lowerThird', 'Lower Third'],
-  ['conditions', 'Conditions'],
-  ['schoolLogos', 'School Logos'],
-  ['watermark', 'Watermark'],
-  ['countdown', 'Countdown']
-];
-
-const DEFAULT_RESULTS = [
-  { place: 1, school: 'Brooks School', time: '6:02.4', margin: '-', lane: 1 },
-  { place: 2, school: 'Phillips Exeter', time: '6:05.1', margin: '+2.7', lane: 2 },
-  { place: 3, school: 'Andover', time: '6:07.8', margin: '+5.4', lane: 3 }
-];
-
+// ── state ─────────────────────────────────────────────────────────────
 let ws;
-let teamPresets = {};
-let timerRunning = false, timerStart = null, timerElapsed = 0, timerIv = null;
-let countdownRunning = false, countdownDuration = 300, countdownStart = null, countdownIv = null;
-let setupOpen = false;
-let firstStateReceived = false;
-let currentLanes = [];
-let finishTimes = [];
+let raceSchedule = [];
+let activeRaceIdx = null;
+let currentMode   = null;
+let timerRunning  = false, timerStart = null, timerElapsed = 0, timerIv = null;
+let firstState    = false;
+let schedOpen     = false;
 
-// ── toggles grid ──
-function buildToggleGrid() {
-  const grid = document.getElementById('togGrid');
-  grid.innerHTML = TOGGLES.map(([key, label]) => `
-    <div class="tog-card" id="tog-${key}" onclick="toggleEl('${key}')">
-      <div>
-        <div class="tog-card-name">${label}</div>
-        <div class="tog-card-status" id="st-${key}">OFF</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <button class="tog-apply-btn" id="apply-${key}" style="display:none;" onclick="event.stopPropagation();applyWidget('${key}')"></button>
-        <div class="tog-switch" id="sw-${key}"></div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function setToggle(key, active) {
-  const card = document.getElementById(`tog-${key}`);
-  const st = document.getElementById(`st-${key}`);
-  if (card) card.classList.toggle('is-on', !!active);
-  if (st) st.textContent = active ? 'ON' : 'OFF';
-}
-
-let overlayIsUp = false;
-let serverWidgetState = {};
-
-function toggleEl(key) {
-  const card = document.getElementById(`tog-${key}`);
-  const active = !card.classList.contains('is-on');
-  setToggle(key, active);
-  updateApplyBtn(key);
-}
-
-function setServerWidget(key, active) {
-  serverWidgetState[key] = !!active;
-  updateApplyBtn(key);
-}
-
-function updateApplyBtn(key) {
-  const btn = document.getElementById(`apply-${key}`);
-  if (!btn) return;
-  const localOn = document.getElementById(`tog-${key}`)?.classList.contains('is-on') || false;
-  const serverOn = serverWidgetState[key] || false;
-  if (localOn === serverOn) {
-    btn.style.display = 'none';
-  } else if (localOn) {
-    btn.textContent = 'Put Up';
-    btn.style.background = 'var(--accent)';
-    btn.style.color = '#fff';
-    btn.style.display = '';
-  } else {
-    btn.textContent = 'Take Off';
-    btn.style.background = 'var(--danger)';
-    btn.style.color = '#fff';
-    btn.style.display = '';
-  }
-}
-
-function applyWidget(key) {
-  const active = document.getElementById(`tog-${key}`)?.classList.contains('is-on') || false;
-  send({ type: 'toggle', element: key, active });
-  setServerWidget(key, active);
-  const anyActive = TOGGLES.some(([k]) => serverWidgetState[k]);
-  setOverlayLive(anyActive);
-}
-
-function setOverlayLive(live) {
-  overlayIsUp = live;
-  const btn = document.getElementById('overlayMainBtn');
-  if (!btn) return;
-  if (live) {
-    btn.textContent = 'Take Down ↓';
-    btn.style.background = 'var(--danger)';
-  } else {
-    btn.textContent = 'Send Up ↑';
-    btn.style.background = 'var(--accent)';
-  }
-}
-
-function overlayMainAction() {
-  const sending = !overlayIsUp;
-  const widgets = {};
-  TOGGLES.forEach(([key]) => {
-    const card = document.getElementById(`tog-${key}`);
-    const active = sending && (card?.classList.contains('is-on') || false);
-    widgets[key] = active;
-    serverWidgetState[key] = active;
-    updateApplyBtn(key);
-  });
-  send({ type: 'save-widgets', widgets });
-  setOverlayLive(sending);
-}
-
-function openPreview() {
-  document.getElementById('previewPanel').style.display = 'flex';
-  scalePreviewFrame();
-}
-function closePreview() {
-  document.getElementById('previewPanel').style.display = 'none';
-}
-function scalePreviewFrame() {
-  const container = document.getElementById('previewContainer');
-  const frame = document.getElementById('previewFrame');
-  if (!container || !frame) return;
-  frame.style.transform = `scale(${container.offsetWidth / 1920})`;
-}
-window.addEventListener('resize', scalePreviewFrame);
-
-// ── websocket ──
-function connect() {
+// ── websocket ─────────────────────────────────────────────────────────
+function wsConnect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}`);
-  ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', token, clientRole: 'controller' }));
-  ws.onclose = () => { setStatus(false); setTimeout(connect, 3000); };
-  ws.onmessage = e => onMessage(JSON.parse(e.data));
+  ws.onopen  = () => ws.send(JSON.stringify({ type: 'auth', token }));
+  ws.onclose = () => { setWsStatus(false); setTimeout(wsConnect, 3000); };
+  ws.onerror = () => {};
+  ws.onmessage = e => { try { onMsg(JSON.parse(e.data)); } catch {} };
 }
 
-function send(payload) { if (ws?.readyState === 1) ws.send(JSON.stringify(payload)); }
+function send(obj) { if (ws?.readyState === 1) ws.send(JSON.stringify(obj)); }
 
-function onMessage(msg) {
-  if (msg.type === 'auth-ok') { setStatus(true); toast('Connected', 'ok'); }
+function onMsg(msg) {
+  if (msg.type === 'auth-ok') { setWsStatus(true); }
   if (msg.type === 'auth-fail') { localStorage.clear(); location.href = '/'; }
   if (msg.type === 'state') {
-    if (msg.teamPresets) { teamPresets = msg.teamPresets; syncLaneSelects(); renderSchoolLogosGrid(); restoreBackupIfNeeded(); }
-    if (msg.overlayState) applyState(msg.overlayState);
-    if (Array.isArray(msg.raceSchedule)) { raceSchedule = msg.raceSchedule; renderRaceSchedule(); }
+    if (Array.isArray(msg.raceSchedule)) { raceSchedule = msg.raceSchedule; renderSchedule(); }
+    if (msg.overlayState) applyServerState(msg.overlayState);
   }
-  if (msg.type === 'toggle') { setToggle(msg.element, msg.active); setServerWidget(msg.element, msg.active); }
+  if (msg.type === 'race-schedule') { raceSchedule = msg.schedule || []; renderSchedule(); }
   if (msg.type === 'timer-control') syncTimer(msg);
-  if (msg.type === 'countdown-control') syncCountdown(msg);
-  if (msg.type === 'team-presets') { teamPresets = msg.teamPresets || {}; syncLaneSelects(); renderSchoolLogosGrid(); saveBackup(); }
-  if (msg.type === 'race-schedule') { raceSchedule = msg.schedule || []; renderRaceSchedule(); }
 }
 
-function setStatus(ok) {
-  document.getElementById('connDot').className = 'status-dot ' + (ok ? 'live' : 'err');
-  document.getElementById('connLabel').innerHTML = `<span class="status-dot ${ok ? 'live' : 'err'}" id="connDot"></span> ${ok ? 'Live' : 'Reconnecting...'}`;
+function setWsStatus(ok) {
+  document.getElementById('wsDot').className = 'dot ' + (ok ? 'live' : 'err');
+  document.getElementById('wsLabel').innerHTML =
+    `<span class="dot ${ok ? 'live' : 'err'}" id="wsDot"></span>${ok ? 'Live' : 'Reconnecting…'}`;
 }
 
-function applyState(state) {
-  // Always sync toggle ON/OFF states — needed for multi-device accuracy
-  TOGGLES.forEach(([key]) => {
-    if (state[key]?.active !== undefined) {
-      setToggle(key, state[key].active);
-      setServerWidget(key, state[key].active);
+// ── server state sync ─────────────────────────────────────────────────
+function applyServerState(s) {
+  // Sync timer
+  if (s.timer) {
+    timerElapsed = s.timer.elapsed || 0;
+    if (s.timer.running && s.timer.startTime) {
+      timerStart = s.timer.startTime; timerRunning = true; runTimer();
+    } else {
+      stopTimerLocal(); updateTimerDisp(timerElapsed);
     }
+  }
+
+  // Derive mode from which elements are active
+  const h = s.eventHeader?.active;
+  const t = s.timer?.active;
+  const l = s.lanes?.active;
+  if (!h)           setModeLocal('break');
+  else if (l && !t) setModeLocal('prerace');
+  else if (t && !l) setModeLocal('racing');
+  else              setModeLocal(null);
+
+  if (firstState) return;
+  firstState = true;
+
+  // Restore schools editor from server lanes data on first load
+  if (s.lanes?.data) fillSchoolsEditor(s.lanes.data);
+}
+
+// ── mode ──────────────────────────────────────────────────────────────
+const ALL_WIDGETS_OFF = {
+  eventHeader: false, timer: false, lanes: false, results: false,
+  strokeRate: false, distance: false, lowerThird: false, conditions: false,
+  schoolLogos: false, watermark: false, countdown: false
+};
+
+function setMode(mode) {
+  const widgets = { ...ALL_WIDGETS_OFF };
+  if (mode === 'prerace') { widgets.eventHeader = true; widgets.lanes = true; }
+  if (mode === 'racing')  { widgets.eventHeader = true; widgets.timer = true; }
+  send({ type: 'save-widgets', widgets });
+  setModeLocal(mode);
+  toast(mode === 'break' ? 'Overlay cleared' : mode.charAt(0).toUpperCase() + mode.slice(1) + ' mode', 'ok');
+}
+
+function setModeLocal(mode) {
+  currentMode = mode;
+  ['prerace', 'racing', 'break'].forEach(m => {
+    const btn = document.getElementById('mode-' + m);
+    if (!btn) return;
+    btn.className = 'mode-btn' + (mode === m ? ' is-active-' + m : '');
   });
-  // sync Send Up / Take Down button
-  const anyActive = TOGGLES.some(([key]) => serverWidgetState[key]);
-  setOverlayLive(anyActive);
-
-  // Always sync live clocks — they must stay accurate across reconnects
-  if (state.timer) {
-    timerElapsed = state.timer.elapsed || 0;
-    if (state.timer.running && state.timer.startTime) {
-      timerStart = state.timer.startTime; timerRunning = true; runTimer();
-    } else { stopTimerLocal(); updateTimerDisplay(timerElapsed); }
-  }
-  if (state.countdown) {
-    countdownDuration = state.countdown.duration || 300;
-    document.getElementById('countdownDur').value = countdownDuration;
-    if (state.countdown.active && state.countdown.startTime) {
-      countdownStart = state.countdown.startTime; countdownRunning = true; runCountdown();
-    } else { stopCountdownLocal(); updateCdDisplay(countdownDuration); }
-  }
-
-  // Only fill form fields on the very first state load — never overwrite on reconnect
-  if (firstStateReceived) return;
-  firstStateReceived = true;
-
-  if (state.eventHeader) {
-    document.getElementById('evTitle').value = state.eventHeader.text || '';
-    document.getElementById('evSub').value = state.eventHeader.subtitle || '';
-  }
-  if (state.strokeRate) {
-    document.getElementById('spmVal').value = state.strokeRate.value || 36;
-    document.getElementById('spmLbl').value = state.strokeRate.label || '';
-  }
-  if (state.distance) {
-    document.getElementById('dstCov').value = state.distance.covered || 0;
-    document.getElementById('dstTot').value = state.distance.total || 1500;
-  }
-  if (state.lowerThird) {
-    document.getElementById('ltName').value = state.lowerThird.name || '';
-    document.getElementById('ltTitle').value = state.lowerThird.title || '';
-    document.getElementById('ltSchool').value = state.lowerThird.school || '';
-  }
-  if (state.watermark) document.getElementById('wmText').value = state.watermark.text || '';
-  if (state.conditions) {
-    document.getElementById('cWind').value = state.conditions.wind || '';
-    document.getElementById('cTemp').value = state.conditions.temp || '';
-    document.getElementById('cWater').value = state.conditions.water || '';
-  }
-  fillResults(state.results?.data || DEFAULT_RESULTS);
-  fillLanes(state.lanes?.data || []);
 }
 
-// ── timer ──
-function updateTimerDisplay(ms) {
-  const m = Math.floor(ms / 60000), s = Math.floor((ms % 60000) / 1000), t = Math.floor((ms % 1000) / 100);
-  document.getElementById('timerDisp').innerHTML = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}<span class="sub">.${t}</span>`;
-}
-function runTimer() {
-  clearInterval(timerIv);
-  document.getElementById('tStart').disabled = true;
-  document.getElementById('tStop').disabled = false;
-  setToggle('timer', true);
-  timerIv = setInterval(() => updateTimerDisplay(Date.now() - timerStart), 100);
-}
-function stopTimerLocal() {
-  clearInterval(timerIv); timerRunning = false;
-  document.getElementById('tStart').disabled = false;
-  document.getElementById('tStop').disabled = true;
-}
-function syncTimer(msg) {
-  if (msg.action === 'start') { timerRunning = true; timerStart = Date.now() - (msg.elapsed || 0); runTimer(); startDistAuto(); }
-  else if (msg.action === 'stop') { timerElapsed = msg.elapsed || 0; stopTimerLocal(); updateTimerDisplay(timerElapsed); stopDistAuto(); }
-  else if (msg.action === 'reset') { timerElapsed = 0; stopTimerLocal(); updateTimerDisplay(0); stopDistAuto(); }
-}
-function tStart() { timerRunning = true; timerStart = Date.now() - timerElapsed; runTimer(); send({ type: 'timer-control', action: 'start', elapsed: timerElapsed }); startDistAuto(); }
-function tStop() { timerElapsed = Date.now() - timerStart; stopTimerLocal(); updateTimerDisplay(timerElapsed); send({ type: 'timer-control', action: 'stop', elapsed: timerElapsed }); stopDistAuto(); }
-function tReset() { timerElapsed = 0; stopTimerLocal(); updateTimerDisplay(0); send({ type: 'timer-control', action: 'reset' }); stopDistAuto(); document.getElementById('dstCov').value = 0; }
-
-// ── distance auto-estimate ──
-let distAutoIv = null;
-function parsePaceSeconds(str) {
-  const parts = String(str || '5:05').split(':');
-  return (parseInt(parts[0])||0)*60 + (parseInt(parts[1])||0);
-}
-function startDistAuto() {
-  if (distAutoIv) return;
-  document.getElementById('distAutoLabel').style.display = 'inline';
-  distAutoIv = setInterval(() => {
-    if (!timerRunning) return;
-    const total = Number(document.getElementById('dstTot').value) || 1500;
-    const paceS = parsePaceSeconds(document.getElementById('paceTime').value) || 305;
-    const elapsedS = (Date.now() - timerStart) / 1000;
-    const covered = Math.min(total, Math.round(elapsedS * (total / paceS)));
-    document.getElementById('dstCov').value = covered;
-    send({ type: 'update', element: 'distance', data: { covered, total } });
-  }, 2000);
-}
-function stopDistAuto() {
-  clearInterval(distAutoIv);
-  distAutoIv = null;
-  document.getElementById('distAutoLabel').style.display = 'none';
-}
-
-// ── countdown ──
-function updateCdDisplay(sec) {
-  const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
-  document.getElementById('countdownDisp').textContent = `${m}:${String(s).padStart(2,'0')}`;
-}
-function runCountdown() {
-  clearInterval(countdownIv);
-  document.getElementById('cStart').disabled = true;
-  document.getElementById('cStop').disabled = false;
-  countdownIv = setInterval(() => {
-    const rem = Math.max(0, countdownDuration - (Date.now() - countdownStart) / 1000);
-    updateCdDisplay(rem);
-    if (rem <= 0) { stopCountdownLocal(); }
-  }, 200);
-}
-function stopCountdownLocal() {
-  clearInterval(countdownIv); countdownRunning = false;
-  document.getElementById('cStart').disabled = false;
-  document.getElementById('cStop').disabled = true;
-}
-function syncCountdown(msg) {
-  countdownDuration = Number(msg.duration) || countdownDuration;
-  document.getElementById('countdownDur').value = countdownDuration;
-  if (msg.action === 'start') { countdownRunning = true; countdownStart = msg.startTime || Date.now(); runCountdown(); }
-  else { stopCountdownLocal(); updateCdDisplay(countdownDuration); }
-}
-function cStart() {
-  countdownDuration = Number(document.getElementById('countdownDur').value) || 300;
-  countdownStart = Date.now(); countdownRunning = true; runCountdown();
-  send({ type: 'countdown-control', action: 'start', duration: countdownDuration });
-}
-function cStop() { stopCountdownLocal(); updateCdDisplay(countdownDuration); send({ type: 'countdown-control', action: 'stop', duration: countdownDuration }); }
-function cReset() { stopCountdownLocal(); updateCdDisplay(countdownDuration); send({ type: 'countdown-control', action: 'reset', duration: countdownDuration }); }
-
-// ── push helpers ──
-
-
-function pushEvent() {
-  send({ type: 'update', element: 'eventHeader', data: { text: document.getElementById('evTitle').value, subtitle: document.getElementById('evSub').value } });
-}
-
-function clampSpm(v) { const n = Math.round(Number(v)||0); return n ? Math.min(60, Math.max(10, n)) : 0; }
-function nudgeSpm(d) { document.getElementById('spmVal').value = clampSpm((clampSpm(document.getElementById('spmVal').value)||36) + d); pushSpm(); }
-function pushSpm() {
-  const value = clampSpm(document.getElementById('spmVal').value || 36);
-  document.getElementById('spmVal').value = value || '';
-  send({ type: 'update', element: 'strokeRate', data: { value, label: document.getElementById('spmLbl').value || 'Leading Boat' } });
-  toast(`SPM → ${value}`, 'ok');
-}
-
-function pushDist() { send({ type: 'update', element: 'distance', data: { covered: Number(document.getElementById('dstCov').value)||0, total: Number(document.getElementById('dstTot').value)||2000 } }); toast('Distance updated', 'ok'); }
-function pushLT() { send({ type: 'update', element: 'lowerThird', data: { name: document.getElementById('ltName').value, title: document.getElementById('ltTitle').value, school: document.getElementById('ltSchool').value } }); toast('Lower third updated', 'ok'); }
-function pushWM() { send({ type: 'update', element: 'watermark', data: { text: document.getElementById('wmText').value } }); toast('Watermark updated', 'ok'); }
-function pushCond() { send({ type: 'update', element: 'conditions', data: { wind: document.getElementById('cWind').value, temp: document.getElementById('cTemp').value, water: document.getElementById('cWater').value } }); toast('Conditions updated', 'ok'); }
-
-// ── lanes ──
-function fillLanes(data) {
-  const c = document.getElementById('lanesEd');
-  c.innerHTML = '';
-  const rows = data?.length ? data : [
-    { lane: 1, school: 'Brooks School', color: '#004830' },
-    { lane: 2, school: 'Phillips Exeter', color: '#8B0000' },
-    { lane: 3, school: 'Andover', color: '#2E7D32' }
-  ];
-  currentLanes = rows;
-  rows.forEach(item => buildLaneRow(c, item));
-  buildFinishRows();
-}
-
-function buildLaneRow(c, item) {
-  const row = document.createElement('div');
-  row.className = 'lane-row-simple';
-  row.dataset.logo = item.logo || '';
-  row.innerHTML = `
-    <div class="lane-num">${item.lane || c.children.length + 1}</div>
-    <input class="quick-input" style="margin:0;" value="${escapeAttr(item.school||'')}" placeholder="School">
-    <input type="color" class="color-swatch" value="${item.color||'#004830'}">
-    <label class="mini-up" title="Logo">
-      ${item.logo ? `<img src="${item.logo}" alt="">` : 'LG'}
-      <input type="file" accept="image/*" onchange="laneLogoChange(this)">
-    </label>
-  `;
-  c.appendChild(row);
-}
-
-function addLane() {
-  buildLaneRow(document.getElementById('lanesEd'), { lane: document.getElementById('lanesEd').children.length + 1, school: '', color: '#004830' });
-}
-
-function laneLogoChange(input) {
-  const file = input.files?.[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const row = input.closest('.lane-row-simple');
-    row.dataset.logo = e.target.result;
-    const label = row.querySelector('.mini-up');
-    label.innerHTML = `<img src="${e.target.result}" alt=""><input type="file" accept="image/*" onchange="laneLogoChange(this)">`;
-  };
-  reader.readAsDataURL(file);
-}
-
-function syncLaneSelects() {}
-
-// ── finish times ──
-function buildFinishRows() {
-  const container = document.getElementById('finishRows');
-  if (!container) return;
-  if (!currentLanes.length) {
-    container.innerHTML = '<div class="empty-msg">Set lane assignments in Setup first.</div>';
-    return;
-  }
-  container.innerHTML = currentLanes.map((lane, i) => {
-    const existing = finishTimes.find(f => f.laneIndex === i);
-    const timeStr = existing ? msToTimeStr(existing.ms) : '—';
-    const timeColor = existing ? 'var(--accent)' : 'var(--text2)';
-    const btn = existing
-      ? `<button class="btn btn-stop" style="flex:none;padding:5px 10px;font-size:12px;" onclick="unmarkFinish(${i})">✕</button>`
-      : `<button class="btn btn-go" style="flex:none;padding:5px 10px;font-size:12px;" onclick="markFinish(${i})">Mark</button>`;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;${i>0?'border-top:1px solid var(--line);':''}">
-      <div style="width:22px;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text2);text-align:center;">${lane.lane}</div>
-      <div style="flex:1;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeAttr(lane.school||'Lane '+lane.lane)}</div>
-      <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;min-width:64px;text-align:right;color:${timeColor};">${timeStr}</div>
-      ${btn}
-    </div>`;
-  }).join('');
-}
-
-function markFinish(i) {
-  if (!timerRunning && timerElapsed === 0) { toast('Start the timer first', 'err'); return; }
-  const ms = timerRunning ? (Date.now() - timerStart) : timerElapsed;
-  const lane = currentLanes[i];
-  if (!lane) return;
-  finishTimes = finishTimes.filter(f => f.laneIndex !== i);
-  finishTimes.push({ laneIndex: i, lane: lane.lane, school: lane.school, logo: lane.logo || null, ms });
-  buildFinishRows();
-  pushFinishResults();
-}
-
-function unmarkFinish(i) {
-  finishTimes = finishTimes.filter(f => f.laneIndex !== i);
-  buildFinishRows();
-  if (finishTimes.length) pushFinishResults();
-}
-
-function clearFinishTimes() {
-  finishTimes = [];
-  buildFinishRows();
-  toast('Finish times cleared', 'ok');
-}
-
-function msToTimeStr(ms) {
+// ── timer ─────────────────────────────────────────────────────────────
+function updateTimerDisp(ms) {
   const m = Math.floor(ms / 60000);
   const s = Math.floor((ms % 60000) / 1000);
   const t = Math.floor((ms % 1000) / 100);
-  return `${m}:${String(s).padStart(2,'0')}.${t}`;
+  document.getElementById('timerDisp').innerHTML =
+    `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}<span class="sub">.${t}</span>`;
 }
 
-function formatGap(ms) {
-  if (ms === 0) return '—';
-  const totalS = ms / 1000;
-  if (totalS < 60) return `+${totalS.toFixed(1)}`;
-  const m = Math.floor(totalS / 60);
-  const rem = (totalS % 60).toFixed(1);
-  return `+${m}:${parseFloat(rem) < 10 ? '0' + rem : rem}`;
+function runTimer() {
+  clearInterval(timerIv);
+  document.getElementById('tStartBtn').disabled = true;
+  document.getElementById('tStopBtn').disabled  = false;
+  timerIv = setInterval(() => updateTimerDisp(Date.now() - timerStart), 100);
 }
 
-function pushFinishResults() {
-  if (!finishTimes.length) return;
-  const sorted = [...finishTimes].sort((a, b) => a.ms - b.ms);
-  const winMs = sorted[0].ms;
-  const data = sorted.map((f, i) => ({
-    place: i + 1,
-    school: f.school,
-    time: msToTimeStr(f.ms),
-    margin: i === 0 ? '—' : formatGap(f.ms - winMs),
-    lane: f.lane,
-    logo: f.logo || null
-  }));
-  send({ type: 'update', element: 'results', data: { data } });
-  if (!document.getElementById('tog-results')?.classList.contains('is-on')) {
-    setToggle('results', true);
-    send({ type: 'toggle', element: 'results', active: true });
+function stopTimerLocal() {
+  clearInterval(timerIv); timerRunning = false;
+  document.getElementById('tStartBtn').disabled = false;
+  document.getElementById('tStopBtn').disabled  = true;
+}
+
+function syncTimer(msg) {
+  if (msg.action === 'start') {
+    timerStart = Date.now() - (msg.elapsed || 0); timerRunning = true; runTimer();
+  } else if (msg.action === 'stop') {
+    timerElapsed = msg.elapsed || 0; stopTimerLocal(); updateTimerDisp(timerElapsed);
+  } else if (msg.action === 'reset') {
+    timerElapsed = 0; stopTimerLocal(); updateTimerDisp(0);
   }
-  fillResults(data);
-  toast(`${data.length} finish time${data.length > 1 ? 's' : ''} pushed`, 'ok');
 }
 
-// ── school logos grid ──
-function renderSchoolLogosGrid() {
-  const grid = document.getElementById('schoolLogosGrid');
-  const presets = Object.values(teamPresets);
-  if (!presets.length) {
-    grid.innerHTML = '<div class="empty-msg" style="grid-column:1/-1;">No team presets saved yet. Add teams first.</div>';
-    return;
-  }
-  grid.innerHTML = '';
-  presets.sort((a, b) => a.name.localeCompare(b.name)).forEach(preset => {
-    const card = document.createElement('label');
-    card.className = 'logo-card' + (preset.logo ? ' has-logo' : '');
-    card.title = 'Click to upload logo for ' + preset.name;
-    const imgBox = document.createElement('div');
-    imgBox.className = 'logo-card-img';
-    if (preset.logo) {
-      imgBox.innerHTML = `<img src="${preset.logo}" alt="${escapeAttr(preset.name)}">`;
-    } else {
-      imgBox.textContent = (preset.shortName || preset.name || '').slice(0, 2).toUpperCase();
-    }
-    const nameEl = document.createElement('div');
-    nameEl.className = 'logo-card-name';
-    nameEl.textContent = preset.name;
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/png,image/jpeg,image/svg+xml,image/*';
-    fileInput.onchange = () => {
-      const file = fileInput.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const logo = e.target.result;
-        const updated = { ...preset, logo };
-        teamPresets[preset.id] = updated;
-        send({ type: 'team-preset-save', preset: updated });
-        saveBackup();
-        toast('Logo saved for ' + preset.name, 'ok');
-        renderSchoolLogosGrid();
-      };
-      reader.readAsDataURL(file);
-    };
-    card.appendChild(imgBox);
-    card.appendChild(nameEl);
-    card.appendChild(fileInput);
-    grid.appendChild(card);
+function tStart() {
+  timerStart = Date.now() - timerElapsed; timerRunning = true; runTimer();
+  send({ type: 'timer-control', action: 'start', elapsed: timerElapsed });
+}
+function tStop() {
+  timerElapsed = Date.now() - timerStart; stopTimerLocal(); updateTimerDisp(timerElapsed);
+  send({ type: 'timer-control', action: 'stop', elapsed: timerElapsed });
+}
+function tReset() {
+  timerElapsed = 0; stopTimerLocal(); updateTimerDisp(0);
+  send({ type: 'timer-control', action: 'reset' });
+}
+
+// ── schools ───────────────────────────────────────────────────────────
+function fillSchoolsEditor(lanes) {
+  const rows = document.querySelectorAll('#schoolsEd .school-row');
+  rows.forEach((row, i) => {
+    const lane = lanes[i];
+    if (!lane) return;
+    row.querySelector('input[type=color]').value = lane.color || '#004830';
+    row.querySelector('input[type=text]').value  = lane.school || '';
   });
 }
 
-function pushLanes() {
-  const data = Array.from(document.querySelectorAll('#lanesEd .lane-row-simple')).map((row, i) => ({
-    lane: i + 1,
-    school: row.querySelector('input[type=text], input:not([type=color]):not([type=file])').value,
-    color: row.querySelector('input[type=color]').value,
-    logo: row.dataset.logo || null
-  }));
+function pushSchools() {
+  const data = Array.from(document.querySelectorAll('#schoolsEd .school-row'))
+    .map((row, i) => ({
+      lane: i + 1,
+      school: row.querySelector('input[type=text]').value.trim(),
+      color: row.querySelector('input[type=color]').value,
+      accentColor: '#000000', textColor: '#FFFFFF', logo: null
+    }))
+    .filter(d => d.school);
+
+  if (!data.length) { toast('Enter at least one school name', 'err'); return; }
   send({ type: 'update', element: 'lanes', data: { data } });
-  toast('Lanes pushed', 'ok');
+  toast(`${data.length} school${data.length > 1 ? 's' : ''} pushed`, 'ok');
 }
 
-// ── results ──
-function fillResults(data) {
-  const body = document.getElementById('resBdy');
-  body.innerHTML = '';
-  (data || DEFAULT_RESULTS).forEach(r => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td><input type="number" value="${r.place||''}" style="width:36px;"></td>
-      <td><input type="text" value="${escapeAttr(r.school||'')}"></td>
-      <td><input type="text" value="${escapeAttr(r.time||'')}" style="width:68px;"></td>
-      <td><input type="text" value="${escapeAttr(r.margin||'')}" style="width:52px;"></td>
-    `;
-    body.appendChild(row);
-  });
-}
-
-function addRow() {
-  const existing = Array.from(document.querySelectorAll('#resBdy tr')).map(row => {
-    const inp = row.querySelectorAll('input');
-    return { place: Number(inp[0].value)||0, school: inp[1].value, time: inp[2].value, margin: inp[3].value };
-  });
-  fillResults([...existing, { place: existing.length + 1, school: '', time: '', margin: '' }]);
-}
-
-function pushResults() {
-  const data = Array.from(document.querySelectorAll('#resBdy tr')).map(row => {
-    const inp = row.querySelectorAll('input');
-    return { place: Number(inp[0].value)||0, school: inp[1].value, time: inp[2].value, margin: inp[3].value };
-  });
-  send({ type: 'update', element: 'results', data: { data } });
-  toast('Results pushed', 'ok');
-}
-
-// ── setup accordion ──
-function toggleSetup(btn) {
-  setupOpen = !setupOpen;
-  document.getElementById('setupBody').classList.toggle('hidden', !setupOpen);
-  document.getElementById('setupArrow').textContent = setupOpen ? '▲' : '▼';
-}
-
-// ── utils ──
-function escapeAttr(v) { return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function toast(msg, type) {
-  const el = document.createElement('div');
-  el.style.cssText = `padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;background:${type==='ok'?'#00a86b':'#e53935'};`;
-  el.textContent = msg;
-  document.getElementById('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 2200);
-}
-
-// ── local backup ──
-const BACKUP_KEY = 'crew_local_backup';
-
-function saveBackup() {
-  try {
-    localStorage.setItem(BACKUP_KEY, JSON.stringify({ teamPresets, ts: Date.now() }));
-  } catch(e) {}
-}
-
-function loadBackup() {
-  try { return JSON.parse(localStorage.getItem(BACKUP_KEY) || 'null'); } catch(e) { return null; }
-}
-
-function restoreBackupIfNeeded() {
-  const backup = loadBackup();
-  if (!backup?.teamPresets) return;
-  const serverHasLogos = Object.values(teamPresets).some(p => p.logo);
-  if (serverHasLogos) return; // server already has data, don't overwrite
-  const backupHasLogos = Object.values(backup.teamPresets).some(p => p.logo);
-  if (!backupHasLogos) return;
-  const ageMin = Math.round((Date.now() - backup.ts) / 60000);
-  const ok = confirm(`Local backup found (${ageMin} min ago) with saved logos. Restore to server?`);
-  if (!ok) return;
-  Object.values(backup.teamPresets).forEach(preset => {
-    if (preset.logo) { teamPresets[preset.id] = preset; send({ type: 'team-preset-save', preset }); }
-  });
-  toast('Logos restored from local backup', 'ok');
-  renderSchoolLogosGrid();
-}
-
-// ── flash alert ──
-function sendAlert(text, duration) {
-  send({ type: 'alert', text, duration: duration || 4 });
-  toast('Alert: ' + text, 'ok');
-}
-function sendCustomAlert() {
-  const text = document.getElementById('alertText').value.trim();
-  if (!text) return;
-  sendAlert(text, Number(document.getElementById('alertDur').value) || 4);
-  document.getElementById('alertText').value = '';
-}
-
-// ── race schedule ──
-let raceSchedule = [];
-
-function saveRaceSchedule() {
-  send({ type: 'race-schedule-save', schedule: raceSchedule });
-}
-
-function renderRaceSchedule() {
-  const el = document.getElementById('raceScheduleList');
+// ── race schedule ─────────────────────────────────────────────────────
+function renderSchedule() {
+  const list = document.getElementById('raceList');
+  const sched = document.getElementById('schedList');
   if (!raceSchedule.length) {
-    el.innerHTML = '<div class="empty-msg">No races added yet.</div>';
+    list.innerHTML  = '<div class="empty-row">No races in schedule — add below</div>';
+    sched.innerHTML = '<div class="empty-row">No races yet.</div>';
     return;
   }
-  el.innerHTML = raceSchedule.map((race, i) => `
-    <div style="display:flex; align-items:center; gap:6px;">
-      <button class="action-btn ghost" style="flex:1; text-align:left; padding:9px 12px;" onclick="loadRace(${i})">
-        <span style="font-weight:700;">${escapeAttr(race.name)}</span>
-        ${race.sub ? `<span style="color:var(--text2); font-size:11px; margin-left:6px;">${escapeAttr(race.sub)}</span>` : ''}
+  list.innerHTML = raceSchedule.map((r, i) => `
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="race-btn${activeRaceIdx === i ? ' is-active' : ''}" onclick="loadRace(${i})" style="flex:1;">
+        <span>${escAttr(r.name)}</span>
+        ${r.sub ? `<span class="race-sub">${escAttr(r.sub)}</span>` : ''}
       </button>
-      <button class="action-btn ghost" style="flex:none; padding:7px 10px; color:var(--danger); font-size:16px;" onclick="removeRace(${i})">×</button>
+    </div>
+  `).join('');
+  sched.innerHTML = raceSchedule.map((r, i) => `
+    <div style="display:flex;gap:6px;align-items:center;">
+      <span style="flex:1;font-size:13px;font-weight:600;padding:8px 0;">${escAttr(r.name)}${r.sub ? `<span style="color:var(--text2);font-weight:400;font-size:11px;margin-left:6px;">${escAttr(r.sub)}</span>` : ''}</span>
+      <button class="race-del" onclick="removeRace(${i})">×</button>
     </div>
   `).join('');
 }
@@ -1284,9 +548,11 @@ function renderRaceSchedule() {
 function loadRace(i) {
   const race = raceSchedule[i];
   if (!race) return;
-  document.getElementById('evTitle').value = race.name;
-  document.getElementById('evSub').value = race.sub || '';
-  pushEvent();
+  activeRaceIdx = i;
+  document.getElementById('activeRaceName').textContent = race.name;
+  document.getElementById('activeRaceSub').textContent  = race.sub || '';
+  send({ type: 'update', element: 'eventHeader', data: { text: race.name, subtitle: race.sub || '' } });
+  renderSchedule();
   toast('Loaded: ' + race.name, 'ok');
 }
 
@@ -1294,318 +560,81 @@ function addRace() {
   const name = document.getElementById('newRaceName').value.trim();
   if (!name) return;
   raceSchedule.push({ name, sub: document.getElementById('newRaceSub').value.trim() });
-  saveRaceSchedule();
+  send({ type: 'race-schedule-save', schedule: raceSchedule });
   document.getElementById('newRaceName').value = '';
-  document.getElementById('newRaceSub').value = '';
-  renderRaceSchedule();
+  document.getElementById('newRaceSub').value  = '';
+  renderSchedule();
 }
 
 function removeRace(i) {
+  if (activeRaceIdx === i) activeRaceIdx = null;
+  else if (activeRaceIdx > i) activeRaceIdx--;
   raceSchedule.splice(i, 1);
-  saveRaceSchedule();
-  renderRaceSchedule();
+  send({ type: 'race-schedule-save', schedule: raceSchedule });
+  renderSchedule();
 }
 
-// ── keyboard shortcuts ──
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.code === 'Space') { e.preventDefault(); timerRunning ? tStop() : tStart(); }
-  if (e.code === 'KeyR') { e.preventDefault(); tReset(); }
-  if (e.code === 'KeyU') { e.preventDefault(); overlayMainAction(); }
-});
-
-buildToggleGrid();
-fillResults(DEFAULT_RESULTS);
-fillLanes([]);
-connect();
-</script>
-
-<!-- ── Import Schedule Modal ── -->
-<div class="modal-overlay" id="importModal" style="display:none;" onclick="if(event.target===this)closeImport()">
-  <div class="modal-box">
-    <div class="modal-head">
-      <h3>Import Schedule from Photo</h3>
-      <button class="modal-close" onclick="closeImport()">×</button>
-    </div>
-    <div class="modal-body">
-      <!-- Step 1: upload -->
-      <div id="imp-step1">
-        <div class="upload-zone" id="uploadZone"
-          onclick="document.getElementById('scheduleFileInput').click()"
-          ondragover="event.preventDefault();this.classList.add('drag')"
-          ondragleave="this.classList.remove('drag')"
-          ondrop="event.preventDefault();this.classList.remove('drag');handleImgDrop(event)">
-          <div class="uz-icon">📸</div>
-          <strong style="font-size:14px;">Tap to choose a photo</strong>
-          <p>or drag & drop — photo of printed schedule, screenshot, anything</p>
-        </div>
-        <img id="uploadPreview" class="upload-preview">
-        <input type="file" id="scheduleFileInput" accept="image/*" style="display:none" onchange="loadImgFile(this.files[0])">
-      </div>
-
-      <!-- Step 2: OCR progress -->
-      <div id="imp-step2" style="display:none;">
-        <div class="ocr-progress">
-          <div id="ocrStatusText">Reading image…</div>
-          <div class="ocr-bar-wrap"><div class="ocr-bar" id="ocrBar"></div></div>
-        </div>
-      </div>
-
-      <!-- Step 3: review -->
-      <div id="imp-step3" style="display:none;">
-        <div style="font-size:12px; color:var(--text2); margin-bottom:4px;">Review detected races — delete any you don't want, then hit Import.</div>
-        <div id="parsedList" style="display:flex;flex-direction:column;gap:8px;"></div>
-        <div id="noRacesMsg" class="no-races-msg" style="display:none;">No races detected. Try a clearer photo or add races manually.</div>
-        <button class="import-btn" id="importConfirmBtn" onclick="confirmImport()">Import to Schedule</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script>
-// ── schedule import ───────────────────────────────────────────────────
-let parsedRaces = [];
-let importImgFile = null;
-
-function openImport() {
-  document.getElementById('importModal').style.display = 'flex';
-  resetImport();
+function toggleSchedule(btn) {
+  schedOpen = !schedOpen;
+  document.getElementById('schedBody').classList.toggle('hidden', !schedOpen);
+  document.getElementById('schedArrow').textContent = schedOpen ? '▲' : '▼';
 }
 
-function closeImport() {
-  document.getElementById('importModal').style.display = 'none';
+// ── alert ─────────────────────────────────────────────────────────────
+function sendAlert(text, duration) {
+  send({ type: 'alert', text, duration: duration || 4 });
+  toast('Alert: ' + text, 'ok');
 }
-
-function resetImport() {
-  parsedRaces = [];
-  importImgFile = null;
-  show('imp-step1'); hide('imp-step2'); hide('imp-step3');
-  document.getElementById('uploadPreview').style.display = 'none';
-  document.getElementById('scheduleFileInput').value = '';
-  document.getElementById('ocrBar').style.width = '0%';
-}
-
-function handleImgDrop(e) {
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) loadImgFile(file);
-}
-
-function loadImgFile(file) {
-  if (!file) return;
-  importImgFile = file;
-  const url = URL.createObjectURL(file);
-  const prev = document.getElementById('uploadPreview');
-  prev.src = url;
-  prev.style.display = 'block';
-  runOCR(file);
-}
-
-async function runOCR(file) {
-  hide('imp-step1'); show('imp-step2');
-  try {
-    const result = await Tesseract.recognize(file, 'eng', {
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          document.getElementById('ocrBar').style.width = (m.progress * 100).toFixed(0) + '%';
-          document.getElementById('ocrStatusText').textContent = 'Reading image… ' + (m.progress * 100).toFixed(0) + '%';
-        }
-      }
-    });
-    const text = result.data.text;
-    parsedRaces = parseScheduleText(text);
-    renderParsedPreview();
-    hide('imp-step2'); show('imp-step3');
-  } catch (err) {
-    hide('imp-step2'); show('imp-step1');
-    toast('Could not read image: ' + err.message, 'err');
-  }
-}
-
-// ── parser ────────────────────────────────────────────────────────────
-const KNOWN_SCHOOLS = [
-  'brooks','exeter','andover','groton','st paul','saint paul','middlesex',
-  'deerfield','concord','noble','taft','kent','loomis','hotchkiss','choate',
-  'milton','tabor','worcester','belmont hill','rivers','boston college'
-];
-
-function parseScheduleText(raw) {
-  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 1);
-  const races = [];
-  let current = null;
-
-  const isRaceName = l =>
-    /varsity|j\.?v\.?|junior varsity|novice|freshman|frosh|lightweight|4\+|8\+|2x|4x|1x|2-|pair|four|eight|sculls?/i.test(l) ||
-    /final|heat\s*\d|semi|repechage|time trial/i.test(l) ||
-    /^(race|event|event\s+no\.?)\s*\d+/i.test(l);
-
-  const lanePatterns = [
-    { re: /^lane\s*(\d)\s*[-:]\s*(.+)/i,    li: 1, si: 2 },
-    { re: /^(\d)\s*[-:.]\s+([a-z].{2,})/i,  li: 1, si: 2 },
-    { re: /^(\d)\s+([A-Z][a-z].{2,})/,      li: 1, si: 2 },
-    { re: /(.{3,})\s+[-–]\s+lane\s*(\d)/i,  li: 2, si: 1 },
-    { re: /(.{3,})\s+\(lane\s*(\d)\)/i,     li: 2, si: 1 },
-  ];
-
-  const extractLane = l => {
-    for (const { re, li, si } of lanePatterns) {
-      const m = l.match(re);
-      if (m) {
-        const lane = parseInt(m[li]);
-        const school = m[si].trim().replace(/[.,;]+$/, '');
-        if (lane >= 1 && lane <= 8 && school.length > 1) return { lane, school };
-      }
-    }
-    return null;
-  };
-
-  const looksLikeSchool = l =>
-    KNOWN_SCHOOLS.some(s => l.toLowerCase().includes(s)) ||
-    /school|academy|prep|college/i.test(l);
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const laneMatch = extractLane(line);
-
-    if (laneMatch) {
-      if (!current) current = { name: 'Race ' + (races.length + 1), sub: '', lanes: [] };
-      if (!current.lanes.find(x => x.lane === laneMatch.lane)) {
-        current.lanes.push(laneMatch);
-      }
-      continue;
-    }
-
-    if (isRaceName(line)) {
-      if (current && (current.lanes.length || isRaceName(current.name))) races.push(current);
-      const sub = (i + 1 < lines.length && !isRaceName(lines[i+1]) && !extractLane(lines[i+1])) ? lines[++i] : '';
-      current = { name: cleanRaceName(line), sub: cleanSub(sub), lanes: [] };
-      continue;
-    }
-
-    // Bare list of school names (no lane numbers) — assign sequentially
-    if (looksLikeSchool(line) && current && current.lanes.length < 8) {
-      const nextLane = current.lanes.length + 1;
-      current.lanes.push({ lane: nextLane, school: line.replace(/[.,;]+$/, '') });
-    }
-  }
-
-  if (current && (current.lanes.length || races.length === 0)) races.push(current);
-  return races.filter(r => r.name);
-}
-
-function cleanRaceName(s) {
-  return s.replace(/^(race|event)\s*\d+\s*[-:.]?\s*/i, '')
-          .replace(/^\d+\s*[-:.]?\s*/, '')
-          .trim() || s.trim();
-}
-
-function cleanSub(s) {
-  if (!s) return '';
-  if (/^\d{1,2}:\d{2}/.test(s)) return s; // time → use as sub
-  if (s.length > 60) return '';
-  return s;
+function sendCustomAlert() {
+  const text = document.getElementById('alertText').value.trim();
+  if (!text) return;
+  sendAlert(text, 4);
+  document.getElementById('alertText').value = '';
 }
 
 // ── preview ───────────────────────────────────────────────────────────
-function renderParsedPreview() {
-  const list = document.getElementById('parsedList');
-  const none = document.getElementById('noRacesMsg');
-  const btn  = document.getElementById('importConfirmBtn');
+function openPreview() {
+  document.getElementById('previewModal').style.display = 'flex';
+  const c = document.getElementById('previewContainer');
+  document.getElementById('previewFrame').style.transform = `scale(${c.offsetWidth / 1920})`;
+}
+function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
+window.addEventListener('resize', () => {
+  const c = document.getElementById('previewContainer');
+  const f = document.getElementById('previewFrame');
+  if (c && f) f.style.transform = `scale(${c.offsetWidth / 1920})`;
+});
 
-  if (!parsedRaces.length) {
-    list.innerHTML = ''; none.style.display = 'block'; btn.disabled = true;
-    return;
-  }
-  none.style.display = 'none'; btn.disabled = false;
-  list.innerHTML = parsedRaces.map((race, i) => `
-    <div class="parsed-race" id="pr-${i}">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;">
-        <div>
-          <div class="parsed-race-name">${esc(race.name)}</div>
-          ${race.sub ? `<div class="parsed-race-sub">${esc(race.sub)}</div>` : ''}
-        </div>
-        <button class="delete-race" onclick="deleteParsedRace(${i})">×</button>
-      </div>
-      ${race.lanes.length ? `
-        <div class="parsed-lanes">
-          ${race.lanes.sort((a,b)=>a.lane-b.lane).map(l => `
-            <div class="parsed-lane">
-              <div class="lane-num">${l.lane}</div>
-              <span>${esc(l.school)}</span>
-            </div>`).join('')}
-        </div>` : '<div style="font-size:11px;color:var(--text2);margin-top:4px;">No lane assignments detected</div>'}
-    </div>
-  `).join('');
+// ── utils ─────────────────────────────────────────────────────────────
+function escAttr(v) {
+  return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg, type) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type || 'ok');
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 2400);
+}
+function logout() {
+  localStorage.removeItem('crew_token');
+  localStorage.removeItem('crew_user');
+  location.href = '/';
 }
 
-function deleteParsedRace(i) {
-  parsedRaces.splice(i, 1);
-  renderParsedPreview();
-}
+// ── keyboard shortcuts ────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.code === 'Space') { e.preventDefault(); timerRunning ? tStop() : tStart(); }
+  if (e.code === 'KeyR')  { e.preventDefault(); tReset(); }
+  if (e.code === 'Digit1') setMode('prerace');
+  if (e.code === 'Digit2') setMode('racing');
+  if (e.code === 'Digit3') setMode('break');
+});
 
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function confirmImport() {
-  if (!parsedRaces.length) return;
-  let added = 0;
-  for (const race of parsedRaces) {
-    if (!raceSchedule.find(r => r.name === race.name)) {
-      raceSchedule.push({ name: race.name, sub: race.sub, lanes: race.lanes });
-      added++;
-    }
-  }
-  saveRaceSchedule();
-  renderRaceSchedule();
-  closeImport();
-  toast(`Imported ${added} race${added !== 1 ? 's' : ''}`, 'ok');
-}
-
-function show(id) { document.getElementById(id).style.display = ''; }
-function hide(id) { document.getElementById(id).style.display = 'none'; }
-
-// ── Schedule PDF ──────────────────────────────────────────────────────
-async function uploadPDF(input) {
-  const file = input.files[0];
-  if (!file) return;
-  try {
-    const res = await fetch('/api/upload-schedule', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/pdf', 'Authorization': 'Bearer ' + token },
-      body: file
-    });
-    if (!res.ok) throw new Error('Upload failed');
-    setPdfStatus(true, file.name);
-    toast('Schedule PDF uploaded', 'ok');
-  } catch (e) {
-    toast('Upload failed: ' + e.message, 'err');
-  }
-  input.value = '';
-}
-
-async function deletePDF() {
-  try {
-    await fetch('/api/upload-schedule', {
-      method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    setPdfStatus(false);
-    toast('Schedule PDF removed', 'ok');
-  } catch { toast('Remove failed', 'err'); }
-}
-
-function setPdfStatus(exists, name) {
-  document.getElementById('viewPdfBtn').style.display   = exists ? '' : 'none';
-  document.getElementById('deletePdfBtn').style.display = exists ? '' : 'none';
-  document.getElementById('pdfStatus').innerHTML = exists
-    ? `PDF uploaded${name ? ': <strong>' + name + '</strong>' : ''}. Visible at <strong>/viewer.html</strong>.`
-    : 'No schedule PDF uploaded. Viewers can see it at <strong>/viewer.html</strong>.';
-}
-
-// Check on load whether a PDF already exists
-fetch('/uploads/schedule.pdf', { method: 'HEAD' }).then(r => { if (r.ok) setPdfStatus(true); }).catch(() => {});
+renderSchedule();
+wsConnect();
 </script>
 </body>
 </html>
