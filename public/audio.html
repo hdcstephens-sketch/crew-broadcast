@@ -109,25 +109,6 @@
     .toast.err { background: var(--danger); }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-    /* ── results / finish / schedule ── */
-    .btn-go  { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .btn-go:hover { background: #00c07a; }
-    .btn-stop-red { background: var(--danger-dim); border-color: rgba(229,57,53,0.4); color: #ef9a9a; }
-    .btn-stop-red:hover { background: rgba(229,57,53,0.28); }
-
-    .tbl-simple { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .tbl-simple th { text-align: left; padding: 6px 8px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text2); border-bottom: 1px solid var(--line); }
-    .tbl-simple td { padding: 4px; }
-    .tbl-simple input { background: var(--card2); border: 1px solid var(--line); border-radius: 7px; padding: 7px 8px; color: var(--text); font-size: 13px; width: 100%; font-family: inherit; outline: none; }
-    .tbl-simple input:focus { border-color: var(--accent); }
-
-    .race-btn { width: 100%; text-align: left; padding: 10px 13px; background: var(--card2); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: 0.13s; display: flex; align-items: center; gap: 6px; }
-    .race-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .race-btn .race-sub { font-size: 11px; color: var(--text2); font-weight: 400; margin-left: auto; white-space: nowrap; }
-    .race-btn:hover .race-sub { color: var(--accent); }
-
-    .empty-row { font-size: 12px; color: var(--text2); padding: 10px; text-align: center; border: 1px dashed var(--line); border-radius: 8px; }
-
   </style>
 </head>
 <body>
@@ -136,7 +117,6 @@
   <div class="topbar-brand">COMMENTARY</div>
   <div class="topbar-right">
     <span id="wsLabel"><span class="dot" id="wsDot"></span>Connecting</span>
-    <a class="pill" href="/times.html">Times</a>
     <a class="pill" href="/control.html">← Control</a>
     <a class="pill" href="/monitor.html" target="_blank">Monitor ↗</a>
     <button class="pill" onclick="logout()" style="cursor:pointer;border-color:rgba(229,57,53,0.4);color:#ef9a9a;">Log Out</button>
@@ -177,34 +157,6 @@
     <button class="btn" style="padding:8px 14px;font-size:12px;flex:none;" onclick="refreshDevices()">Refresh Devices</button>
   </div>
 
-  <!-- User guide link -->
-  <a href="https://docs.google.com/document/d/10uk4DOHIMrPHK-ARIaO8l4VKgZldGdqi4daG8VnnBe0/edit?usp=sharing" target="_blank" style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);text-decoration:none;color:var(--text2);font-size:13px;font-weight:600;">
-    <span style="font-size:18px;">📖</span> Commentary User Guide
-    <span style="margin-left:auto;font-size:11px;opacity:0.5;">↗</span>
-  </a>
-
-  <!-- Race Schedule -->
-  <div class="card">
-    <div class="card-label">Race Schedule</div>
-    <div id="raceScheduleList">
-      <div class="empty-row">No races in schedule.</div>
-    </div>
-  </div>
-
-  <!-- Results / Leaderboard -->
-  <div class="card">
-    <div class="card-label">Leaderboard / Results</div>
-    <table class="tbl-simple">
-      <thead><tr><th>#</th><th>School</th><th>Time</th></tr></thead>
-      <tbody id="resBdy"></tbody>
-    </table>
-    <div class="btn-row" style="margin-top:10px;">
-      <button class="btn" onclick="addRow()">+ Row</button>
-      <button class="btn btn-stop-red" onclick="clearResults()">Clear All</button>
-      <button class="btn btn-go" onclick="pushResults()" style="flex:2;">Push Results</button>
-    </div>
-  </div>
-
   <!-- Event log -->
   <div class="card">
     <div class="card-label">Event Log</div>
@@ -239,114 +191,6 @@ let isMuted = false, mode = 'idle';
 let wakeLock = null;
 let keepAliveEl = null;
 
-// Results / schedule state
-let raceSchedule = [];
-let firstStateReceived = false;
-
-// ── state sync ────────────────────────────────────────────────────────
-function applyState(state) {
-  if (firstStateReceived) return;
-  firstStateReceived = true;
-  fillResults(state.results?.data || []);
-}
-
-// ── results table ─────────────────────────────────────────────────────
-function parseTimeToSec(s) {
-  const m = String(s || '').trim().match(/^(\d+):(\d+(?:\.\d+)?)$/);
-  if (m) return parseInt(m[1]) * 60 + parseFloat(m[2]);
-  const n = parseFloat(s);
-  return isNaN(n) ? null : n;
-}
-
-function secToGap(diff) {
-  if (diff <= 0) return '—';
-  if (diff < 60) return `+${diff.toFixed(1)}`;
-  const m = Math.floor(diff / 60);
-  const s = (diff % 60).toFixed(1);
-  return `+${m}:${parseFloat(s) < 10 ? '0' + s : s}`;
-}
-
-function fillResults(data) {
-  const body = document.getElementById('resBdy');
-  if (!body) return;
-  body.innerHTML = '';
-  (data || []).forEach(r => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td><input type="number" value="${r.place||''}" style="width:38px;"></td>
-      <td><input type="text" value="${escAttr(r.school||'')}"></td>
-      <td><input type="text" value="${escAttr(r.time||'')}" style="width:76px;" placeholder="6:02.4"></td>
-    `;
-    body.appendChild(row);
-  });
-}
-
-function addRow() {
-  const existing = Array.from(document.querySelectorAll('#resBdy tr')).map(row => {
-    const inp = row.querySelectorAll('input');
-    return { place: Number(inp[0].value)||0, school: inp[1].value, time: inp[2].value };
-  });
-  fillResults([...existing, { place: existing.length + 1, school: '', time: '' }]);
-}
-
-function clearResults() {
-  fillResults([]);
-  wsSend({ type: 'update', element: 'results', data: { data: [] } });
-  toast('Results cleared', 'ok');
-}
-
-function pushResults() {
-  const rows = Array.from(document.querySelectorAll('#resBdy tr')).map(row => {
-    const inp = row.querySelectorAll('input');
-    return { school: inp[1].value.trim(), time: inp[2].value.trim(), _sec: parseTimeToSec(inp[2].value) };
-  }).filter(r => r.school || r.time);
-
-  // sort by parsed time (nulls last), then assign place and compute gap
-  rows.sort((a, b) => {
-    if (a._sec === null && b._sec === null) return 0;
-    if (a._sec === null) return 1;
-    if (b._sec === null) return -1;
-    return a._sec - b._sec;
-  });
-
-  const firstSec = rows[0]?._sec ?? null;
-  const data = rows.map((r, i) => ({
-    place: i + 1,
-    school: r.school,
-    time: r.time,
-    margin: (r._sec !== null && firstSec !== null && i > 0) ? secToGap(r._sec - firstSec) : '—'
-  }));
-
-  fillResults(data);
-  wsSend({ type: 'update', element: 'results', data: { data } });
-  toast('Results pushed', 'ok');
-}
-
-// ── race schedule ─────────────────────────────────────────────────────
-function renderRaceSchedule() {
-  const el = document.getElementById('raceScheduleList');
-  if (!el) return;
-  if (!raceSchedule.length) {
-    el.innerHTML = '<div class="empty-row">No races in schedule.</div>';
-    return;
-  }
-  el.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;">' +
-    raceSchedule.map((race, i) => `
-      <button class="race-btn" onclick="loadRace(${i})">
-        <span>${escAttr(race.name)}</span>
-        ${race.sub ? `<span class="race-sub">${escAttr(race.sub)}</span>` : ''}
-      </button>
-    `).join('') + '</div>';
-}
-
-function loadRace(i) {
-  const race = raceSchedule[i];
-  if (!race) return;
-  wsSend({ type: 'update', element: 'eventHeader', data: { text: race.name, subtitle: race.sub || '' } });
-  toast('Loaded: ' + race.name, 'ok');
-  addLog('Race loaded: ' + race.name);
-}
-
 // ── util ──────────────────────────────────────────────────────────────
 function escAttr(v) { return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -366,13 +210,6 @@ function wsConnect() {
         addLog('Connected to server');
       } else if (msg.type === 'auth-fail') {
         addLog('Auth failed — please reload');
-      } else if (msg.type === 'state') {
-        if (msg.overlayState) applyState(msg.overlayState);
-        if (Array.isArray(msg.raceSchedule)) { raceSchedule = msg.raceSchedule; renderRaceSchedule(); }
-      } else if (msg.type === 'race-schedule') {
-        raceSchedule = msg.schedule || []; renderRaceSchedule();
-      } else if (msg.type === 'update' && msg.element === 'results' && msg.data?.data) {
-        fillResults(msg.data.data);
       }
     } catch {}
   };
