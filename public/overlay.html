@@ -4,14 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0">
   <title>OBS Overlay</title>
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Crimson+Pro:ital,wght@0,400;1,400&family=Inter:wght@500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       width: 1920px; height: 1080px;
       overflow: hidden; background: transparent;
-      font-family: 'Rajdhani', sans-serif;
     }
 
     #overlay-root {
@@ -20,125 +19,70 @@
       transform-origin: top left;
     }
 
-    /* ── race bar (bottom) ─────────────────────────────────── */
+    /* ── race bar ────────────────────────────────────────────── */
     #ov-racebar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: 96px;
+      height: 88px;
       visibility: hidden;
     }
-    .racebar-inner {
+
+    .rb-inner {
       position: absolute; inset: 0;
+      background: #030806;
+      border-top: 3px solid #004830;
+      display: flex; align-items: stretch;
+    }
+
+    /* Left school tag */
+    .rb-tag {
+      width: 218px; flex-shrink: 0;
+      background: #004830;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 24px;
+    }
+    .rb-tag-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 800;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: rgba(255,255,255,0.82);
+      text-align: center; line-height: 1.15;
+    }
+
+    /* Divider */
+    .rb-rule {
+      width: 1px; flex-shrink: 0;
+      background: rgba(255,255,255,0.09);
+    }
+
+    /* Main content */
+    .rb-content {
+      flex: 1; min-width: 0;
       display: flex; align-items: center;
-      background: rgba(3, 9, 5, 0.92);
-      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 0 56px; gap: 28px;
     }
-    .racebar-accent {
-      width: 7px; height: 100%;
-      background: linear-gradient(180deg, #00c07a 0%, #004830 100%);
-      flex-shrink: 0;
+
+    .rb-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 48px; font-weight: 800;
+      letter-spacing: 0.025em; text-transform: uppercase;
+      color: #ffffff; white-space: nowrap; line-height: 1;
     }
-    .racebar-content {
-      display: flex; align-items: center;
-      padding: 0 52px; gap: 32px; flex: 1; min-width: 0;
+
+    .rb-sep {
+      width: 1px; height: 34px; flex-shrink: 0;
+      background: rgba(255,255,255,0.16);
     }
-    .racebar-name {
-      font-size: 46px; font-weight: 700;
-      letter-spacing: 0.04em; text-transform: uppercase;
-      color: #fff; white-space: nowrap; line-height: 1;
-    }
-    .racebar-sep {
-      width: 1.5px; height: 42px;
-      background: rgba(255,255,255,0.15);
-      flex-shrink: 0;
-    }
-    .racebar-sub {
-      font-size: 24px; font-weight: 600;
-      letter-spacing: 0.08em;
-      color: rgba(255,255,255,0.50);
+
+    .rb-sub {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 24px; font-weight: 400; font-style: italic;
+      letter-spacing: 0.01em;
+      color: rgba(255,255,255,0.52);
       white-space: nowrap;
     }
-    .racebar-live {
-      margin-left: auto;
-      display: flex; align-items: center; gap: 9px;
-      padding-right: 52px;
-      font-size: 13px; font-weight: 700;
-      letter-spacing: 0.24em; text-transform: uppercase;
-      color: rgba(255,255,255,0.38);
-      flex-shrink: 0;
-    }
-    .racebar-live-dot {
-      width: 9px; height: 9px; border-radius: 50%;
-      background: #00a86b;
-      animation: livePulse 1.4s ease-in-out infinite;
-    }
-    @keyframes livePulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(0,168,107,0.6); }
-      50%       { box-shadow: 0 0 0 6px rgba(0,168,107,0); }
-    }
 
-    /* ── timer (top-right) ─────────────────────────────────── */
-    #ov-timer {
-      position: absolute;
-      top: 40px; right: 44px;
-      visibility: hidden;
-    }
-    .timer-card {
-      background: rgba(3, 9, 5, 0.92);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-top: 3px solid #00a86b;
-      border-radius: 14px;
-      padding: 18px 40px 22px;
-      text-align: center;
-      min-width: 230px;
-    }
-    .timer-label {
-      font-size: 13px; font-weight: 700;
-      letter-spacing: 0.24em; text-transform: uppercase;
-      color: rgba(255,255,255,0.36);
-      margin-bottom: 6px;
-    }
-    .timer-val {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 62px; font-weight: 700;
-      color: #fff; line-height: 1;
-      letter-spacing: 0.01em;
-    }
-    .timer-ms {
-      font-size: 38px;
-      color: rgba(255,255,255,0.52);
-    }
-
-    /* ── schools (upper-center, pre-race) ──────────────────── */
-    #ov-schools {
-      position: absolute;
-      top: 148px; left: 0; right: 0;
-      display: flex; justify-content: center;
-      visibility: hidden;
-      pointer-events: none;
-    }
-    .schools-row {
-      display: flex; gap: 28px;
-    }
-    .school-card {
-      background: rgba(3, 9, 5, 0.90);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px;
-      overflow: hidden;
-      min-width: 250px;
-      text-align: center;
-    }
-    .school-color-bar {
-      height: 10px; width: 100%;
-    }
-    .school-name {
-      font-size: 38px; font-weight: 700;
-      letter-spacing: 0.04em; text-transform: uppercase;
-      color: #fff;
-      padding: 24px 36px 28px;
-    }
-
-    /* ── alert flash (center) ──────────────────────────────── */
+    /* ── alert flash ─────────────────────────────────────────── */
     #ov-alert {
       position: absolute;
       top: 50%; left: 50%;
@@ -146,11 +90,12 @@
       opacity: 0; pointer-events: none; z-index: 20;
     }
     .alert-text {
-      background: rgba(0, 168, 107, 0.96);
-      border-radius: 14px;
-      padding: 24px 60px;
-      font-size: 48px; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase;
+      background: #004830;
+      border-top: 3px solid #00c07a;
+      padding: 22px 60px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 52px; font-weight: 800;
+      letter-spacing: 0.1em; text-transform: uppercase;
       color: #fff; white-space: nowrap;
     }
   </style>
@@ -158,35 +103,20 @@
 <body>
 <div id="overlay-root">
 
-  <!-- Race bar — slides up from bottom -->
   <div id="ov-racebar">
-    <div class="racebar-inner">
-      <div class="racebar-accent"></div>
-      <div class="racebar-content">
-        <div class="racebar-name" id="rb-name">BOYS VARSITY 1X</div>
-        <div class="racebar-sep" id="rb-sep"></div>
-        <div class="racebar-sub" id="rb-sub">Spring Invitational 2026</div>
+    <div class="rb-inner">
+      <div class="rb-tag">
+        <div class="rb-tag-text" id="rb-tag">BROOKS<br>SCHOOL</div>
       </div>
-      <div class="racebar-live">
-        <div class="racebar-live-dot"></div>LIVE
+      <div class="rb-rule"></div>
+      <div class="rb-content">
+        <div class="rb-name" id="rb-name">BOYS VARSITY 1X</div>
+        <div class="rb-sep" id="rb-sep"></div>
+        <div class="rb-sub" id="rb-sub">Spring Invitational 2026</div>
       </div>
     </div>
   </div>
 
-  <!-- Timer — slides in from top-right -->
-  <div id="ov-timer">
-    <div class="timer-card">
-      <div class="timer-label">Race Time</div>
-      <div class="timer-val"><span id="ov-tm">00:00</span><span class="timer-ms" id="ov-ms">.0</span></div>
-    </div>
-  </div>
-
-  <!-- Schools — drops in from top, pre-race -->
-  <div id="ov-schools">
-    <div class="schools-row" id="ov-schools-row"></div>
-  </div>
-
-  <!-- Alert flash -->
   <div id="ov-alert"><div class="alert-text" id="ov-at"></div></div>
 
 </div>
@@ -196,7 +126,7 @@
 'use strict';
 
 // ── scale to viewport ──────────────────────────────────────────────────
-(function scaleOverlay() {
+(function() {
   const root = document.getElementById('overlay-root');
   function fit() {
     root.style.transform = `scale(${Math.min(window.innerWidth / 1920, window.innerHeight / 1080)})`;
@@ -205,66 +135,27 @@
   fit();
 })();
 
-// ── show / hide with purpose-built animations ──────────────────────────
-function showRacebar() {
+// ── bar show / hide ────────────────────────────────────────────────────
+function showBar() {
   const el = document.getElementById('ov-racebar');
   gsap.killTweensOf(el);
   el.style.visibility = 'visible';
-  gsap.fromTo(el, { y: 96 }, { y: 0, duration: 0.55, ease: 'power3.out', clearProps: 'y' });
+  gsap.fromTo(el, { y: 88 }, { y: 0, duration: 0.44, ease: 'power3.out', clearProps: 'y' });
 }
-function hideRacebar() {
+
+function hideBar() {
   const el = document.getElementById('ov-racebar');
   gsap.killTweensOf(el);
-  gsap.to(el, { y: 96, duration: 0.38, ease: 'power2.in',
+  gsap.to(el, {
+    y: 88, duration: 0.3, ease: 'power2.in',
     onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { clearProps: 'y' }); }
   });
 }
 
-function showTimer() {
-  const el = document.getElementById('ov-timer');
-  gsap.killTweensOf(el);
-  el.style.visibility = 'visible';
-  gsap.fromTo(el, { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: 'power3.out', clearProps: 'x,opacity' });
-}
-function hideTimer() {
-  const el = document.getElementById('ov-timer');
-  gsap.killTweensOf(el);
-  gsap.to(el, { x: 60, opacity: 0, duration: 0.3, ease: 'power2.in',
-    onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { clearProps: 'x,opacity' }); }
-  });
-}
-
-function showSchools() {
-  const el = document.getElementById('ov-schools');
-  gsap.killTweensOf(el);
-  el.style.visibility = 'visible';
-  const cards = el.querySelectorAll('.school-card');
-  if (cards.length) {
-    gsap.fromTo(cards,
-      { y: -50, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.52, stagger: 0.1, ease: 'back.out(1.5)', clearProps: 'y,opacity' }
-    );
-  }
-}
-function hideSchools() {
-  const el = document.getElementById('ov-schools');
-  gsap.killTweensOf(el);
-  const cards = el.querySelectorAll('.school-card');
-  if (cards.length) {
-    gsap.to(cards, { y: -30, opacity: 0, duration: 0.28, stagger: 0.06, ease: 'power2.in',
-      onComplete: () => { el.style.visibility = 'hidden'; gsap.set(cards, { clearProps: 'y,opacity' }); }
-    });
-  } else {
-    el.style.visibility = 'hidden';
-  }
-}
-
-const SHOW = { eventHeader: showRacebar, timer: showTimer, lanes: showSchools };
-const HIDE = { eventHeader: hideRacebar, timer: hideTimer, lanes: hideSchools };
-
 // ── content ────────────────────────────────────────────────────────────
 function applyContent(state) {
   if (!state) return;
+
   if (state.eventHeader !== undefined) {
     const name = (state.eventHeader?.text || '').toUpperCase();
     const sub  = state.eventHeader?.subtitle || '';
@@ -272,44 +163,15 @@ function applyContent(state) {
     document.getElementById('rb-sub').textContent  = sub;
     document.getElementById('rb-sep').style.display = sub ? '' : 'none';
   }
-  if (state.lanes?.data) renderSchools(state.lanes.data);
-}
 
-function renderSchools(lanes) {
-  const row = document.getElementById('ov-schools-row');
-  const items = (lanes || []).filter(l => (l.school || '').trim());
-  row.innerHTML = items.map(lane => `
-    <div class="school-card">
-      <div class="school-color-bar" style="background:${esc(lane.color || '#004830')};"></div>
-      <div class="school-name">${esc(lane.school)}</div>
-    </div>
-  `).join('');
-}
-
-// ── timer ──────────────────────────────────────────────────────────────
-let timerRunning = false, timerStart = null, timerFrame = null;
-
-function startTimer(elapsed) {
-  timerRunning = true;
-  timerStart = Date.now() - elapsed;
-  cancelAnimationFrame(timerFrame);
-  (function tick() {
-    if (!timerRunning) return;
-    const ms    = Date.now() - timerStart;
-    const mins  = Math.floor(ms / 60000);
-    const secs  = Math.floor((ms % 60000) / 1000);
-    const tenth = Math.floor((ms % 1000) / 100);
-    document.getElementById('ov-tm').textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-    document.getElementById('ov-ms').textContent = `.${tenth}`;
-    timerFrame = requestAnimationFrame(tick);
-  })();
-}
-
-function stopTimer()  { timerRunning = false; cancelAnimationFrame(timerFrame); }
-function resetTimer() {
-  stopTimer();
-  document.getElementById('ov-tm').textContent = '00:00';
-  document.getElementById('ov-ms').textContent = '.0';
+  if (state.watermark?.text) {
+    // Derive a 2-line tag from the team name (e.g. "Brooks School" → "BROOKS\nSCHOOL")
+    const words = state.watermark.text.trim().split(/\s+/);
+    document.getElementById('rb-tag').innerHTML =
+      words.length > 1
+        ? `${esc(words.slice(0,-1).join(' '))}<br>${esc(words[words.length-1])}`
+        : esc(words[0] || 'CREW');
+  }
 }
 
 // ── alert ──────────────────────────────────────────────────────────────
@@ -320,14 +182,17 @@ function showAlert(text, duration) {
   if (alertTimer) clearTimeout(alertTimer);
   gsap.killTweensOf(el);
   gsap.fromTo(el,
-    { opacity: 0, scale: 0.88 },
-    { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(1.6)' }
+    { opacity: 0, y: -16 },
+    { opacity: 1, y: 0, duration: 0.32, ease: 'power3.out' }
   );
   alertTimer = setTimeout(() =>
-    gsap.to(el, { opacity: 0, scale: 0.95, duration: 0.45, ease: 'power2.in' }),
+    gsap.to(el, { opacity: 0, y: -10, duration: 0.4, ease: 'power2.in' }),
     Math.max(1, duration || 3) * 1000
   );
 }
+
+// ── timer (reference only — not shown, keeps server state in sync) ─────
+let timerRunning = false, timerStart = null;
 
 // ── websocket ──────────────────────────────────────────────────────────
 let ws;
@@ -347,35 +212,32 @@ function handle(msg) {
     case 'state': {
       const s = msg.overlayState;
       if (!s) return;
-      ['eventHeader', 'timer', 'lanes'].forEach(key => {
-        if (s[key]?.active) SHOW[key]?.(); else HIDE[key]?.();
-      });
+      if (s.eventHeader?.active) showBar(); else hideBar();
       applyContent(s);
-      if (s.timer?.running && s.timer?.startTime) startTimer(Date.now() - s.timer.startTime);
-      break;
-    }
-
-    case 'toggle': {
-      if (msg.active) SHOW[msg.element]?.(); else HIDE[msg.element]?.();
-      break;
-    }
-
-    case 'update': {
-      if (msg.element && msg.data) applyContent({ [msg.element]: msg.data });
-      break;
-    }
-
-    case 'timer-control': {
-      if (msg.action === 'start') {
-        const skew = msg.serverTime ? Date.now() - msg.serverTime : 0;
-        startTimer((msg.elapsed || 0) + skew);
-      } else if (msg.action === 'stop') {
-        stopTimer();
-      } else if (msg.action === 'reset') {
-        resetTimer();
+      if (s.timer?.running && s.timer?.startTime) {
+        timerRunning = true; timerStart = s.timer.startTime;
       }
       break;
     }
+
+    case 'toggle':
+      if (msg.element === 'eventHeader') {
+        if (msg.active) showBar(); else hideBar();
+      }
+      break;
+
+    case 'save-widgets':
+      // server echoes back as a state broadcast
+      break;
+
+    case 'update':
+      if (msg.element && msg.data) applyContent({ [msg.element]: msg.data });
+      break;
+
+    case 'timer-control':
+      if (msg.action === 'start') { timerRunning = true; timerStart = Date.now() - (msg.elapsed || 0); }
+      else { timerRunning = false; }
+      break;
 
     case 'alert':
       showAlert(msg.text, msg.duration);
