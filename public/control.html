@@ -116,13 +116,7 @@
       border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); color: var(--text);
     }
 
-    /* ── timer ── */
-    .timer-display {
-      font-family: 'Rajdhani', sans-serif; font-size: 68px; font-weight: 700;
-      line-height: 1; color: var(--text); letter-spacing: 0.02em;
-      text-align: center; padding: 10px 0 14px;
-    }
-    .timer-display .sub { font-size: 40px; color: var(--text2); }
+    /* ── buttons ── */
     .btn-row { display: flex; gap: 8px; }
     .btn {
       flex: 1; padding: 12px 8px; border-radius: 12px; border: 1px solid var(--line);
@@ -133,9 +127,6 @@
     .btn:disabled { opacity: 0.3; pointer-events: none; }
     .btn-go  { background: var(--accent); border-color: var(--accent); color: #fff; }
     .btn-go:hover { background: #00c07a; }
-    .btn-stop { background: rgba(229,57,53,0.14); border-color: rgba(229,57,53,0.4); color: #ef9a9a; }
-    .btn-stop:hover { background: rgba(229,57,53,0.26); }
-    .btn-icon { flex: none; width: 46px; height: 46px; font-size: 20px; padding: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
 
     /* ── quick inputs ── */
     .quick-input {
@@ -224,14 +215,14 @@
     </div>
   </div>
 
-  <!-- ── 3. Timer ─────────────────────────────────────────── -->
+  <!-- ── 3. Athlete Intro ────────────────────────────────── -->
   <div class="card">
-    <div class="sec-label" style="margin-bottom:0;">Race Timer</div>
-    <div class="timer-display" id="timerDisp">00:00<span class="sub">.0</span></div>
+    <div class="sec-label">Athlete Intro</div>
+    <input class="quick-input" id="introName" placeholder="Athlete name…">
+    <input class="quick-input" id="introSub"  placeholder="Event / boat — e.g. Boys Varsity 1x">
     <div class="btn-row">
-      <button class="btn btn-go"   id="tStartBtn" onclick="tStart()">Start</button>
-      <button class="btn btn-stop" id="tStopBtn"  onclick="tStop()" disabled>Stop</button>
-      <button class="btn btn-icon" onclick="tReset()" title="Reset">↺</button>
+      <button class="btn btn-go" onclick="showIntro()">Show</button>
+      <button class="btn"        onclick="hideIntro()">Hide</button>
     </div>
   </div>
 
@@ -283,8 +274,7 @@ let ws;
 let raceSchedule = [];
 let activeRaceIdx = null;
 let currentMode   = null;
-let timerRunning  = false, timerStart = null, timerElapsed = 0, timerIv = null;
-let schedOpen     = false;
+let schedOpen = false;
 
 // ── websocket ─────────────────────────────────────────────────────────
 function wsConnect() {
@@ -306,7 +296,6 @@ function onMsg(msg) {
     if (msg.overlayState) applyServerState(msg.overlayState);
   }
   if (msg.type === 'race-schedule') { raceSchedule = msg.schedule || []; renderSchedule(); }
-  if (msg.type === 'timer-control') syncTimer(msg);
 }
 
 function setWsStatus(ok) {
@@ -317,14 +306,6 @@ function setWsStatus(ok) {
 
 // ── server state sync ─────────────────────────────────────────────────
 function applyServerState(s) {
-  if (s.timer) {
-    timerElapsed = s.timer.elapsed || 0;
-    if (s.timer.running && s.timer.startTime) {
-      timerStart = s.timer.startTime; timerRunning = true; runTimer();
-    } else {
-      stopTimerLocal(); updateTimerDisp(timerElapsed);
-    }
-  }
   setModeLocal(s.eventHeader?.active ? 'on' : 'off');
 }
 
@@ -349,49 +330,18 @@ function setModeLocal(mode) {
   });
 }
 
-// ── timer ─────────────────────────────────────────────────────────────
-function updateTimerDisp(ms) {
-  const m = Math.floor(ms / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
-  const t = Math.floor((ms % 1000) / 100);
-  document.getElementById('timerDisp').innerHTML =
-    `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}<span class="sub">.${t}</span>`;
+// ── athlete intro ─────────────────────────────────────────────────────
+function showIntro() {
+  const name = document.getElementById('introName').value.trim();
+  const sub  = document.getElementById('introSub').value.trim();
+  if (!name) { toast('Enter a name', 'err'); return; }
+  send({ type: 'update', element: 'lowerThird', data: { text: name, sub } });
+  send({ type: 'toggle', element: 'lowerThird', active: true });
+  toast('Intro: ' + name, 'ok');
 }
 
-function runTimer() {
-  clearInterval(timerIv);
-  document.getElementById('tStartBtn').disabled = true;
-  document.getElementById('tStopBtn').disabled  = false;
-  timerIv = setInterval(() => updateTimerDisp(Date.now() - timerStart), 100);
-}
-
-function stopTimerLocal() {
-  clearInterval(timerIv); timerRunning = false;
-  document.getElementById('tStartBtn').disabled = false;
-  document.getElementById('tStopBtn').disabled  = true;
-}
-
-function syncTimer(msg) {
-  if (msg.action === 'start') {
-    timerStart = Date.now() - (msg.elapsed || 0); timerRunning = true; runTimer();
-  } else if (msg.action === 'stop') {
-    timerElapsed = msg.elapsed || 0; stopTimerLocal(); updateTimerDisp(timerElapsed);
-  } else if (msg.action === 'reset') {
-    timerElapsed = 0; stopTimerLocal(); updateTimerDisp(0);
-  }
-}
-
-function tStart() {
-  timerStart = Date.now() - timerElapsed; timerRunning = true; runTimer();
-  send({ type: 'timer-control', action: 'start', elapsed: timerElapsed });
-}
-function tStop() {
-  timerElapsed = Date.now() - timerStart; stopTimerLocal(); updateTimerDisp(timerElapsed);
-  send({ type: 'timer-control', action: 'stop', elapsed: timerElapsed });
-}
-function tReset() {
-  timerElapsed = 0; stopTimerLocal(); updateTimerDisp(0);
-  send({ type: 'timer-control', action: 'reset' });
+function hideIntro() {
+  send({ type: 'toggle', element: 'lowerThird', active: false });
 }
 
 // ── race schedule ─────────────────────────────────────────────────────
@@ -488,8 +438,6 @@ function logout() {
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.code === 'Space') { e.preventDefault(); timerRunning ? tStop() : tStart(); }
-  if (e.code === 'KeyR')  { e.preventDefault(); tReset(); }
   if (e.code === 'Digit1') setMode('on');
   if (e.code === 'Digit2') setMode('off');
 });

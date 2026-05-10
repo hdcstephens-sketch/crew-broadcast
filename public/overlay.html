@@ -82,6 +82,39 @@
       white-space: nowrap;
     }
 
+    /* ── athlete intro ───────────────────────────────────────── */
+    #ov-intro {
+      position: absolute;
+      bottom: 108px; left: 0;
+      visibility: hidden;
+    }
+    .intro-inner {
+      display: flex; align-items: stretch;
+      background: #030806;
+      border-top: 3px solid #004830;
+      border-right: 3px solid #004830;
+    }
+    .intro-accent {
+      width: 6px; flex-shrink: 0;
+      background: #004830;
+    }
+    .intro-content {
+      padding: 16px 40px 16px 28px;
+    }
+    .intro-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 52px; font-weight: 800;
+      letter-spacing: 0.03em; text-transform: uppercase;
+      color: #ffffff; line-height: 1;
+    }
+    .intro-sub {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 22px; font-weight: 400; font-style: italic;
+      letter-spacing: 0.01em;
+      color: rgba(255,255,255,0.52);
+      margin-top: 4px;
+    }
+
     /* ── alert flash ─────────────────────────────────────────── */
     #ov-alert {
       position: absolute;
@@ -113,6 +146,16 @@
         <div class="rb-name" id="rb-name">BOYS VARSITY 1X</div>
         <div class="rb-sep" id="rb-sep"></div>
         <div class="rb-sub" id="rb-sub">Spring Invitational 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ov-intro">
+    <div class="intro-inner">
+      <div class="intro-accent"></div>
+      <div class="intro-content">
+        <div class="intro-name" id="intro-name">ATHLETE NAME</div>
+        <div class="intro-sub"  id="intro-sub"></div>
       </div>
     </div>
   </div>
@@ -152,6 +195,23 @@ function hideBar() {
   });
 }
 
+// ── athlete intro ──────────────────────────────────────────────────────
+function showIntro() {
+  const el = document.getElementById('ov-intro');
+  gsap.killTweensOf(el);
+  el.style.visibility = 'visible';
+  gsap.fromTo(el, { x: -60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.38, ease: 'power3.out' });
+}
+
+function hideIntro() {
+  const el = document.getElementById('ov-intro');
+  gsap.killTweensOf(el);
+  gsap.to(el, {
+    x: -60, opacity: 0, duration: 0.28, ease: 'power2.in',
+    onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { clearProps: 'x,opacity' }); }
+  });
+}
+
 // ── content ────────────────────────────────────────────────────────────
 function applyContent(state) {
   if (!state) return;
@@ -162,6 +222,15 @@ function applyContent(state) {
     document.getElementById('rb-name').textContent = name;
     document.getElementById('rb-sub').textContent  = sub;
     document.getElementById('rb-sep').style.display = sub ? '' : 'none';
+  }
+
+  if (state.lowerThird !== undefined) {
+    const name = (state.lowerThird?.text || '').toUpperCase();
+    const sub  = state.lowerThird?.sub || '';
+    document.getElementById('intro-name').textContent = name;
+    const subEl = document.getElementById('intro-sub');
+    subEl.textContent = sub;
+    subEl.style.display = sub ? '' : 'none';
   }
 
   if (state.watermark?.text) {
@@ -213,6 +282,7 @@ function handle(msg) {
       const s = msg.overlayState;
       if (!s) return;
       if (s.eventHeader?.active) showBar(); else hideBar();
+      if (s.lowerThird?.active) showIntro(); else hideIntro();
       applyContent(s);
       if (s.timer?.running && s.timer?.startTime) {
         timerRunning = true; timerStart = s.timer.startTime;
@@ -223,6 +293,9 @@ function handle(msg) {
     case 'toggle':
       if (msg.element === 'eventHeader') {
         if (msg.active) showBar(); else hideBar();
+      }
+      if (msg.element === 'lowerThird') {
+        if (msg.active) showIntro(); else hideIntro();
       }
       break;
 
