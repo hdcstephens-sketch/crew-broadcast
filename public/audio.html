@@ -97,6 +97,47 @@
     .sel { width: 100%; padding: 10px 12px; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; appearance: none; -webkit-appearance: none; }
     .sel:focus { border-color: var(--accent); }
 
+    /* ── audio chain ── */
+    .chain { display: flex; align-items: stretch; gap: 0; }
+    .chain-block {
+      flex: 1; min-width: 0;
+      background: var(--card2); border: 1px solid var(--line); border-radius: 12px;
+      padding: 12px 10px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .chain-arrow {
+      display: flex; align-items: center; padding: 0 5px;
+      color: rgba(255,255,255,0.18); font-size: 18px; flex-shrink: 0;
+    }
+    .chain-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--text2);
+    }
+    .fader-row { display: flex; gap: 10px; align-items: flex-end; }
+    .fader-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .fader-val {
+      font-size: 10px; font-weight: 600; color: var(--accent);
+      min-width: 28px; text-align: center; line-height: 1;
+    }
+    .fader-lbl {
+      font-size: 9px; color: var(--text2);
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    input[type=range].vfader {
+      writing-mode: vertical-lr; direction: rtl;
+      width: 26px; height: 72px;
+      accent-color: var(--accent); cursor: pointer;
+      -webkit-appearance: slider-vertical;
+    }
+    .comp-btn {
+      width: 100%; padding: 7px 0; border-radius: 8px;
+      border: 1px solid var(--line); background: transparent;
+      color: var(--text2); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.1em; cursor: pointer; font-family: inherit;
+      transition: 0.15s;
+    }
+    .comp-btn.on { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
     /* ── log ── */
     .log { display: flex; flex-direction: column; gap: 6px; }
     .log-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--card2); font-size: 12px; }
@@ -157,6 +198,61 @@
     <button class="btn" style="padding:8px 14px;font-size:12px;flex:none;" onclick="refreshDevices()">Refresh Devices</button>
   </div>
 
+  <!-- Audio Chain -->
+  <div class="card">
+    <div class="card-label">Audio Chain</div>
+    <div class="chain">
+
+      <!-- EQ -->
+      <div class="chain-block">
+        <div class="chain-label">EQ</div>
+        <div class="fader-row">
+          <div class="fader-col">
+            <div class="fader-val" id="eqLowVal">0</div>
+            <input type="range" class="vfader" id="eqLowFader" min="-12" max="12" step="0.5" value="0" oninput="setEQ('low',this.value)">
+            <div class="fader-lbl">Low</div>
+          </div>
+          <div class="fader-col">
+            <div class="fader-val" id="eqMidVal">0</div>
+            <input type="range" class="vfader" id="eqMidFader" min="-12" max="12" step="0.5" value="0" oninput="setEQ('mid',this.value)">
+            <div class="fader-lbl">Mid</div>
+          </div>
+          <div class="fader-col">
+            <div class="fader-val" id="eqHighVal">0</div>
+            <input type="range" class="vfader" id="eqHighFader" min="-12" max="12" step="0.5" value="0" oninput="setEQ('high',this.value)">
+            <div class="fader-lbl">High</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chain-arrow">›</div>
+
+      <!-- Compressor -->
+      <div class="chain-block">
+        <div class="chain-label">Comp</div>
+        <button class="comp-btn" id="compBtn" onclick="toggleComp()">OFF</button>
+        <div class="fader-col">
+          <div class="fader-val" id="compThreshVal">-24</div>
+          <input type="range" class="vfader" id="compThreshFader" min="-60" max="0" step="1" value="-24" oninput="setCompThresh(this.value)">
+          <div class="fader-lbl">Thr</div>
+        </div>
+      </div>
+
+      <div class="chain-arrow">›</div>
+
+      <!-- Output Gain -->
+      <div class="chain-block">
+        <div class="chain-label">Gain</div>
+        <div class="fader-col">
+          <div class="fader-val" id="gainFaderVal">1.0×</div>
+          <input type="range" class="vfader" id="gainFader" min="0" max="2" step="0.05" value="1" oninput="setGainFader(this.value)">
+          <div class="fader-lbl">Out</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Event log -->
   <div class="card">
     <div class="card-label">Event Log</div>
@@ -182,10 +278,17 @@ if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
 // ── state ─────────────────────────────────────────────────────────────
 let ws;
 let rawStream = null;
-let audioCtx = null, micSource = null, analyser = null, gainNode = null, destNode = null, meterRaf = null;
+let audioCtx = null, micSource = null, analyser = null;
+let eqLowNode = null, eqMidNode = null, eqHighNode = null, compNode = null;
+let gainNode = null, destNode = null, meterRaf = null;
 let recorder = null;
 let selectedMicId = '';
 let isMuted = false, mode = 'idle';
+
+// Audio chain state (persists across graph rebuilds)
+let chainEqLow = 0, chainEqMid = 0, chainEqHigh = 0;
+let chainCompOn = false, chainCompThresh = -24;
+let chainGain = 1.0;
 
 // Background-audio lock state
 let wakeLock = null;
@@ -295,27 +398,47 @@ async function acquireMic() {
 
 function buildGraph(stream) {
   tearGraph();
-  audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   audioCtx.resume();
   audioCtx.onstatechange = () => {
     if (audioCtx?.state === 'suspended' && mode !== 'idle') audioCtx.resume().catch(() => {});
   };
+
   micSource = audioCtx.createMediaStreamSource(stream);
-  analyser  = audioCtx.createAnalyser();
-  analyser.fftSize = 256;
-  gainNode  = audioCtx.createGain();
-  gainNode.gain.value = 1;
-  destNode  = audioCtx.createMediaStreamDestination();
+  analyser  = audioCtx.createAnalyser(); analyser.fftSize = 256;
+
+  eqLowNode = audioCtx.createBiquadFilter();
+  eqLowNode.type = 'lowshelf'; eqLowNode.frequency.value = 120; eqLowNode.gain.value = chainEqLow;
+
+  eqMidNode = audioCtx.createBiquadFilter();
+  eqMidNode.type = 'peaking'; eqMidNode.frequency.value = 1800;
+  eqMidNode.Q.value = 1.2; eqMidNode.gain.value = chainEqMid;
+
+  eqHighNode = audioCtx.createBiquadFilter();
+  eqHighNode.type = 'highshelf'; eqHighNode.frequency.value = 6000; eqHighNode.gain.value = chainEqHigh;
+
+  compNode = audioCtx.createDynamicsCompressor();
+  applyCompSettings();
+
+  gainNode = audioCtx.createGain(); gainNode.gain.value = chainGain;
+  destNode = audioCtx.createMediaStreamDestination();
+
   micSource.connect(analyser);
-  micSource.connect(gainNode);
+  micSource.connect(eqLowNode);
+  eqLowNode.connect(eqMidNode);
+  eqMidNode.connect(eqHighNode);
+  eqHighNode.connect(compNode);
+  compNode.connect(gainNode);
   gainNode.connect(destNode);
+
   startMeter();
 }
 
 function tearGraph() {
   stopMeter();
   if (audioCtx) audioCtx.close().catch(() => {});
-  audioCtx = micSource = analyser = gainNode = destNode = null;
+  audioCtx = micSource = analyser = null;
+  eqLowNode = eqMidNode = eqHighNode = compNode = gainNode = destNode = null;
   document.getElementById('meterFill').style.width = '0%';
   document.getElementById('levelText').textContent = '0%';
 }
@@ -498,6 +621,52 @@ function logout() {
   localStorage.removeItem('crew_token');
   localStorage.removeItem('crew_user');
   location.href = '/';
+}
+
+// ── audio chain controls ──────────────────────────────────────────────
+function setEQ(band, raw) {
+  const v = parseFloat(raw);
+  const label = (v > 0 ? '+' : '') + v;
+  if (band === 'low')  { chainEqLow  = v; if (eqLowNode)  eqLowNode.gain.value  = v; document.getElementById('eqLowVal').textContent  = label; }
+  if (band === 'mid')  { chainEqMid  = v; if (eqMidNode)  eqMidNode.gain.value  = v; document.getElementById('eqMidVal').textContent  = label; }
+  if (band === 'high') { chainEqHigh = v; if (eqHighNode) eqHighNode.gain.value = v; document.getElementById('eqHighVal').textContent = label; }
+}
+
+function setGainFader(raw) {
+  chainGain = parseFloat(raw);
+  if (gainNode) gainNode.gain.value = chainGain;
+  document.getElementById('gainFaderVal').textContent = chainGain.toFixed(2) + '×';
+}
+
+function setCompThresh(raw) {
+  chainCompThresh = parseInt(raw);
+  document.getElementById('compThreshVal').textContent = chainCompThresh + 'dB';
+  applyCompSettings();
+}
+
+function toggleComp() {
+  chainCompOn = !chainCompOn;
+  const btn = document.getElementById('compBtn');
+  btn.textContent  = chainCompOn ? 'ON' : 'OFF';
+  btn.className    = 'comp-btn' + (chainCompOn ? ' on' : '');
+  applyCompSettings();
+}
+
+function applyCompSettings() {
+  if (!compNode) return;
+  if (chainCompOn) {
+    compNode.threshold.value = chainCompThresh;
+    compNode.knee.value      = 8;
+    compNode.ratio.value     = 4;
+    compNode.attack.value    = 0.003;
+    compNode.release.value   = 0.25;
+  } else {
+    compNode.threshold.value = 0;
+    compNode.knee.value      = 0;
+    compNode.ratio.value     = 1;
+    compNode.attack.value    = 0;
+    compNode.release.value   = 0;
+  }
 }
 
 wsConnect();
