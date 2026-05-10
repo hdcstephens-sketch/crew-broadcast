@@ -101,24 +101,20 @@
     }
 
     /* ── mode buttons ── */
-    .mode-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .mode-btn {
-      padding: 16px 8px; border-radius: var(--r); border: 1px solid var(--line);
+      padding: 18px 8px; border-radius: var(--r); border: 1px solid var(--line);
       background: var(--card); color: var(--text2);
       font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
       letter-spacing: 0.08em; cursor: pointer; transition: 0.15s; text-align: center;
     }
     .mode-btn:hover { border-color: var(--accent); color: var(--text); }
-    .mode-btn.is-active-prerace {
-      border-color: rgba(0,168,107,0.5); background: var(--accent-dim); color: var(--accent);
-    }
-    .mode-btn.is-active-racing {
+    .mode-btn.is-active-on {
       background: var(--accent); border-color: var(--accent); color: #fff;
     }
-    .mode-btn.is-active-break {
+    .mode-btn.is-active-off {
       border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); color: var(--text);
     }
-    .mode-sub { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; opacity: 0.6; display: block; margin-top: 3px; }
 
     /* ── timer ── */
     .timer-display {
@@ -141,24 +137,6 @@
     .btn-stop:hover { background: rgba(229,57,53,0.26); }
     .btn-icon { flex: none; width: 46px; height: 46px; font-size: 20px; padding: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
 
-    /* ── schools editor ── */
-    .school-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 0; border-bottom: 1px solid var(--line);
-    }
-    .school-row:last-child { border-bottom: none; }
-    .color-swatch {
-      width: 38px; height: 38px; border-radius: 9px; border: 1px solid var(--line);
-      padding: 3px; cursor: pointer; background: var(--card2); flex-shrink: 0;
-    }
-    .school-input {
-      flex: 1; background: var(--card2); border: 1px solid var(--line);
-      border-radius: 10px; padding: 9px 12px; color: var(--text);
-      font-size: 14px; font-family: inherit; outline: none;
-    }
-    .school-input:focus { border-color: var(--accent); }
-    .school-input::placeholder { color: var(--text2); }
-
     /* ── quick inputs ── */
     .quick-input {
       width: 100%; background: var(--card2); border: 1px solid var(--line);
@@ -168,15 +146,6 @@
     .quick-input:focus { border-color: var(--accent); }
     .quick-input::placeholder { color: var(--text2); }
     .quick-input:last-child { margin-bottom: 0; }
-
-    /* ── alert presets ── */
-    .alert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-    .alert-btn {
-      padding: 11px 8px; border-radius: 12px; border: 1px solid var(--line);
-      background: var(--card2); color: var(--text); font-size: 13px; font-weight: 600;
-      font-family: inherit; cursor: pointer; transition: 0.13s; text-align: center;
-    }
-    .alert-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
     /* ── action button ── */
     .action-btn {
@@ -248,20 +217,10 @@
 
   <!-- ── 2. Mode ──────────────────────────────────────────── -->
   <div>
-    <div class="sec-label">Mode</div>
+    <div class="sec-label">Bar</div>
     <div class="mode-grid">
-      <button class="mode-btn" id="mode-prerace" onclick="setMode('prerace')">
-        PRE-RACE
-        <span class="mode-sub">Bar + Schools</span>
-      </button>
-      <button class="mode-btn" id="mode-racing" onclick="setMode('racing')">
-        RACING
-        <span class="mode-sub">Bar + Timer</span>
-      </button>
-      <button class="mode-btn" id="mode-break" onclick="setMode('break')">
-        BREAK
-        <span class="mode-sub">Clear all</span>
-      </button>
+      <button class="mode-btn" id="mode-on" onclick="setMode('on')">BAR ON</button>
+      <button class="mode-btn" id="mode-off" onclick="setMode('off')">BAR OFF</button>
     </div>
   </div>
 
@@ -276,46 +235,7 @@
     </div>
   </div>
 
-  <!-- ── 4. Schools ───────────────────────────────────────── -->
-  <div class="card">
-    <div class="sec-label">Schools Racing</div>
-    <div id="schoolsEd">
-      <div class="school-row">
-        <input type="color" class="color-swatch" value="#004830">
-        <input type="text" class="school-input" placeholder="School name">
-      </div>
-      <div class="school-row">
-        <input type="color" class="color-swatch" value="#8B0000">
-        <input type="text" class="school-input" placeholder="School name">
-      </div>
-      <div class="school-row">
-        <input type="color" class="color-swatch" value="#2E7D32">
-        <input type="text" class="school-input" placeholder="School name">
-      </div>
-      <div class="school-row">
-        <input type="color" class="color-swatch" value="#4A148C">
-        <input type="text" class="school-input" placeholder="School name">
-      </div>
-    </div>
-    <button class="action-btn full" style="margin-top:14px;" onclick="pushSchools()">Push Schools to Overlay</button>
-  </div>
-
-  <!-- ── 5. Flash Alert ───────────────────────────────────── -->
-  <div>
-    <div class="sec-label">Flash Alert</div>
-    <div class="alert-grid">
-      <button class="alert-btn" onclick="sendAlert('PHOTO FINISH', 5)">📸 Photo Finish</button>
-      <button class="alert-btn" onclick="sendAlert('RACE COMPLETE', 4)">✅ Race Complete</button>
-      <button class="alert-btn" onclick="sendAlert('FALSE START', 4)">⚠️ False Start</button>
-      <button class="alert-btn" onclick="sendAlert('COURSE RECORD', 5)">🏆 Course Record</button>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <input class="quick-input" id="alertText" placeholder="Custom alert…" style="margin:0;flex:1;">
-      <button class="action-btn" onclick="sendCustomAlert()">Flash</button>
-    </div>
-  </div>
-
-  <!-- ── 6. Schedule ──────────────────────────────────────── -->
+  <!-- ── 4. Schedule ──────────────────────────────────────── -->
   <div>
     <button class="collapse-btn" onclick="toggleSchedule(this)">
       <span>Manage Schedule</span><span id="schedArrow">▼</span>
@@ -364,7 +284,6 @@ let raceSchedule = [];
 let activeRaceIdx = null;
 let currentMode   = null;
 let timerRunning  = false, timerStart = null, timerElapsed = 0, timerIv = null;
-let firstState    = false;
 let schedOpen     = false;
 
 // ── websocket ─────────────────────────────────────────────────────────
@@ -398,7 +317,6 @@ function setWsStatus(ok) {
 
 // ── server state sync ─────────────────────────────────────────────────
 function applyServerState(s) {
-  // Sync timer
   if (s.timer) {
     timerElapsed = s.timer.elapsed || 0;
     if (s.timer.running && s.timer.startTime) {
@@ -407,42 +325,24 @@ function applyServerState(s) {
       stopTimerLocal(); updateTimerDisp(timerElapsed);
     }
   }
-
-  // Derive mode from which elements are active
-  const h = s.eventHeader?.active;
-  const t = s.timer?.active;
-  const l = s.lanes?.active;
-  if (!h)           setModeLocal('break');
-  else if (l && !t) setModeLocal('prerace');
-  else if (t && !l) setModeLocal('racing');
-  else              setModeLocal(null);
-
-  if (firstState) return;
-  firstState = true;
-
-  // Restore schools editor from server lanes data on first load
-  if (s.lanes?.data) fillSchoolsEditor(s.lanes.data);
+  setModeLocal(s.eventHeader?.active ? 'on' : 'off');
 }
 
 // ── mode ──────────────────────────────────────────────────────────────
-const ALL_WIDGETS_OFF = {
-  eventHeader: false, timer: false, lanes: false, results: false,
-  strokeRate: false, distance: false, lowerThird: false, conditions: false,
-  schoolLogos: false, watermark: false, countdown: false
-};
-
 function setMode(mode) {
-  const widgets = { ...ALL_WIDGETS_OFF };
-  if (mode === 'prerace') { widgets.eventHeader = true; widgets.lanes = true; }
-  if (mode === 'racing')  { widgets.eventHeader = true; widgets.timer = true; }
-  send({ type: 'save-widgets', widgets });
+  const on = mode === 'on';
+  send({ type: 'save-widgets', widgets: {
+    eventHeader: on, timer: false, lanes: false, results: false,
+    strokeRate: false, distance: false, lowerThird: false, conditions: false,
+    schoolLogos: false, watermark: false, countdown: false
+  }});
   setModeLocal(mode);
-  toast(mode === 'break' ? 'Overlay cleared' : mode.charAt(0).toUpperCase() + mode.slice(1) + ' mode', 'ok');
+  toast(on ? 'Bar on' : 'Bar off', 'ok');
 }
 
 function setModeLocal(mode) {
   currentMode = mode;
-  ['prerace', 'racing', 'break'].forEach(m => {
+  ['on', 'off'].forEach(m => {
     const btn = document.getElementById('mode-' + m);
     if (!btn) return;
     btn.className = 'mode-btn' + (mode === m ? ' is-active-' + m : '');
@@ -492,32 +392,6 @@ function tStop() {
 function tReset() {
   timerElapsed = 0; stopTimerLocal(); updateTimerDisp(0);
   send({ type: 'timer-control', action: 'reset' });
-}
-
-// ── schools ───────────────────────────────────────────────────────────
-function fillSchoolsEditor(lanes) {
-  const rows = document.querySelectorAll('#schoolsEd .school-row');
-  rows.forEach((row, i) => {
-    const lane = lanes[i];
-    if (!lane) return;
-    row.querySelector('input[type=color]').value = lane.color || '#004830';
-    row.querySelector('input[type=text]').value  = lane.school || '';
-  });
-}
-
-function pushSchools() {
-  const data = Array.from(document.querySelectorAll('#schoolsEd .school-row'))
-    .map((row, i) => ({
-      lane: i + 1,
-      school: row.querySelector('input[type=text]').value.trim(),
-      color: row.querySelector('input[type=color]').value,
-      accentColor: '#000000', textColor: '#FFFFFF', logo: null
-    }))
-    .filter(d => d.school);
-
-  if (!data.length) { toast('Enter at least one school name', 'err'); return; }
-  send({ type: 'update', element: 'lanes', data: { data } });
-  toast(`${data.length} school${data.length > 1 ? 's' : ''} pushed`, 'ok');
 }
 
 // ── race schedule ─────────────────────────────────────────────────────
@@ -580,18 +454,6 @@ function toggleSchedule(btn) {
   document.getElementById('schedArrow').textContent = schedOpen ? '▲' : '▼';
 }
 
-// ── alert ─────────────────────────────────────────────────────────────
-function sendAlert(text, duration) {
-  send({ type: 'alert', text, duration: duration || 4 });
-  toast('Alert: ' + text, 'ok');
-}
-function sendCustomAlert() {
-  const text = document.getElementById('alertText').value.trim();
-  if (!text) return;
-  sendAlert(text, 4);
-  document.getElementById('alertText').value = '';
-}
-
 // ── preview ───────────────────────────────────────────────────────────
 function openPreview() {
   document.getElementById('previewModal').style.display = 'flex';
@@ -628,9 +490,8 @@ document.addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.code === 'Space') { e.preventDefault(); timerRunning ? tStop() : tStart(); }
   if (e.code === 'KeyR')  { e.preventDefault(); tReset(); }
-  if (e.code === 'Digit1') setMode('prerace');
-  if (e.code === 'Digit2') setMode('racing');
-  if (e.code === 'Digit3') setMode('break');
+  if (e.code === 'Digit1') setMode('on');
+  if (e.code === 'Digit2') setMode('off');
 });
 
 renderSchedule();
