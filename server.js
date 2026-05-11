@@ -496,6 +496,22 @@ app.delete('/api/upload/athlete-photo', requireAuth, requireAdmin, (req, res) =>
   res.json({ ok: true });
 });
 
+const GRID_PHOTO_DIR = path.join(__dirname, 'public', 'media', 'grid');
+
+app.post('/api/upload/grid-photo',
+  requireAuth,
+  requireAdmin,
+  express.raw({ type: req => /^image\/(jpeg|png|webp|gif)$/.test(req.headers['content-type'] || ''), limit: '10mb' }),
+  (req, res) => {
+    if (!req.body || !req.body.length) return res.status(400).json({ error: 'No image data' });
+    const ext = (req.headers['content-type'] || 'image/jpeg').split('/')[1].split(';')[0];
+    const filename = `${uuidv4()}.${ext}`;
+    fs.mkdirSync(GRID_PHOTO_DIR, { recursive: true });
+    fs.writeFileSync(path.join(GRID_PHOTO_DIR, filename), req.body);
+    res.json({ ok: true, path: `/media/grid/${filename}` });
+  }
+);
+
 // Keep WebSocket connections alive through Railway's proxy timeout
 const WS_PING_INTERVAL = 25000;
 const wsHeartbeat = setInterval(() => {
@@ -751,6 +767,27 @@ function handleMessage(clientId, msg) {
       const alertText = String(msg.text || '').slice(0, 120);
       const alertDuration = Math.min(15, Math.max(1, Number(msg.duration) || 3));
       if (alertText) broadcast('overlay', { type: 'alert', text: alertText, duration: alertDuration });
+      break;
+    }
+
+    case 'grid-start': {
+      if (!client.authenticated) return;
+      const entries = Array.isArray(msg.entries)
+        ? msg.entries.slice(0, 20).map(e => ({
+            lane:   String(e.lane   || '').slice(0, 10),
+            name:   String(e.name   || '').slice(0, 80),
+            school: String(e.school || '').slice(0, 80),
+            image:  String(e.image  || '').slice(0, 300)
+          }))
+        : [];
+      const duration = Math.min(15000, Math.max(2000, Number(msg.duration) || 5000));
+      broadcast('overlay', { type: 'grid-start', entries, duration });
+      break;
+    }
+
+    case 'grid-stop': {
+      if (!client.authenticated) return;
+      broadcast('overlay', { type: 'grid-stop' });
       break;
     }
 

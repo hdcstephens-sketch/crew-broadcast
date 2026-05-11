@@ -351,7 +351,48 @@
     <button class="btn" style="flex:none;padding:8px 14px;font-size:12px;" onclick="monRefreshOutputs()">Refresh Devices</button>
   </div>
 
-  <!-- ── 6. Schedule ──────────────────────────────────────── -->
+  <!-- ── 6. Pre-Race Grid ─────────────────────────────────── -->
+  <div>
+    <button class="collapse-btn" onclick="toggleGrid(this)">
+      <span>Pre-Race Grid Intro</span><span id="gridArrow">▼</span>
+    </button>
+    <div class="collapse-body hidden" id="gridBody">
+
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:12px;color:var(--text2);white-space:nowrap;">Seconds per entry</span>
+        <input type="range" min="2" max="12" step="1" value="5" id="gridDuration"
+          style="flex:1;accent-color:var(--accent);"
+          oninput="document.getElementById('gridDurVal').textContent=this.value+'s'">
+        <span id="gridDurVal" style="font-size:13px;font-weight:700;color:var(--accent);min-width:28px;">5s</span>
+      </div>
+
+      <div id="gridList" style="display:flex;flex-direction:column;gap:6px;"></div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;padding:12px;background:var(--card2);border:1px solid var(--line);border-radius:12px;">
+        <div class="sec-label" style="margin-bottom:2px;">Add Entry</div>
+        <div style="display:flex;gap:6px;">
+          <input class="quick-input" id="gridLane" placeholder="Lane" type="number" min="1" max="8" style="margin:0;width:72px;flex-shrink:0;">
+          <input class="quick-input" id="gridName" placeholder="Boat class — e.g. Boys Varsity 1x" style="margin:0;flex:1;">
+        </div>
+        <input class="quick-input" id="gridSchool" placeholder="School name" style="margin:0;">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <label style="flex:1;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="gridPhotoLabel">
+            📷 Choose photo…
+            <input type="file" id="gridPhoto" accept="image/*" style="display:none;" onchange="gridPhotoSelected(this)">
+          </label>
+          <button class="action-btn ghost" onclick="addGridEntry()" style="flex-shrink:0;">+ Add</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-go" id="gridRunBtn" onclick="gridRun()">▶ Run Grid</button>
+        <button class="btn btn-stop" id="gridStopBtn" onclick="gridSendStop()" disabled>Stop</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 7. Schedule ──────────────────────────────────────── -->
   <div>
     <button class="collapse-btn" onclick="toggleSchedule(this)">
       <span>Manage Schedule</span><span id="schedArrow">▼</span>
@@ -902,6 +943,105 @@ function monSetStatus(s) {
   text.textContent = msg;
 }
 
+// ── pre-race grid ─────────────────────────────────────────────────────
+let gridEntries = [];
+let gridOpen = false;
+let pendingGridPhoto = null;
+
+function toggleGrid(btn) {
+  gridOpen = !gridOpen;
+  document.getElementById('gridBody').classList.toggle('hidden', !gridOpen);
+  document.getElementById('gridArrow').textContent = gridOpen ? '▲' : '▼';
+}
+
+async function gridPhotoSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const lbl = document.getElementById('gridPhotoLabel');
+  lbl.childNodes[0].textContent = '⏳ Uploading…';
+  try {
+    const res = await fetch('/api/upload/grid-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': file.type, 'Authorization': 'Bearer ' + token },
+      body: file
+    });
+    if (!res.ok) throw new Error();
+    const { path } = await res.json();
+    pendingGridPhoto = path;
+    lbl.childNodes[0].textContent = '✓ ' + file.name;
+  } catch {
+    lbl.childNodes[0].textContent = '📷 Choose photo…';
+    toast('Upload failed', 'err');
+  }
+}
+
+function addGridEntry() {
+  const lane   = document.getElementById('gridLane').value.trim();
+  const name   = document.getElementById('gridName').value.trim();
+  const school = document.getElementById('gridSchool').value.trim();
+  if (!name) { toast('Enter a boat class', 'err'); return; }
+  gridEntries.push({ lane: lane || String(gridEntries.length + 1), name, school, image: pendingGridPhoto || '' });
+  document.getElementById('gridLane').value  = '';
+  document.getElementById('gridName').value  = '';
+  document.getElementById('gridSchool').value = '';
+  document.getElementById('gridPhoto').value  = '';
+  document.getElementById('gridPhotoLabel').childNodes[0].textContent = '📷 Choose photo…';
+  pendingGridPhoto = null;
+  renderGridEntries();
+}
+
+function renderGridEntries() {
+  const list = document.getElementById('gridList');
+  if (!gridEntries.length) {
+    list.innerHTML = '<div class="empty-row">No entries yet — add crews below</div>';
+    return;
+  }
+  list.innerHTML = gridEntries.map((e, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card2);border:1px solid var(--line);border-radius:10px;">
+      ${e.image
+        ? `<img src="${escAttr(e.image)}" style="width:52px;height:34px;object-fit:cover;border-radius:4px;flex-shrink:0;">`
+        : `<div style="width:52px;height:34px;background:rgba(255,255,255,0.06);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text2);">no img</div>`}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.lane ? 'Lane '+escAttr(e.lane)+' · ' : ''}${escAttr(e.name)}</div>
+        ${e.school ? `<div style="font-size:11px;color:var(--text2);">${escAttr(e.school)}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        ${i > 0                       ? `<button class="race-del" onclick="moveGrid(${i},-1)" style="color:var(--text2);font-size:14px;">↑</button>` : ''}
+        ${i < gridEntries.length - 1  ? `<button class="race-del" onclick="moveGrid(${i},1)"  style="color:var(--text2);font-size:14px;">↓</button>` : ''}
+        <button class="race-del" onclick="removeGrid(${i})">×</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function moveGrid(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= gridEntries.length) return;
+  [gridEntries[i], gridEntries[j]] = [gridEntries[j], gridEntries[i]];
+  renderGridEntries();
+}
+
+function removeGrid(i) {
+  gridEntries.splice(i, 1);
+  renderGridEntries();
+}
+
+function gridRun() {
+  if (!gridEntries.length) { toast('Add entries first', 'err'); return; }
+  const duration = parseInt(document.getElementById('gridDuration').value) * 1000;
+  send({ type: 'grid-start', entries: gridEntries, duration });
+  document.getElementById('gridRunBtn').disabled = true;
+  document.getElementById('gridStopBtn').disabled = false;
+  toast('Grid running', 'ok');
+}
+
+function gridSendStop() {
+  send({ type: 'grid-stop' });
+  document.getElementById('gridRunBtn').disabled = false;
+  document.getElementById('gridStopBtn').disabled = true;
+}
+
+renderGridEntries();
 renderSchedule();
 wsConnect();
 monConnect();

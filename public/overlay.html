@@ -155,6 +155,116 @@
     }
 
     /* ══════════════════════════════════════════════════════════
+       PRE-RACE GRID INTRO (F1 STYLE)
+    ══════════════════════════════════════════════════════════ */
+    #ov-grid {
+      position: absolute; inset: 0;
+      visibility: hidden; z-index: 18;
+      overflow: hidden;
+      background: #020705;
+    }
+
+    /* Two bg layers for cross-fading between entries */
+    .grid-bg {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      animation: grid-kb 12s ease-out forwards;
+    }
+    @keyframes grid-kb {
+      from { transform: scale(1.0); }
+      to   { transform: scale(1.1); }
+    }
+
+    /* Vignette overlays for legibility */
+    .grid-vignette {
+      position: absolute; inset: 0; pointer-events: none; z-index: 2;
+      background:
+        linear-gradient(180deg,
+          rgba(2,7,5,0.2)  0%,
+          transparent      28%,
+          rgba(2,7,5,0.5)  62%,
+          rgba(2,7,5,0.97) 100%
+        ),
+        linear-gradient(90deg, rgba(2,7,5,0.5) 0%, transparent 50%);
+    }
+
+    /* Top accent line — matches race bar */
+    .grid-topline {
+      position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 10;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(0,168,107,0.55) 8%,
+        #00d87e 28%, #00f096 50%, #00d87e 72%,
+        rgba(0,168,107,0.55) 92%,
+        transparent 100%
+      );
+      box-shadow: 0 0 14px 2px rgba(0,224,140,0.4);
+    }
+
+    /* Entry counter top-right */
+    .grid-counter {
+      position: absolute; top: 60px; right: 80px; z-index: 10;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 700; letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.25);
+    }
+
+    /* Bottom content panel */
+    .grid-panel {
+      position: absolute; bottom: 44px; left: 0; right: 80px; z-index: 10;
+      display: flex; align-items: center;
+    }
+
+    .grid-bar {
+      width: 7px; height: 116px; flex-shrink: 0;
+      background: linear-gradient(180deg, #00f090 0%, #009a5e 100%);
+      margin-right: 52px;
+    }
+
+    .grid-lane-wrap {
+      flex-shrink: 0; text-align: center;
+      padding-right: 52px;
+    }
+    .grid-lane-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; font-weight: 700; letter-spacing: 0.32em;
+      color: #00d87e;
+    }
+    .grid-lane-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 104px; font-weight: 900; line-height: 0.88;
+      color: #fff;
+    }
+
+    .grid-divider {
+      width: 1px; height: 80px; flex-shrink: 0;
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,0.18) 50%, transparent);
+      margin-right: 52px;
+    }
+
+    .grid-info { flex: 1; min-width: 0; }
+    .grid-event-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 80px; font-weight: 900; letter-spacing: 0.04em;
+      text-transform: uppercase; color: #fff; line-height: 1;
+    }
+    .grid-school-name {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 34px; font-weight: 300; font-style: italic;
+      color: rgba(255,255,255,0.46); margin-top: 8px;
+    }
+
+    /* Progress bar — bottom edge */
+    .grid-progress-track {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 3px; z-index: 10;
+      background: rgba(255,255,255,0.07);
+    }
+    .grid-progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #009a5e, #00d87e);
+    }
+
+    /* ══════════════════════════════════════════════════════════
        ALERT FLASH
     ══════════════════════════════════════════════════════════ */
     #ov-alert {
@@ -224,6 +334,30 @@
         <div class="intro-name" id="intro-name">ATHLETE NAME</div>
         <div class="intro-sub"  id="intro-sub"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Pre-Race Grid Intro -->
+  <div id="ov-grid">
+    <div class="grid-bg" id="grid-bg-a"></div>
+    <div class="grid-bg" id="grid-bg-b" style="opacity:0;"></div>
+    <div class="grid-vignette"></div>
+    <div class="grid-topline"></div>
+    <div class="grid-counter" id="grid-counter"></div>
+    <div class="grid-panel" id="grid-panel">
+      <div class="grid-bar"></div>
+      <div class="grid-lane-wrap">
+        <div class="grid-lane-label">LANE</div>
+        <div class="grid-lane-num" id="grid-lane-num">1</div>
+      </div>
+      <div class="grid-divider"></div>
+      <div class="grid-info">
+        <div class="grid-event-name" id="grid-event-name">BOYS VARSITY 1X</div>
+        <div class="grid-school-name" id="grid-school-name">Brooks School</div>
+      </div>
+    </div>
+    <div class="grid-progress-track">
+      <div class="grid-progress-fill" id="grid-progress-fill"></div>
     </div>
   </div>
 
@@ -337,6 +471,95 @@ function showAlert(text, duration) {
   );
 }
 
+// ── pre-race grid intro ───────────────────────────────────────────────
+let gridRunning = false, gridTimer = null, gridActiveBg = 'a';
+
+function gridStart(entries, duration) {
+  if (!entries?.length) return;
+  gridStop();
+  gridRunning = true;
+  const el = document.getElementById('ov-grid');
+  el.style.visibility = 'visible';
+  gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.6, ease: 'power2.out' });
+  gridPlayEntry(entries, 0, duration);
+}
+
+function gridPlayEntry(entries, idx, duration) {
+  if (!gridRunning) return;
+  if (idx >= entries.length) { gridEnd(); return; }
+
+  const entry = entries[idx];
+
+  // Cross-fade backgrounds
+  const next = gridActiveBg === 'a' ? 'b' : 'a';
+  const nextEl = document.getElementById('grid-bg-' + next);
+  const curEl  = document.getElementById('grid-bg-' + gridActiveBg);
+  nextEl.style.backgroundImage = entry.image ? `url("${escUrl(entry.image)}")` : 'none';
+  // Restart Ken Burns on the incoming layer
+  nextEl.style.animation = 'none';
+  void nextEl.offsetWidth;
+  nextEl.style.animation = '';
+  gsap.set(nextEl, { opacity: 0 });
+  gsap.to(nextEl, { opacity: 1, duration: 0.8, ease: 'power2.inOut' });
+  gsap.to(curEl,  { opacity: 0, duration: 0.8, ease: 'power2.inOut' });
+  gridActiveBg = next;
+
+  // Counter
+  document.getElementById('grid-counter').textContent = (idx + 1) + ' • ' + entries.length;
+
+  // Content update helper
+  const update = () => {
+    document.getElementById('grid-lane-num').textContent    = entry.lane || (idx + 1);
+    document.getElementById('grid-event-name').textContent  = (entry.name || '').toUpperCase();
+    document.getElementById('grid-school-name').textContent = entry.school || '';
+  };
+
+  const panel = document.getElementById('grid-panel');
+  if (idx === 0) {
+    update();
+    gsap.fromTo(panel, { y: 48, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' });
+  } else {
+    gsap.to(panel, {
+      y: -24, opacity: 0, duration: 0.28, ease: 'power2.in',
+      onComplete: () => {
+        update();
+        gsap.fromTo(panel, { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' });
+      }
+    });
+  }
+
+  // Progress bar
+  const fill = document.getElementById('grid-progress-fill');
+  gsap.set(fill, { width: '0%' });
+  gsap.to(fill, { width: '100%', duration: duration / 1000, ease: 'none' });
+
+  gridTimer = setTimeout(() => gridPlayEntry(entries, idx + 1, duration), duration);
+}
+
+function gridEnd() {
+  gridRunning = false;
+  if (gridTimer) { clearTimeout(gridTimer); gridTimer = null; }
+  const el = document.getElementById('ov-grid');
+  gsap.to(el, {
+    opacity: 0, duration: 0.7, ease: 'power2.in',
+    onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { opacity: 1 }); }
+  });
+}
+
+function gridStop() {
+  gridRunning = false;
+  if (gridTimer) { clearTimeout(gridTimer); gridTimer = null; }
+  gsap.killTweensOf(document.getElementById('ov-grid'));
+  gsap.killTweensOf(document.getElementById('grid-panel'));
+  const el = document.getElementById('ov-grid');
+  el.style.visibility = 'hidden';
+  gsap.set(el, { opacity: 1 });
+}
+
+function escUrl(s) {
+  return String(s || '').replace(/"/g, '%22');
+}
+
 // ── timer ref ────────────────────────────────────────────────────────
 let timerRunning = false, timerStart = null;
 
@@ -386,6 +609,14 @@ function handle(msg) {
 
     case 'alert':
       showAlert(msg.text, msg.duration);
+      break;
+
+    case 'grid-start':
+      gridStart(msg.entries, msg.duration);
+      break;
+
+    case 'grid-stop':
+      gridStop();
       break;
   }
 }
