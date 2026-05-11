@@ -228,6 +228,7 @@
   <div class="topbar-brand" id="brandName">CREW</div>
   <div class="topbar-right">
     <span id="wsLabel"><span class="dot" id="wsDot"></span>Connecting</span>
+    <a class="pill" href="/setup.html">Setup</a>
     <a class="pill" href="/audio.html">Mic</a>
     <a class="pill" href="/overlay.html" target="_blank">Overlay ↗</a>
     <a class="pill" href="/monitor.html" target="_blank">Monitor ↗</a>
@@ -973,9 +974,9 @@ function renderGridPreview() {
   const entries = buildAthleteGrid();
   const el = document.getElementById('gridPreview');
   if (!el) return;
-  el.textContent = entries.length > 0
+  el.innerHTML = entries.length > 0
     ? entries.length + ' athletes · Girls 6→1 then Boys 6→1'
-    : 'No athletes in roster — add them in Setup';
+    : 'No athletes in roster — add them in <a href="/setup.html" style="color:var(--accent);text-decoration:none;">Setup → Boats</a>';
 }
 
 function gridRun() {
