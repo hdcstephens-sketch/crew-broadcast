@@ -245,7 +245,7 @@
     .grid-info { flex: 1; min-width: 0; }
     .grid-event-name {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 80px; font-weight: 900; letter-spacing: 0.04em;
+      font-size: 68px; font-weight: 900; letter-spacing: 0.04em;
       text-transform: uppercase; color: #fff; line-height: 1;
     }
     .grid-school-name {
@@ -347,7 +347,7 @@
     <div class="grid-panel" id="grid-panel">
       <div class="grid-bar"></div>
       <div class="grid-lane-wrap">
-        <div class="grid-lane-label">LANE</div>
+        <div class="grid-lane-label" id="grid-lane-label">LANE</div>
         <div class="grid-lane-num" id="grid-lane-num">1</div>
       </div>
       <div class="grid-divider"></div>
@@ -509,6 +509,7 @@ function gridPlayEntry(entries, idx, duration) {
 
   // Content update helper
   const update = () => {
+    document.getElementById('grid-lane-label').textContent  = (entry.laneLabel || 'LANE').toUpperCase();
     document.getElementById('grid-lane-num').textContent    = entry.lane || (idx + 1);
     document.getElementById('grid-event-name').textContent  = (entry.name || '').toUpperCase();
     document.getElementById('grid-school-name').textContent = entry.school || '';

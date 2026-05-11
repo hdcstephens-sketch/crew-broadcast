@@ -773,11 +773,12 @@ function handleMessage(clientId, msg) {
     case 'grid-start': {
       if (!client.authenticated) return;
       const entries = Array.isArray(msg.entries)
-        ? msg.entries.slice(0, 20).map(e => ({
-            lane:   String(e.lane   || '').slice(0, 10),
-            name:   String(e.name   || '').slice(0, 80),
-            school: String(e.school || '').slice(0, 80),
-            image:  String(e.image  || '').slice(0, 300)
+        ? msg.entries.slice(0, 200).map(e => ({
+            laneLabel: String(e.laneLabel || 'LANE').slice(0, 20),
+            lane:      String(e.lane   || '').slice(0, 10),
+            name:      String(e.name   || '').slice(0, 80),
+            school:    String(e.school || '').slice(0, 80),
+            image:     String(e.image  || '').slice(0, 300)
           }))
         : [];
       const duration = Math.min(15000, Math.max(2000, Number(msg.duration) || 5000));
