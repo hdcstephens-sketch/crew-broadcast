@@ -220,9 +220,33 @@
       .mode-grid { grid-template-columns: 1fr 1fr 1fr; }
       .alert-grid { grid-template-columns: 1fr 1fr; }
     }
+
+    /* ── hot mic glow ── */
+    #mic-hot-overlay {
+      position: fixed; inset: 0; z-index: 998;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      box-shadow: inset 0 0 0 3px rgba(229,57,53,0.85), inset 0 0 70px rgba(229,57,53,0.25);
+    }
+    #mic-hot-overlay.active {
+      opacity: 1;
+      animation: mic-hot-pulse 2s ease-in-out infinite;
+    }
+    @keyframes mic-hot-pulse {
+      0%, 100% { box-shadow: inset 0 0 0 3px rgba(229,57,53,0.7),  inset 0 0 60px rgba(229,57,53,0.18); }
+      50%       { box-shadow: inset 0 0 0 4px rgba(255,80,70,1.0),  inset 0 0 95px rgba(229,57,53,0.40); }
+    }
+    .dot.recording { background: #e53935; box-shadow: 0 0 7px #e53935; animation: dot-blink 1.2s ease-in-out infinite; }
+    @keyframes dot-blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.45; }
+    }
   </style>
 </head>
 <body>
+
+<div id="mic-hot-overlay"></div>
 
 <div class="topbar">
   <div class="topbar-brand" id="brandName">CREW</div>
@@ -701,16 +725,19 @@ function comChangeMic(id) {
 }
 
 function comSetStatus(s) {
-  const dot  = document.getElementById('comDot');
-  const text = document.getElementById('comStatus');
+  const dot     = document.getElementById('comDot');
+  const text    = document.getElementById('comStatus');
+  const overlay = document.getElementById('mic-hot-overlay');
   if (s === 'live') {
-    dot.className = 'dot live';
-    text.style.color = 'var(--accent)';
-    text.textContent = 'Live — broadcasting';
+    dot.className = 'dot recording';
+    text.style.color = '#ef5350';
+    text.textContent = 'HOT MIC — broadcasting';
+    overlay.classList.add('active');
   } else {
     dot.className = 'dot';
     text.style.color = 'var(--text2)';
     text.textContent = 'Idle — tap Start to go live';
+    overlay.classList.remove('active');
   }
 }
 

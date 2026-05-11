@@ -264,6 +264,13 @@
       background: linear-gradient(90deg, #009a5e, #00d87e);
     }
 
+    /* Flash-cut overlay for grid entrance */
+    #grid-flash {
+      position: absolute; inset: 0; z-index: 25;
+      background: rgba(160,255,210,0.55);
+      opacity: 0; pointer-events: none;
+    }
+
     /* ══════════════════════════════════════════════════════════
        ALERT FLASH
     ══════════════════════════════════════════════════════════ */
@@ -359,6 +366,7 @@
     <div class="grid-progress-track">
       <div class="grid-progress-fill" id="grid-progress-fill"></div>
     </div>
+    <div id="grid-flash"></div>
   </div>
 
   <div id="ov-alert">
@@ -386,41 +394,63 @@
 
 // ── race bar ─────────────────────────────────────────────────────────
 function showBar() {
-  const el = document.getElementById('ov-racebar');
-  gsap.killTweensOf(el);
+  const el      = document.getElementById('ov-racebar');
+  const tag     = el.querySelector('.rb-tag');
+  const content = el.querySelector('.rb-content');
+  gsap.killTweensOf([el, tag, content]);
   el.style.visibility = 'visible';
-  gsap.fromTo(el,
-    { y: 92, opacity: 0 },
-    { y: 0, opacity: 1, duration: 0.52, ease: 'power4.out', clearProps: 'y,opacity' }
-  );
+  gsap.set(el,      { y: 0, opacity: 1 });
+  gsap.set(tag,     { x: -220 });
+  gsap.set(content, { clipPath: 'inset(0 100% 0 0)' });
+  const tl = gsap.timeline();
+  tl.to(tag,     { x: 0, duration: 0.44, ease: 'expo.out' })
+    .to(content, { clipPath: 'inset(0 0% 0 0)', duration: 0.52, ease: 'expo.out' }, 0.08);
 }
 
 function hideBar() {
-  const el = document.getElementById('ov-racebar');
-  gsap.killTweensOf(el);
-  gsap.to(el, {
-    y: 92, opacity: 0, duration: 0.34, ease: 'power3.in',
-    onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { clearProps: 'y,opacity' }); }
+  const el      = document.getElementById('ov-racebar');
+  const tag     = el.querySelector('.rb-tag');
+  const content = el.querySelector('.rb-content');
+  gsap.killTweensOf([el, tag, content]);
+  gsap.set(tag,     { x: 0 });
+  gsap.set(content, { clipPath: 'inset(0 0% 0 0)' });
+  const tl = gsap.timeline({
+    onComplete: () => { el.style.visibility = 'hidden'; gsap.set([el, tag, content], { clearProps: 'all' }); }
   });
+  tl.to(content, { clipPath: 'inset(0 100% 0 0)', duration: 0.22, ease: 'power3.in' })
+    .to(tag,     { x: -220, duration: 0.26, ease: 'power3.in' }, 0.04)
+    .to(el,      { y: 92,   duration: 0.2,  ease: 'power2.in' }, 0.18);
 }
 
 // ── athlete intro ────────────────────────────────────────────────────
 function showIntro() {
-  const el = document.getElementById('ov-intro');
-  gsap.killTweensOf(el);
+  const el     = document.getElementById('ov-intro');
+  const accent = el.querySelector('.intro-accent');
+  const name   = document.getElementById('intro-name');
+  const sub    = document.getElementById('intro-sub');
+  gsap.killTweensOf([el, accent, name, sub]);
   el.style.visibility = 'visible';
-  gsap.fromTo(el,
-    { x: -72, opacity: 0 },
-    { x: 0, opacity: 1, duration: 0.42, ease: 'power3.out' }
-  );
+  gsap.set(el,     { opacity: 1, x: 0, clipPath: 'inset(0 100% 0 0)' });
+  gsap.set(accent, { scaleY: 0, transformOrigin: 'top center' });
+  gsap.set(name,   { opacity: 0, x: -18, letterSpacing: '0.18em' });
+  gsap.set(sub,    { opacity: 0, y: 6 });
+  const tl = gsap.timeline();
+  tl.to(el,     { clipPath: 'inset(0 0% 0 0)', duration: 0.38, ease: 'expo.out' })
+    .to(accent, { scaleY: 1, duration: 0.22, ease: 'power4.out' }, 0.06)
+    .to(name,   { opacity: 1, x: 0, letterSpacing: '0.04em', duration: 0.32, ease: 'power3.out' }, 0.2)
+    .to(sub,    { opacity: 1, y: 0, duration: 0.26, ease: 'power2.out' }, 0.34);
 }
 
 function hideIntro() {
-  const el = document.getElementById('ov-intro');
-  gsap.killTweensOf(el);
+  const el     = document.getElementById('ov-intro');
+  const accent = el.querySelector('.intro-accent');
+  const name   = document.getElementById('intro-name');
+  const sub    = document.getElementById('intro-sub');
+  gsap.killTweensOf([el, accent, name, sub]);
+  gsap.set(el, { clipPath: 'inset(0 0% 0 0)' });
   gsap.to(el, {
-    x: -72, opacity: 0, duration: 0.3, ease: 'power2.in',
-    onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { clearProps: 'x,opacity' }); }
+    clipPath: 'inset(0 100% 0 0)', duration: 0.28, ease: 'power3.in',
+    onComplete: () => { el.style.visibility = 'hidden'; gsap.set([el, accent, name, sub], { clearProps: 'all' }); }
   });
 }
 
@@ -478,9 +508,16 @@ function gridStart(entries, duration) {
   if (!entries?.length) return;
   gridStop();
   gridRunning = true;
-  const el = document.getElementById('ov-grid');
+  const el    = document.getElementById('ov-grid');
+  const flash = document.getElementById('grid-flash');
   el.style.visibility = 'visible';
-  gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.6, ease: 'power2.out' });
+  gsap.set(el, { opacity: 1 });
+  gsap.set(flash, { opacity: 0.85 });
+  gsap.to(flash, { opacity: 0, duration: 0.55, ease: 'power2.out' });
+  gsap.fromTo('.grid-topline',
+    { scaleX: 0, transformOrigin: 'left center' },
+    { scaleX: 1, duration: 0.75, ease: 'expo.out' }
+  );
   gridPlayEntry(entries, 0, duration);
 }
 
@@ -491,11 +528,10 @@ function gridPlayEntry(entries, idx, duration) {
   const entry = entries[idx];
 
   // Cross-fade backgrounds
-  const next = gridActiveBg === 'a' ? 'b' : 'a';
+  const next   = gridActiveBg === 'a' ? 'b' : 'a';
   const nextEl = document.getElementById('grid-bg-' + next);
   const curEl  = document.getElementById('grid-bg-' + gridActiveBg);
   nextEl.style.backgroundImage = entry.image ? `url("${escUrl(entry.image)}")` : 'none';
-  // Restart Ken Burns on the incoming layer
   nextEl.style.animation = 'none';
   void nextEl.offsetWidth;
   nextEl.style.animation = '';
@@ -504,35 +540,71 @@ function gridPlayEntry(entries, idx, duration) {
   gsap.to(curEl,  { opacity: 0, duration: 0.8, ease: 'power2.inOut' });
   gridActiveBg = next;
 
-  // Counter
-  document.getElementById('grid-counter').textContent = (idx + 1) + ' • ' + entries.length;
+  // Counter — pop in with scale bounce
+  const counter = document.getElementById('grid-counter');
+  counter.textContent = (idx + 1) + ' • ' + entries.length;
+  gsap.fromTo(counter, { scale: 1.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: 'back.out(2)' });
 
-  // Content update helper
-  const update = () => {
-    document.getElementById('grid-lane-label').textContent  = (entry.laneLabel || 'LANE').toUpperCase();
-    document.getElementById('grid-lane-num').textContent    = entry.lane || (idx + 1);
-    document.getElementById('grid-event-name').textContent  = (entry.name || '').toUpperCase();
-    document.getElementById('grid-school-name').textContent = entry.school || '';
-  };
+  const panel      = document.getElementById('grid-panel');
+  const bar        = panel.querySelector('.grid-bar');
+  const laneLabel  = document.getElementById('grid-lane-label');
+  const laneNum    = document.getElementById('grid-lane-num');
+  const divider    = panel.querySelector('.grid-divider');
+  const eventName  = document.getElementById('grid-event-name');
+  const schoolName = document.getElementById('grid-school-name');
+  const targetLane = Number(entry.lane || idx + 1);
 
-  const panel = document.getElementById('grid-panel');
-  if (idx === 0) {
-    update();
-    gsap.fromTo(panel, { y: 48, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' });
-  } else {
-    gsap.to(panel, {
-      y: -24, opacity: 0, duration: 0.28, ease: 'power2.in',
-      onComplete: () => {
-        update();
-        gsap.fromTo(panel, { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' });
-      }
-    });
+  function updateText() {
+    laneLabel.textContent  = (entry.laneLabel || 'LANE').toUpperCase();
+    eventName.textContent  = (entry.name || '').toUpperCase();
+    schoolName.textContent = entry.school || '';
+  }
+
+  function countLane(from, to) {
+    const obj = { v: from };
+    gsap.to(obj, { v: to, duration: 0.45, ease: 'power2.out',
+      onUpdate: () => { laneNum.textContent = Math.round(obj.v); } });
   }
 
   // Progress bar
   const fill = document.getElementById('grid-progress-fill');
   gsap.set(fill, { width: '0%' });
   gsap.to(fill, { width: '100%', duration: duration / 1000, ease: 'none' });
+
+  if (idx === 0) {
+    updateText();
+    laneNum.textContent = '0';
+    gsap.set(bar,        { scaleY: 0, transformOrigin: 'top center' });
+    gsap.set(panel,      { opacity: 1, x: 0, y: 0 });
+    gsap.set(laneLabel,  { opacity: 0 });
+    gsap.set(laneNum,    { opacity: 0 });
+    gsap.set(divider,    { opacity: 0, scaleY: 0, transformOrigin: 'center center' });
+    gsap.set(eventName,  { opacity: 0, clipPath: 'inset(0 100% 0 0)' });
+    gsap.set(schoolName, { opacity: 0, y: 10 });
+
+    const tl = gsap.timeline();
+    tl.to(bar,        { scaleY: 1, duration: 0.32, ease: 'power4.out' })
+      .to(laneLabel,  { opacity: 1, duration: 0.2 }, 0.1)
+      .to(laneNum,    { opacity: 1, duration: 0.15 }, 0.14)
+      .add(() => countLane(0, targetLane), 0.14)
+      .to(divider,    { opacity: 1, scaleY: 1, duration: 0.28, ease: 'power3.out' }, 0.2)
+      .to(eventName,  { opacity: 1, clipPath: 'inset(0 0% 0 0)', duration: 0.45, ease: 'expo.out' }, 0.26)
+      .to(schoolName, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, 0.44);
+  } else {
+    const prevLane = Number(laneNum.textContent) || idx;
+    gsap.to(panel, {
+      x: -80, opacity: 0, duration: 0.24, ease: 'power2.in',
+      onComplete: () => {
+        updateText();
+        laneNum.textContent = String(prevLane);
+        gsap.set(eventName, { clipPath: 'inset(0 100% 0 0)' });
+        gsap.set(panel, { x: 70 });
+        gsap.to(panel, { x: 0, opacity: 1, duration: 0.4, ease: 'power3.out' });
+        gsap.to(eventName, { clipPath: 'inset(0 0% 0 0)', duration: 0.4, ease: 'expo.out', delay: 0.06 });
+        countLane(prevLane, targetLane);
+      }
+    });
+  }
 
   gridTimer = setTimeout(() => gridPlayEntry(entries, idx + 1, duration), duration);
 }
@@ -550,11 +622,17 @@ function gridEnd() {
 function gridStop() {
   gridRunning = false;
   if (gridTimer) { clearTimeout(gridTimer); gridTimer = null; }
-  gsap.killTweensOf(document.getElementById('ov-grid'));
-  gsap.killTweensOf(document.getElementById('grid-panel'));
-  const el = document.getElementById('ov-grid');
+  const el    = document.getElementById('ov-grid');
+  const panel = document.getElementById('grid-panel');
+  gsap.killTweensOf(el);
+  gsap.killTweensOf(panel);
+  gsap.killTweensOf(panel.querySelectorAll('*'));
+  gsap.killTweensOf('.grid-topline');
+  gsap.killTweensOf(document.getElementById('grid-counter'));
   el.style.visibility = 'hidden';
-  gsap.set(el, { opacity: 1 });
+  gsap.set(el,    { clearProps: 'all' });
+  gsap.set(panel, { clearProps: 'all' });
+  gsap.set('.grid-topline', { clearProps: 'all' });
 }
 
 function escUrl(s) {
