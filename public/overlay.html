@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0">
   <title>OBS Overlay</title>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Crimson+Pro:ital,wght@0,400;1,400&family=Inter:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Crimson+Pro:ital,wght@0,300;1,300;1,400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -19,116 +19,184 @@
       transform-origin: top left;
     }
 
-    /* ── race bar ────────────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════════
+       RACE BAR
+    ══════════════════════════════════════════════════════════ */
     #ov-racebar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: 88px;
+      height: 92px;
       visibility: hidden;
+    }
+
+    /* Glowing top accent line — sits above .rb-inner so it's not clipped */
+    #ov-racebar::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 20;
+      background: linear-gradient(90deg,
+        rgba(0,80,48,0)       0%,
+        rgba(0,168,107,0.55)  8%,
+        #00d87e              28%,
+        #00f096              50%,
+        #00d87e              72%,
+        rgba(0,168,107,0.55) 92%,
+        rgba(0,80,48,0)      100%
+      );
+      box-shadow: 0 0 14px 2px rgba(0,224,140,0.45);
+      animation: glow-pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0.8; }
+      50%       { opacity: 1;   }
     }
 
     .rb-inner {
       position: absolute; inset: 0;
-      background: #030806;
-      border-top: 3px solid #004830;
+      background: #020705;
       display: flex; align-items: stretch;
+      overflow: hidden;
     }
 
-    /* Left school tag */
+    /* Subtle top-edge colour wash inside the bar */
+    .rb-inner::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 40px; z-index: 1; pointer-events: none;
+      background: linear-gradient(180deg, rgba(0,168,107,0.06) 0%, transparent 100%);
+    }
+
+    /* School tag */
     .rb-tag {
-      width: 218px; flex-shrink: 0;
-      background: #004830;
+      width: 220px; flex-shrink: 0; position: relative; z-index: 3;
+      background: linear-gradient(160deg, #004d34 0%, #002f1d 100%);
       display: flex; align-items: center; justify-content: center;
-      padding: 0 24px;
+      padding: 0 20px;
+    }
+    .rb-tag::after {
+      content: '';
+      position: absolute; right: 0; top: 12px; bottom: 12px; width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(0,216,126,0.22) 50%, transparent);
     }
     .rb-tag-text {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 22px; font-weight: 800;
+      font-size: 21px; font-weight: 800;
       letter-spacing: 0.22em; text-transform: uppercase;
-      color: rgba(255,255,255,0.82);
-      text-align: center; line-height: 1.15;
+      color: rgba(255,255,255,0.7);
+      text-align: center; line-height: 1.3;
     }
 
-    /* Divider */
-    .rb-rule {
-      width: 1px; flex-shrink: 0;
-      background: rgba(255,255,255,0.09);
-    }
-
-    /* Main content */
+    /* Content */
     .rb-content {
-      flex: 1; min-width: 0;
+      flex: 1; min-width: 0; position: relative; z-index: 3;
       display: flex; align-items: center;
-      padding: 0 56px; gap: 28px;
+      padding: 0 64px; gap: 36px;
     }
 
     .rb-name {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 48px; font-weight: 800;
-      letter-spacing: 0.025em; text-transform: uppercase;
+      font-size: 52px; font-weight: 900;
+      letter-spacing: 0.04em; text-transform: uppercase;
       color: #ffffff; white-space: nowrap; line-height: 1;
     }
 
     .rb-sep {
-      width: 1px; height: 34px; flex-shrink: 0;
-      background: rgba(255,255,255,0.16);
+      width: 1px; height: 32px; flex-shrink: 0;
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,0.18) 50%, transparent);
     }
 
     .rb-sub {
       font-family: 'Crimson Pro', Georgia, serif;
-      font-size: 24px; font-weight: 400; font-style: italic;
+      font-size: 27px; font-weight: 300; font-style: italic;
       letter-spacing: 0.01em;
-      color: rgba(255,255,255,0.52);
+      color: rgba(255,255,255,0.42);
       white-space: nowrap;
     }
 
-    /* ── athlete intro ───────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════════
+       ATHLETE INTRO LOWER THIRD
+    ══════════════════════════════════════════════════════════ */
     #ov-intro {
       position: absolute;
-      bottom: 108px; left: 0;
+      bottom: 112px; left: 0;
       visibility: hidden;
     }
+
     .intro-inner {
       display: flex; align-items: stretch;
-      background: #030806;
-      border-top: 3px solid #004830;
-      border-right: 3px solid #004830;
-    }
-    .intro-accent {
-      width: 6px; flex-shrink: 0;
-      background: #004830;
-    }
-    .intro-content {
-      padding: 16px 40px 16px 28px;
-    }
-    .intro-name {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 52px; font-weight: 800;
-      letter-spacing: 0.03em; text-transform: uppercase;
-      color: #ffffff; line-height: 1;
-    }
-    .intro-sub {
-      font-family: 'Crimson Pro', Georgia, serif;
-      font-size: 22px; font-weight: 400; font-style: italic;
-      letter-spacing: 0.01em;
-      color: rgba(255,255,255,0.52);
-      margin-top: 4px;
+      background: #020705;
+      /* Diagonal top-right cut — sports broadcast feel */
+      clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 100%, 0 100%);
+      /* Top border follows the clip boundary */
+      border-top: 2px solid #00d87e;
     }
 
-    /* ── alert flash ─────────────────────────────────────────── */
+    /* Gradient left accent bar */
+    .intro-accent {
+      width: 7px; flex-shrink: 0;
+      background: linear-gradient(180deg, #00f090 0%, #009a5e 100%);
+    }
+
+    .intro-content {
+      padding: 18px 58px 18px 26px;
+    }
+
+    .intro-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 58px; font-weight: 900;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: #ffffff; line-height: 1;
+    }
+
+    .intro-sub {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 25px; font-weight: 300; font-style: italic;
+      color: rgba(255,255,255,0.46);
+      margin-top: 5px;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       ALERT FLASH
+    ══════════════════════════════════════════════════════════ */
     #ov-alert {
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       opacity: 0; pointer-events: none; z-index: 20;
     }
+
+    .alert-inner {
+      position: relative;
+      background: #020705;
+      overflow: hidden;
+    }
+
+    /* Top glow line */
+    .alert-inner::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 2;
+      background: linear-gradient(90deg, transparent 5%, #00d87e 30%, #00f096 50%, #00d87e 70%, transparent 95%);
+      box-shadow: 0 0 14px rgba(0,240,150,0.55);
+    }
+
+    /* Bottom hairline */
+    .alert-inner::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 1px; z-index: 2;
+      background: linear-gradient(90deg, transparent 10%, rgba(0,168,107,0.28) 40%, rgba(0,168,107,0.28) 60%, transparent 90%);
+    }
+
+    /* Subtle inner wash */
+    .alert-wash {
+      position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(180deg, rgba(0,168,107,0.07) 0%, transparent 55%);
+    }
+
     .alert-text {
-      background: #004830;
-      border-top: 3px solid #00c07a;
-      padding: 22px 60px;
+      position: relative; z-index: 3;
+      padding: 22px 80px;
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 52px; font-weight: 800;
-      letter-spacing: 0.1em; text-transform: uppercase;
+      font-size: 56px; font-weight: 900;
+      letter-spacing: 0.12em; text-transform: uppercase;
       color: #fff; white-space: nowrap;
     }
   </style>
@@ -141,7 +209,6 @@
       <div class="rb-tag">
         <div class="rb-tag-text" id="rb-tag">BROOKS<br>SCHOOL</div>
       </div>
-      <div class="rb-rule"></div>
       <div class="rb-content">
         <div class="rb-name" id="rb-name">BOYS VARSITY 1X</div>
         <div class="rb-sep" id="rb-sep"></div>
@@ -160,7 +227,12 @@
     </div>
   </div>
 
-  <div id="ov-alert"><div class="alert-text" id="ov-at"></div></div>
+  <div id="ov-alert">
+    <div class="alert-inner">
+      <div class="alert-wash"></div>
+      <div class="alert-text" id="ov-at"></div>
+    </div>
+  </div>
 
 </div>
 
@@ -168,7 +240,7 @@
 <script>
 'use strict';
 
-// ── scale to viewport ──────────────────────────────────────────────────
+// ── scale to viewport ────────────────────────────────────────────────
 (function() {
   const root = document.getElementById('overlay-root');
   function fit() {
@@ -178,41 +250,47 @@
   fit();
 })();
 
-// ── bar show / hide ────────────────────────────────────────────────────
+// ── race bar ─────────────────────────────────────────────────────────
 function showBar() {
   const el = document.getElementById('ov-racebar');
   gsap.killTweensOf(el);
   el.style.visibility = 'visible';
-  gsap.fromTo(el, { y: 88 }, { y: 0, duration: 0.44, ease: 'power3.out', clearProps: 'y' });
+  gsap.fromTo(el,
+    { y: 92, opacity: 0 },
+    { y: 0, opacity: 1, duration: 0.52, ease: 'power4.out', clearProps: 'y,opacity' }
+  );
 }
 
 function hideBar() {
   const el = document.getElementById('ov-racebar');
   gsap.killTweensOf(el);
   gsap.to(el, {
-    y: 88, duration: 0.3, ease: 'power2.in',
-    onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { clearProps: 'y' }); }
+    y: 92, opacity: 0, duration: 0.34, ease: 'power3.in',
+    onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { clearProps: 'y,opacity' }); }
   });
 }
 
-// ── athlete intro ──────────────────────────────────────────────────────
+// ── athlete intro ────────────────────────────────────────────────────
 function showIntro() {
   const el = document.getElementById('ov-intro');
   gsap.killTweensOf(el);
   el.style.visibility = 'visible';
-  gsap.fromTo(el, { x: -60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.38, ease: 'power3.out' });
+  gsap.fromTo(el,
+    { x: -72, opacity: 0 },
+    { x: 0, opacity: 1, duration: 0.42, ease: 'power3.out' }
+  );
 }
 
 function hideIntro() {
   const el = document.getElementById('ov-intro');
   gsap.killTweensOf(el);
   gsap.to(el, {
-    x: -60, opacity: 0, duration: 0.28, ease: 'power2.in',
+    x: -72, opacity: 0, duration: 0.3, ease: 'power2.in',
     onComplete: () => { el.style.visibility = 'hidden'; gsap.set(el, { clearProps: 'x,opacity' }); }
   });
 }
 
-// ── content ────────────────────────────────────────────────────────────
+// ── content ──────────────────────────────────────────────────────────
 function applyContent(state) {
   if (!state) return;
 
@@ -234,7 +312,6 @@ function applyContent(state) {
   }
 
   if (state.watermark?.text) {
-    // Derive a 2-line tag from the team name (e.g. "Brooks School" → "BROOKS\nSCHOOL")
     const words = state.watermark.text.trim().split(/\s+/);
     document.getElementById('rb-tag').innerHTML =
       words.length > 1
@@ -243,7 +320,7 @@ function applyContent(state) {
   }
 }
 
-// ── alert ──────────────────────────────────────────────────────────────
+// ── alert ────────────────────────────────────────────────────────────
 let alertTimer = null;
 function showAlert(text, duration) {
   const el = document.getElementById('ov-alert');
@@ -251,19 +328,19 @@ function showAlert(text, duration) {
   if (alertTimer) clearTimeout(alertTimer);
   gsap.killTweensOf(el);
   gsap.fromTo(el,
-    { opacity: 0, y: -16 },
-    { opacity: 1, y: 0, duration: 0.32, ease: 'power3.out' }
+    { opacity: 0, scale: 0.94, y: -10 },
+    { opacity: 1, scale: 1,    y: 0,  duration: 0.34, ease: 'power3.out' }
   );
   alertTimer = setTimeout(() =>
-    gsap.to(el, { opacity: 0, y: -10, duration: 0.4, ease: 'power2.in' }),
+    gsap.to(el, { opacity: 0, scale: 0.97, y: -8, duration: 0.38, ease: 'power2.in' }),
     Math.max(1, duration || 3) * 1000
   );
 }
 
-// ── timer (reference only — not shown, keeps server state in sync) ─────
+// ── timer ref ────────────────────────────────────────────────────────
 let timerRunning = false, timerStart = null;
 
-// ── websocket ──────────────────────────────────────────────────────────
+// ── websocket ────────────────────────────────────────────────────────
 let ws;
 
 function connect() {
@@ -291,16 +368,11 @@ function handle(msg) {
     }
 
     case 'toggle':
-      if (msg.element === 'eventHeader') {
-        if (msg.active) showBar(); else hideBar();
-      }
-      if (msg.element === 'lowerThird') {
-        if (msg.active) showIntro(); else hideIntro();
-      }
+      if (msg.element === 'eventHeader') { if (msg.active) showBar();  else hideBar();  }
+      if (msg.element === 'lowerThird')  { if (msg.active) showIntro(); else hideIntro(); }
       break;
 
     case 'save-widgets':
-      // server echoes back as a state broadcast
       break;
 
     case 'update':
