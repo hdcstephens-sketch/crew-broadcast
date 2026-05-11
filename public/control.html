@@ -188,6 +188,34 @@
     .preview-aspect { width: 100%; aspect-ratio: 16/9; position: relative; overflow: hidden; border-radius: 12px; background: #000; border: 1px solid var(--line); }
     .preview-aspect iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: none; transform-origin: 0 0; }
 
+    /* ── audio chain ── */
+    .chain { display: flex; align-items: stretch; gap: 0; }
+    .chain-block {
+      flex: 1; min-width: 0;
+      background: var(--card2); border: 1px solid var(--line); border-radius: 12px;
+      padding: 12px 10px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .chain-arrow { display: flex; align-items: center; padding: 0 5px; color: rgba(255,255,255,0.18); font-size: 18px; flex-shrink: 0; }
+    .chain-label { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text2); }
+    .fader-row { display: flex; gap: 10px; align-items: flex-end; }
+    .fader-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .fader-val { font-size: 10px; font-weight: 600; color: var(--accent); min-width: 28px; text-align: center; line-height: 1; }
+    .fader-lbl { font-size: 9px; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; }
+    input[type=range].vfader {
+      writing-mode: vertical-lr; direction: rtl;
+      width: 26px; height: 72px;
+      accent-color: var(--accent); cursor: pointer;
+      -webkit-appearance: slider-vertical;
+    }
+    .comp-btn {
+      width: 100%; padding: 7px 0; border-radius: 8px;
+      border: 1px solid var(--line); background: transparent;
+      color: var(--text2); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.1em; cursor: pointer; font-family: inherit; transition: 0.15s;
+    }
+    .comp-btn.on { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
     @media (max-width: 420px) {
       .mode-grid { grid-template-columns: 1fr 1fr 1fr; }
       .alert-grid { grid-template-columns: 1fr 1fr; }
@@ -256,7 +284,53 @@
     </div>
   </div>
 
-  <!-- ── 5. Monitor ─────────────────────────────────────────── -->
+  <!-- ── 5. Audio Chain ───────────────────────────────────────── -->
+  <div class="card">
+    <div class="sec-label">Audio Chain</div>
+    <div class="chain">
+      <div class="chain-block">
+        <div class="chain-label">EQ</div>
+        <div class="fader-row">
+          <div class="fader-col">
+            <div class="fader-val" id="eqLowVal">0</div>
+            <input type="range" class="vfader" id="eqLowFader" min="-12" max="12" step="0.5" value="0" oninput="setEQ('low',this.value)">
+            <div class="fader-lbl">Low</div>
+          </div>
+          <div class="fader-col">
+            <div class="fader-val" id="eqMidVal">0</div>
+            <input type="range" class="vfader" id="eqMidFader" min="-12" max="12" step="0.5" value="0" oninput="setEQ('mid',this.value)">
+            <div class="fader-lbl">Mid</div>
+          </div>
+          <div class="fader-col">
+            <div class="fader-val" id="eqHighVal">0</div>
+            <input type="range" class="vfader" id="eqHighFader" min="-12" max="12" step="0.5" value="0" oninput="setEQ('high',this.value)">
+            <div class="fader-lbl">High</div>
+          </div>
+        </div>
+      </div>
+      <div class="chain-arrow">›</div>
+      <div class="chain-block">
+        <div class="chain-label">Comp</div>
+        <button class="comp-btn" id="compBtn" onclick="toggleComp()">OFF</button>
+        <div class="fader-col">
+          <div class="fader-val" id="compThreshVal">-24</div>
+          <input type="range" class="vfader" id="compThreshFader" min="-60" max="0" step="1" value="-24" oninput="setCompThresh(this.value)">
+          <div class="fader-lbl">Thr</div>
+        </div>
+      </div>
+      <div class="chain-arrow">›</div>
+      <div class="chain-block">
+        <div class="chain-label">Gain</div>
+        <div class="fader-col">
+          <div class="fader-val" id="gainFaderVal">1.0×</div>
+          <input type="range" class="vfader" id="gainFader" min="0" max="2" step="0.05" value="1" oninput="setGainFader(this.value)">
+          <div class="fader-lbl">Out</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 6. Monitor ─────────────────────────────────────────── -->
   <div class="card">
     <div class="sec-label">Audio Monitor</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -494,8 +568,14 @@ document.addEventListener('keydown', e => {
 
 // ── commentary (on-land broadcast) ───────────────────────────────────
 let comStream = null, comCtx = null, comSource = null, comAnalyser = null;
+let comEqLow = null, comEqMid = null, comEqHigh = null, comComp = null;
 let comGain = null, comDest = null, comRecorder = null, comMeterRaf = null;
 let comMicId = '', comLive = false;
+
+// Audio chain state (persists across restarts)
+let chainEqLow = 0, chainEqMid = 0, chainEqHigh = 0;
+let chainCompOn = false, chainCompThresh = -24;
+let chainGain = 1.0;
 
 async function comRefreshMics() {
   try {
@@ -519,13 +599,29 @@ async function comStart() {
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true,
                ...(comMicId ? { deviceId: { exact: comMicId } } : {}) }
     });
-    comCtx     = new (window.AudioContext || window.webkitAudioContext)();
-    comSource  = comCtx.createMediaStreamSource(comStream);
-    comAnalyser= comCtx.createAnalyser(); comAnalyser.fftSize = 256;
-    comGain    = comCtx.createGain(); comGain.gain.value = 1;
-    comDest    = comCtx.createMediaStreamDestination();
+    comCtx      = new (window.AudioContext || window.webkitAudioContext)();
+    comSource   = comCtx.createMediaStreamSource(comStream);
+    comAnalyser = comCtx.createAnalyser(); comAnalyser.fftSize = 256;
+
+    comEqLow = comCtx.createBiquadFilter();
+    comEqLow.type = 'lowshelf'; comEqLow.frequency.value = 120; comEqLow.gain.value = chainEqLow;
+    comEqMid = comCtx.createBiquadFilter();
+    comEqMid.type = 'peaking'; comEqMid.frequency.value = 1800; comEqMid.Q.value = 1.2; comEqMid.gain.value = chainEqMid;
+    comEqHigh = comCtx.createBiquadFilter();
+    comEqHigh.type = 'highshelf'; comEqHigh.frequency.value = 6000; comEqHigh.gain.value = chainEqHigh;
+
+    comComp = comCtx.createDynamicsCompressor();
+    applyCompSettings();
+
+    comGain = comCtx.createGain(); comGain.gain.value = chainGain;
+    comDest = comCtx.createMediaStreamDestination();
+
     comSource.connect(comAnalyser);
-    comSource.connect(comGain);
+    comSource.connect(comEqLow);
+    comEqLow.connect(comEqMid);
+    comEqMid.connect(comEqHigh);
+    comEqHigh.connect(comComp);
+    comComp.connect(comGain);
     comGain.connect(comDest);
 
     const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4']
@@ -559,7 +655,8 @@ function comStop() {
   comStream?.getTracks().forEach(t => t.stop());
   comStream = null;
   if (comCtx) comCtx.close().catch(() => {});
-  comCtx = comSource = comAnalyser = comGain = comDest = null;
+  comCtx = comSource = comAnalyser = null;
+  comEqLow = comEqMid = comEqHigh = comComp = comGain = comDest = null;
   comLive = false;
   comSetStatus('idle');
   comStopMeter();
@@ -603,6 +700,52 @@ function comStopMeter() {
   if (comMeterRaf) { cancelAnimationFrame(comMeterRaf); comMeterRaf = null; }
   document.getElementById('comMeter').style.width = '0%';
   document.getElementById('comLevel').textContent = '0%';
+}
+
+// ── audio chain controls ──────────────────────────────────────────────
+function setEQ(band, raw) {
+  const v = parseFloat(raw);
+  const label = (v > 0 ? '+' : '') + v;
+  if (band === 'low')  { chainEqLow  = v; if (comEqLow)  comEqLow.gain.value  = v; document.getElementById('eqLowVal').textContent  = label; }
+  if (band === 'mid')  { chainEqMid  = v; if (comEqMid)  comEqMid.gain.value  = v; document.getElementById('eqMidVal').textContent  = label; }
+  if (band === 'high') { chainEqHigh = v; if (comEqHigh) comEqHigh.gain.value = v; document.getElementById('eqHighVal').textContent = label; }
+}
+
+function setGainFader(raw) {
+  chainGain = parseFloat(raw);
+  if (comGain) comGain.gain.value = chainGain;
+  document.getElementById('gainFaderVal').textContent = chainGain.toFixed(2) + '×';
+}
+
+function setCompThresh(raw) {
+  chainCompThresh = parseInt(raw);
+  document.getElementById('compThreshVal').textContent = chainCompThresh + 'dB';
+  applyCompSettings();
+}
+
+function toggleComp() {
+  chainCompOn = !chainCompOn;
+  const btn = document.getElementById('compBtn');
+  btn.textContent = chainCompOn ? 'ON' : 'OFF';
+  btn.className   = 'comp-btn' + (chainCompOn ? ' on' : '');
+  applyCompSettings();
+}
+
+function applyCompSettings() {
+  if (!comComp) return;
+  if (chainCompOn) {
+    comComp.threshold.value = chainCompThresh;
+    comComp.knee.value      = 8;
+    comComp.ratio.value     = 4;
+    comComp.attack.value    = 0.003;
+    comComp.release.value   = 0.25;
+  } else {
+    comComp.threshold.value = 0;
+    comComp.knee.value      = 0;
+    comComp.ratio.value     = 1;
+    comComp.attack.value    = 0;
+    comComp.release.value   = 0;
+  }
 }
 
 // ── audio monitor ─────────────────────────────────────────────────────
