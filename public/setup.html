@@ -225,8 +225,9 @@
 <div class="tab-content" id="tab-boats">
   <div class="boats-layout">
     <div class="left-panel">
-      <div class="panel-header">
+      <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;">
         <span class="panel-title">Boat Library</span>
+        <button class="btn-sm" onclick="openRosterImport()" style="font-size:11px;padding:4px 10px;">CSV Import</button>
       </div>
       <div class="list-scroll" id="boatList"></div>
     </div>
@@ -295,6 +296,25 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeImport()">Cancel</button>
       <button class="btn-sm" id="importApplyBtn" style="display:none;padding:7px 16px;font-size:13px" onclick="applyImport()">Add to Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- roster CSV import modal -->
+<div class="modal-bg" id="rosterImportModal">
+  <div class="modal">
+    <h3>Roster CSV Import</h3>
+    <p>Paste your spreadsheet data below. Use three columns: <strong>Boat, Name, Seat</strong>. The first row can be a header — it will be skipped automatically.</p>
+    <p style="font-family:monospace;font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:10px 12px;white-space:pre;line-height:1.7;">Boat,Name,Seat
+Boys Varsity 1,John Smith,Stroke
+Boys Varsity 1,Mike Johnson,7
+Girls JV 2,Jane Doe,Cox</p>
+    <p>Valid boat names: <span style="color:var(--accent)">Boys Varsity 1–4, Boys JV 1–2, Girls Varsity 1–4, Girls JV 1–2</span>. Seat is optional.</p>
+    <textarea id="rosterImportText" placeholder="Paste CSV here…" style="min-height:180px;font-family:monospace;font-size:12px;"></textarea>
+    <div id="rosterImportFeedback" style="font-size:12px;color:var(--text2);min-height:18px;"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeRosterImport()">Cancel</button>
+      <button class="btn-sm" onclick="applyRosterImport()" style="padding:7px 16px;font-size:13px;">Import →</button>
     </div>
   </div>
 </div>
@@ -1005,6 +1025,86 @@ function saveConditions() {
   const water = document.getElementById('cond-water').value.trim().slice(0, 40);
   wsSend({ type: 'conditions-save', wind, air, water });
   toast('Conditions saved', 'ok');
+}
+
+/* ══════════════════════════════════════════════════════
+   ROSTER CSV IMPORT
+══════════════════════════════════════════════════════ */
+const ROSTER_NAME_MAP = (() => {
+  const m = {};
+  Object.entries(BOAT_LABELS).forEach(([id, label]) => {
+    m[label.toLowerCase().replace(/\s+/g, '')] = id;
+  });
+  // common shorthands
+  m['bv1'] = 'boys-varsity-1'; m['bv2'] = 'boys-varsity-2';
+  m['bv3'] = 'boys-varsity-3'; m['bv4'] = 'boys-varsity-4';
+  m['bjv1'] = 'boys-jv-1';     m['bjv2'] = 'boys-jv-2';
+  m['gv1'] = 'girls-varsity-1';m['gv2'] = 'girls-varsity-2';
+  m['gv3'] = 'girls-varsity-3';m['gv4'] = 'girls-varsity-4';
+  m['gjv1'] = 'girls-jv-1';    m['gjv2'] = 'girls-jv-2';
+  return m;
+})();
+
+function resolveBoatId(raw) {
+  const key = raw.trim().toLowerCase().replace(/\s+/g, '');
+  return ROSTER_NAME_MAP[key] || null;
+}
+
+function openRosterImport() {
+  document.getElementById('rosterImportText').value = '';
+  document.getElementById('rosterImportFeedback').textContent = '';
+  document.getElementById('rosterImportModal').classList.add('show');
+}
+function closeRosterImport() {
+  document.getElementById('rosterImportModal').classList.remove('show');
+}
+
+function applyRosterImport() {
+  const raw = document.getElementById('rosterImportText').value;
+  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) { document.getElementById('rosterImportFeedback').textContent = 'Nothing to import.'; return; }
+
+  // skip header row if it looks like one
+  const first = lines[0].toLowerCase();
+  const startIdx = (first.includes('boat') || first.includes('name')) ? 1 : 0;
+
+  let added = 0, skipped = 0;
+  const errors = [];
+
+  lines.slice(startIdx).forEach((line, i) => {
+    // support tab or comma separation
+    const parts = line.includes('\t') ? line.split('\t') : line.split(',');
+    const boatRaw = (parts[0] || '').trim();
+    const name    = (parts[1] || '').trim();
+    const seat    = (parts[2] || '').trim();
+
+    if (!boatRaw || !name) { skipped++; return; }
+
+    const boatId = resolveBoatId(boatRaw);
+    if (!boatId) { errors.push(`Row ${startIdx + i + 1}: unknown boat "${boatRaw}"`); skipped++; return; }
+
+    if (!boats[boatId]) boats[boatId] = { id: boatId, name: BOAT_LABELS[boatId] || boatId, boatClass: '', athletes: [] };
+    if (!Array.isArray(boats[boatId].athletes)) boats[boatId].athletes = [];
+
+    boats[boatId].athletes.push({ id: 'a' + Math.random().toString(36).slice(2), name, seat, photoPath: '' });
+    added++;
+  });
+
+  const fb = document.getElementById('rosterImportFeedback');
+  if (errors.length) {
+    fb.style.color = 'var(--danger)';
+    fb.textContent = errors.slice(0, 3).join(' | ') + (errors.length > 3 ? ' …' : '');
+  } else {
+    fb.style.color = 'var(--accent)';
+    fb.textContent = `Added ${added} athlete${added !== 1 ? 's' : ''}${skipped ? `, skipped ${skipped}` : ''}.`;
+  }
+
+  if (added > 0) {
+    setDirty(true);
+    renderBoatList();
+    if (selectedBoatId) renderBoatEditor(selectedBoatId);
+    if (!errors.length) setTimeout(closeRosterImport, 900);
+  }
 }
 
 /* ══════════════════════════════════════════════════════
