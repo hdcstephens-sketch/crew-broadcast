@@ -969,31 +969,88 @@ function toggleGrid(btn) {
   document.getElementById('gridArrow').textContent = gridOpen ? '▲' : '▼';
 }
 
-const BOAT_ORDER = [
+// Girls + Boys JV pull from the live roster; Men's V are hardcoded below.
+const ROSTER_BOAT_ORDER = [
   ['girls-jv-2',      6], ['girls-jv-1',      5],
   ['girls-varsity-4', 4], ['girls-varsity-3',  3],
   ['girls-varsity-2', 2], ['girls-varsity-1',  1],
   ['boys-jv-2',       6], ['boys-jv-1',        5],
-  ['boys-varsity-4',  4], ['boys-varsity-3',   3],
-  ['boys-varsity-2',  2], ['boys-varsity-1',   1],
+];
+
+// Men's V — exact order and athletes for today's race
+const MENS_V_BOATS = [
+  {
+    name: 'Perseverance', lane: '1',
+    athletes: [
+      { seat: 'Cox',    name: 'Lilly Byrnes' },
+      { seat: 'Stroke', name: 'Kaden Almaraz' },
+      { seat: '3',      name: 'Julian Wei' },
+      { seat: '2',      name: 'Armaun Dehpanah' },
+      { seat: 'Bow',    name: 'Rohan Amin' },
+    ]
+  },
+  {
+    name: 'XBOAT', lane: '2',
+    athletes: [
+      { seat: 'Cox',    name: 'Enna Doran' },
+      { seat: 'Stroke', name: 'Angus Sullivan' },
+      { seat: '3',      name: 'John Zaccaro' },
+      { seat: '2',      name: 'Jack Rousmaniere' },
+      { seat: 'Bow',    name: 'James Skowronek' },
+    ]
+  },
+  {
+    name: 'TJ', lane: '3',
+    athletes: [
+      { seat: 'Cox',    name: 'Enna Doran' },
+      { seat: 'Stroke', name: 'Sam Oblak' },
+      { seat: '3',      name: 'Wakeman Gribbell' },
+      { seat: '2',      name: 'Peschel' },
+      { seat: 'Bow',    name: 'Keanan Crott' },
+    ]
+  },
+  {
+    name: 'The Zezza', lane: '4',
+    athletes: [
+      { seat: 'Cox',    name: 'Maddie Macallister' },
+      { seat: 'Stroke', name: 'Kevin Kahu' },
+      { seat: '3',      name: 'Paul Rhee' },
+      { seat: '2',      name: 'Brin Ferrone' },
+      { seat: 'Bow',    name: 'Luke Ferrone' },
+    ]
+  },
 ];
 
 function buildAthleteGrid() {
   const entries = [];
-  BOAT_ORDER.forEach(([id, num]) => {
+
+  // Girls Varsity + Boys JV — live roster
+  ROSTER_BOAT_ORDER.forEach(([id, num]) => {
     const boat = boats[id];
-    if (!boat || !boat.athletes?.length) return;
+    if (!boat?.athletes?.length) return;
     boat.athletes.forEach(athlete => {
       if (!athlete.name) return;
       entries.push({
-        laneLabel: 'BOAT',
-        lane: String(num),
+        laneLabel: 'BOAT', lane: String(num),
         name: athlete.name,
         school: (athlete.seat ? athlete.seat + ' · ' : '') + (boat.name || id),
         image: athlete.photoPath || ''
       });
     });
   });
+
+  // Men's V — hardcoded: Perseverance → XBOAT → TJ → The Zezza
+  MENS_V_BOATS.forEach(boat => {
+    boat.athletes.forEach(athlete => {
+      entries.push({
+        laneLabel: 'BOAT', lane: boat.lane,
+        name: athlete.name,
+        school: athlete.seat + ' · ' + boat.name,
+        image: ''
+      });
+    });
+  });
+
   return entries;
 }
 
@@ -1001,8 +1058,9 @@ function renderGridPreview() {
   const entries = buildAthleteGrid();
   const el = document.getElementById('gridPreview');
   if (!el) return;
+  const mensVCount = MENS_V_BOATS.reduce((n, b) => n + b.athletes.length, 0);
   el.innerHTML = entries.length > 0
-    ? entries.length + ' athletes · Girls 6→1 then Boys 6→1'
+    ? entries.length + ' athletes · Girls → Boys JV → <strong style="color:var(--text)">Perseverance · XBOAT · TJ · The Zezza</strong> (' + mensVCount + ' hardcoded)'
     : 'No athletes in roster — add them in <a href="/setup.html" style="color:var(--accent);text-decoration:none;">Setup → Boats</a>';
 }
 
