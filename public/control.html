@@ -220,33 +220,9 @@
       .mode-grid { grid-template-columns: 1fr 1fr 1fr; }
       .alert-grid { grid-template-columns: 1fr 1fr; }
     }
-
-    /* ── hot mic glow ── */
-    #mic-hot-overlay {
-      position: fixed; inset: 0; z-index: 998;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-      box-shadow: inset 0 0 0 3px rgba(229,57,53,0.85), inset 0 0 70px rgba(229,57,53,0.25);
-    }
-    #mic-hot-overlay.active {
-      opacity: 1;
-      animation: mic-hot-pulse 2s ease-in-out infinite;
-    }
-    @keyframes mic-hot-pulse {
-      0%, 100% { box-shadow: inset 0 0 0 3px rgba(229,57,53,0.7),  inset 0 0 60px rgba(229,57,53,0.18); }
-      50%       { box-shadow: inset 0 0 0 4px rgba(255,80,70,1.0),  inset 0 0 95px rgba(229,57,53,0.40); }
-    }
-    .dot.recording { background: #e53935; box-shadow: 0 0 7px #e53935; animation: dot-blink 1.2s ease-in-out infinite; }
-    @keyframes dot-blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.45; }
-    }
   </style>
 </head>
 <body>
-
-<div id="mic-hot-overlay"></div>
 
 <div class="topbar">
   <div class="topbar-brand" id="brandName">CREW</div>
@@ -725,19 +701,16 @@ function comChangeMic(id) {
 }
 
 function comSetStatus(s) {
-  const dot     = document.getElementById('comDot');
-  const text    = document.getElementById('comStatus');
-  const overlay = document.getElementById('mic-hot-overlay');
+  const dot  = document.getElementById('comDot');
+  const text = document.getElementById('comStatus');
   if (s === 'live') {
-    dot.className = 'dot recording';
-    text.style.color = '#ef5350';
-    text.textContent = 'HOT MIC — broadcasting';
-    overlay.classList.add('active');
+    dot.className = 'dot live';
+    text.style.color = 'var(--accent)';
+    text.textContent = 'Live — broadcasting';
   } else {
     dot.className = 'dot';
     text.style.color = 'var(--text2)';
     text.textContent = 'Idle — tap Start to go live';
-    overlay.classList.remove('active');
   }
 }
 
@@ -969,88 +942,31 @@ function toggleGrid(btn) {
   document.getElementById('gridArrow').textContent = gridOpen ? '▲' : '▼';
 }
 
-// Girls + Boys JV pull from the live roster; Men's V are hardcoded below.
-const ROSTER_BOAT_ORDER = [
+const BOAT_ORDER = [
   ['girls-jv-2',      6], ['girls-jv-1',      5],
   ['girls-varsity-4', 4], ['girls-varsity-3',  3],
   ['girls-varsity-2', 2], ['girls-varsity-1',  1],
   ['boys-jv-2',       6], ['boys-jv-1',        5],
-];
-
-// Men's V — exact order and athletes for today's race
-const MENS_V_BOATS = [
-  {
-    name: 'Perseverance', lane: '1',
-    athletes: [
-      { seat: 'Cox',    name: 'Lilly Byrnes' },
-      { seat: 'Stroke', name: 'Kaden Almaraz' },
-      { seat: '3',      name: 'Julian Wei' },
-      { seat: '2',      name: 'Armaun Dehpanah' },
-      { seat: 'Bow',    name: 'Rohan Amin' },
-    ]
-  },
-  {
-    name: 'XBOAT', lane: '2',
-    athletes: [
-      { seat: 'Cox',    name: 'Enna Doran' },
-      { seat: 'Stroke', name: 'Angus Sullivan' },
-      { seat: '3',      name: 'John Zaccaro' },
-      { seat: '2',      name: 'Jack Rousmaniere' },
-      { seat: 'Bow',    name: 'James Skowronek' },
-    ]
-  },
-  {
-    name: 'TJ', lane: '3',
-    athletes: [
-      { seat: 'Cox',    name: 'Enna Doran' },
-      { seat: 'Stroke', name: 'Sam Oblak' },
-      { seat: '3',      name: 'Wakeman Gribbell' },
-      { seat: '2',      name: 'Peschel' },
-      { seat: 'Bow',    name: 'Keanan Crott' },
-    ]
-  },
-  {
-    name: 'The Zezza', lane: '4',
-    athletes: [
-      { seat: 'Cox',    name: 'Maddie Macallister' },
-      { seat: 'Stroke', name: 'Kevin Kahu' },
-      { seat: '3',      name: 'Paul Rhee' },
-      { seat: '2',      name: 'Brin Ferrone' },
-      { seat: 'Bow',    name: 'Luke Ferrone' },
-    ]
-  },
+  ['boys-varsity-4',  4], ['boys-varsity-3',   3],
+  ['boys-varsity-2',  2], ['boys-varsity-1',   1],
 ];
 
 function buildAthleteGrid() {
   const entries = [];
-
-  // Girls Varsity + Boys JV — live roster
-  ROSTER_BOAT_ORDER.forEach(([id, num]) => {
+  BOAT_ORDER.forEach(([id, num]) => {
     const boat = boats[id];
-    if (!boat?.athletes?.length) return;
+    if (!boat || !boat.athletes?.length) return;
     boat.athletes.forEach(athlete => {
       if (!athlete.name) return;
       entries.push({
-        laneLabel: 'BOAT', lane: String(num),
+        laneLabel: 'BOAT',
+        lane: String(num),
         name: athlete.name,
         school: (athlete.seat ? athlete.seat + ' · ' : '') + (boat.name || id),
         image: athlete.photoPath || ''
       });
     });
   });
-
-  // Men's V — hardcoded: Perseverance → XBOAT → TJ → The Zezza
-  MENS_V_BOATS.forEach(boat => {
-    boat.athletes.forEach(athlete => {
-      entries.push({
-        laneLabel: 'BOAT', lane: boat.lane,
-        name: athlete.name,
-        school: athlete.seat + ' · ' + boat.name,
-        image: ''
-      });
-    });
-  });
-
   return entries;
 }
 
@@ -1058,9 +974,8 @@ function renderGridPreview() {
   const entries = buildAthleteGrid();
   const el = document.getElementById('gridPreview');
   if (!el) return;
-  const mensVCount = MENS_V_BOATS.reduce((n, b) => n + b.athletes.length, 0);
   el.innerHTML = entries.length > 0
-    ? entries.length + ' athletes · Girls → Boys JV → <strong style="color:var(--text)">Perseverance · XBOAT · TJ · The Zezza</strong> (' + mensVCount + ' hardcoded)'
+    ? entries.length + ' athletes · Girls 6→1 then Boys 6→1'
     : 'No athletes in roster — add them in <a href="/setup.html" style="color:var(--accent);text-decoration:none;">Setup → Boats</a>';
 }
 
