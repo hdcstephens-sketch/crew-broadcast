@@ -141,39 +141,6 @@
     .sel:focus { border-color: var(--accent); }
     .sel:disabled { opacity: 0.4; }
 
-    /* ── quick inputs ── */
-    .quick-input {
-      width: 100%; background: var(--card2); border: 1px solid var(--line);
-      border-radius: 10px; padding: 10px 12px; color: var(--text);
-      font-size: 14px; font-family: inherit; outline: none; margin-bottom: 8px;
-    }
-    .quick-input:focus { border-color: var(--accent); }
-    .quick-input::placeholder { color: var(--text2); }
-    .quick-input:last-child { margin-bottom: 0; }
-
-    /* ── action button ── */
-    .action-btn {
-      padding: 10px 16px; border-radius: 11px; border: 1px solid var(--accent);
-      background: var(--accent-dim); color: var(--accent);
-      font-size: 13px; font-weight: 600; font-family: inherit;
-      cursor: pointer; transition: 0.13s;
-    }
-    .action-btn:hover { background: var(--accent); color: #fff; }
-    .action-btn.ghost { border-color: var(--line); background: var(--card2); color: var(--text2); }
-    .action-btn.ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-    .action-btn.full { width: 100%; text-align: center; padding: 13px; font-size: 14px; }
-
-    /* ── schedule (collapsed) ── */
-    .collapse-btn {
-      width: 100%; padding: 13px 16px; background: var(--card); border: 1px solid var(--line);
-      border-radius: var(--r); color: var(--text2); font-size: 13px; font-weight: 600;
-      cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between;
-      font-family: inherit;
-    }
-    .collapse-btn:hover { color: var(--text); border-color: var(--accent); }
-    .collapse-body { padding-top: 16px; display: flex; flex-direction: column; gap: 14px; }
-    .collapse-body.hidden { display: none; }
-
     /* ── toasts ── */
     #toasts { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 999; }
     .toast { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #fff; }
@@ -187,34 +154,6 @@
     .modal-close { background: none; border: none; color: var(--text2); font-size: 24px; cursor: pointer; line-height: 1; }
     .preview-aspect { width: 100%; aspect-ratio: 16/9; position: relative; overflow: hidden; border-radius: 12px; background: #000; border: 1px solid var(--line); }
     .preview-aspect iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: none; transform-origin: 0 0; }
-
-    /* ── audio chain ── */
-    .chain { display: flex; align-items: stretch; gap: 0; }
-    .chain-block {
-      flex: 1; min-width: 0;
-      background: var(--card2); border: 1px solid var(--line); border-radius: 12px;
-      padding: 12px 10px 10px;
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-    }
-    .chain-arrow { display: flex; align-items: center; padding: 0 5px; color: rgba(255,255,255,0.18); font-size: 18px; flex-shrink: 0; }
-    .chain-label { font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text2); }
-    .fader-row { display: flex; gap: 10px; align-items: flex-end; }
-    .fader-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .fader-val { font-size: 10px; font-weight: 600; color: var(--accent); min-width: 28px; text-align: center; line-height: 1; }
-    .fader-lbl { font-size: 9px; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; }
-    input[type=range].vfader {
-      writing-mode: vertical-lr; direction: rtl;
-      width: 26px; height: 72px;
-      accent-color: var(--accent); cursor: pointer;
-      -webkit-appearance: slider-vertical;
-    }
-    .comp-btn {
-      width: 100%; padding: 7px 0; border-radius: 8px;
-      border: 1px solid var(--line); background: transparent;
-      color: var(--text2); font-size: 11px; font-weight: 700;
-      letter-spacing: 0.1em; cursor: pointer; font-family: inherit; transition: 0.15s;
-    }
-    .comp-btn.on { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 
     @media (max-width: 420px) {
       .mode-grid { grid-template-columns: 1fr 1fr 1fr; }
@@ -258,18 +197,7 @@
     </div>
   </div>
 
-  <!-- ── 3. Athlete Intro ────────────────────────────────── -->
-  <div class="card">
-    <div class="sec-label">Athlete Intro</div>
-    <input class="quick-input" id="introName" placeholder="Athlete name…">
-    <input class="quick-input" id="introSub"  placeholder="Event / boat — e.g. Boys Varsity 1x">
-    <div class="btn-row">
-      <button class="btn btn-go" onclick="showIntro()">Show</button>
-      <button class="btn"        onclick="hideIntro()">Hide</button>
-    </div>
-  </div>
-
-  <!-- ── 4. Commentary ────────────────────────────────────── -->
+  <!-- ── 3. Commentary ────────────────────────────────────── -->
   <div class="card">
     <div class="sec-label">Commentary</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -287,53 +215,7 @@
     </div>
   </div>
 
-  <!-- ── 5. Audio Chain ───────────────────────────────────────── -->
-  <div class="card">
-    <div class="sec-label">Audio Chain</div>
-    <div class="chain">
-      <div class="chain-block">
-        <div class="chain-label">EQ</div>
-        <div class="fader-row">
-          <div class="fader-col">
-            <div class="fader-val" id="eqLowVal">0</div>
-            <input type="range" class="vfader" id="eqLowFader" min="-12" max="12" step="0.5" value="0" oninput="setEQ('low',this.value)">
-            <div class="fader-lbl">Low</div>
-          </div>
-          <div class="fader-col">
-            <div class="fader-val" id="eqMidVal">0</div>
-            <input type="range" class="vfader" id="eqMidFader" min="-12" max="12" step="0.5" value="0" oninput="setEQ('mid',this.value)">
-            <div class="fader-lbl">Mid</div>
-          </div>
-          <div class="fader-col">
-            <div class="fader-val" id="eqHighVal">0</div>
-            <input type="range" class="vfader" id="eqHighFader" min="-12" max="12" step="0.5" value="0" oninput="setEQ('high',this.value)">
-            <div class="fader-lbl">High</div>
-          </div>
-        </div>
-      </div>
-      <div class="chain-arrow">›</div>
-      <div class="chain-block">
-        <div class="chain-label">Comp</div>
-        <button class="comp-btn" id="compBtn" onclick="toggleComp()">OFF</button>
-        <div class="fader-col">
-          <div class="fader-val" id="compThreshVal">-24</div>
-          <input type="range" class="vfader" id="compThreshFader" min="-60" max="0" step="1" value="-24" oninput="setCompThresh(this.value)">
-          <div class="fader-lbl">Thr</div>
-        </div>
-      </div>
-      <div class="chain-arrow">›</div>
-      <div class="chain-block">
-        <div class="chain-label">Gain</div>
-        <div class="fader-col">
-          <div class="fader-val" id="gainFaderVal">1.0×</div>
-          <input type="range" class="vfader" id="gainFader" min="0" max="2" step="0.05" value="1" oninput="setGainFader(this.value)">
-          <div class="fader-lbl">Out</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── 6. Monitor ─────────────────────────────────────────── -->
+  <!-- ── 4. Monitor ─────────────────────────────────────────── -->
   <div class="card">
     <div class="sec-label">Audio Monitor</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -352,50 +234,6 @@
     <button class="btn" style="flex:none;padding:8px 14px;font-size:12px;" onclick="monRefreshOutputs()">Refresh Devices</button>
   </div>
 
-  <!-- ── 6. Athlete Intro ─────────────────────────────────── -->
-  <div>
-    <button class="collapse-btn" onclick="toggleGrid(this)">
-      <span>Athlete Intro</span><span id="gridArrow">▼</span>
-    </button>
-    <div class="collapse-body hidden" id="gridBody">
-
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:12px;color:var(--text2);white-space:nowrap;">Seconds per athlete</span>
-        <input type="range" min="2" max="12" step="1" value="5" id="gridDuration"
-          style="flex:1;accent-color:var(--accent);"
-          oninput="document.getElementById('gridDurVal').textContent=this.value+'s'">
-        <span id="gridDurVal" style="font-size:13px;font-weight:700;color:var(--accent);min-width:28px;">5s</span>
-      </div>
-
-      <div style="padding:12px 14px;background:var(--card2);border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--text2);line-height:1.5;" id="gridPreview">
-        Loading roster…
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-go" id="gridRunBtn" onclick="gridRun()">▶ Run Intro</button>
-        <button class="btn btn-stop" id="gridStopBtn" onclick="gridSendStop()" disabled>Stop</button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ── 7. Schedule ──────────────────────────────────────── -->
-  <div>
-    <button class="collapse-btn" onclick="toggleSchedule(this)">
-      <span>Manage Schedule</span><span id="schedArrow">▼</span>
-    </button>
-    <div class="collapse-body hidden" id="schedBody">
-
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <input class="quick-input" id="newRaceName" placeholder="Race name — e.g. Boys Varsity 1x">
-        <input class="quick-input" id="newRaceSub"  placeholder="Subtitle — e.g. Spring Invitational 2026">
-        <button class="action-btn ghost" style="align-self:flex-start;" onclick="addRace()">+ Add Race</button>
-      </div>
-
-      <div id="schedList" style="display:flex;flex-direction:column;gap:6px;"></div>
-
-    </div>
-  </div>
 
 </div>
 
@@ -428,7 +266,6 @@ let ws;
 let raceSchedule = [];
 let activeRaceIdx = null;
 let currentMode   = null;
-let schedOpen = false;
 
 // ── websocket ─────────────────────────────────────────────────────────
 function wsConnect() {
@@ -448,7 +285,6 @@ function onMsg(msg) {
   if (msg.type === 'state') {
     if (Array.isArray(msg.raceSchedule)) { raceSchedule = msg.raceSchedule; renderSchedule(); }
     if (msg.overlayState) applyServerState(msg.overlayState);
-    if (msg.boats) { boats = msg.boats; renderGridPreview(); }
   }
   if (msg.type === 'race-schedule') { raceSchedule = msg.schedule || []; renderSchedule(); }
 }
@@ -485,27 +321,11 @@ function setModeLocal(mode) {
   });
 }
 
-// ── athlete intro ─────────────────────────────────────────────────────
-function showIntro() {
-  const name = document.getElementById('introName').value.trim();
-  const sub  = document.getElementById('introSub').value.trim();
-  if (!name) { toast('Enter a name', 'err'); return; }
-  send({ type: 'update', element: 'lowerThird', data: { text: name, sub } });
-  send({ type: 'toggle', element: 'lowerThird', active: true });
-  toast('Intro: ' + name, 'ok');
-}
-
-function hideIntro() {
-  send({ type: 'toggle', element: 'lowerThird', active: false });
-}
-
 // ── race schedule ─────────────────────────────────────────────────────
 function renderSchedule() {
   const list = document.getElementById('raceList');
-  const sched = document.getElementById('schedList');
   if (!raceSchedule.length) {
-    list.innerHTML  = '<div class="empty-row">No races in schedule — add below</div>';
-    sched.innerHTML = '<div class="empty-row">No races yet.</div>';
+    list.innerHTML = '<div class="empty-row">No races in schedule</div>';
     return;
   }
   list.innerHTML = raceSchedule.map((r, i) => `
@@ -514,12 +334,6 @@ function renderSchedule() {
         <span>${escAttr(r.name)}</span>
         ${r.sub ? `<span class="race-sub">${escAttr(r.sub)}</span>` : ''}
       </button>
-    </div>
-  `).join('');
-  sched.innerHTML = raceSchedule.map((r, i) => `
-    <div style="display:flex;gap:6px;align-items:center;">
-      <span style="flex:1;font-size:13px;font-weight:600;padding:8px 0;">${escAttr(r.name)}${r.sub ? `<span style="color:var(--text2);font-weight:400;font-size:11px;margin-left:6px;">${escAttr(r.sub)}</span>` : ''}</span>
-      <button class="race-del" onclick="removeRace(${i})">×</button>
     </div>
   `).join('');
 }
@@ -533,30 +347,6 @@ function loadRace(i) {
   send({ type: 'update', element: 'eventHeader', data: { text: race.name, subtitle: race.sub || '' } });
   renderSchedule();
   toast('Loaded: ' + race.name, 'ok');
-}
-
-function addRace() {
-  const name = document.getElementById('newRaceName').value.trim();
-  if (!name) return;
-  raceSchedule.push({ name, sub: document.getElementById('newRaceSub').value.trim() });
-  send({ type: 'race-schedule-save', schedule: raceSchedule });
-  document.getElementById('newRaceName').value = '';
-  document.getElementById('newRaceSub').value  = '';
-  renderSchedule();
-}
-
-function removeRace(i) {
-  if (activeRaceIdx === i) activeRaceIdx = null;
-  else if (activeRaceIdx > i) activeRaceIdx--;
-  raceSchedule.splice(i, 1);
-  send({ type: 'race-schedule-save', schedule: raceSchedule });
-  renderSchedule();
-}
-
-function toggleSchedule(btn) {
-  schedOpen = !schedOpen;
-  document.getElementById('schedBody').classList.toggle('hidden', !schedOpen);
-  document.getElementById('schedArrow').textContent = schedOpen ? '▲' : '▼';
 }
 
 // ── preview ───────────────────────────────────────────────────────────
@@ -599,14 +389,8 @@ document.addEventListener('keydown', e => {
 
 // ── commentary (on-land broadcast) ───────────────────────────────────
 let comStream = null, comCtx = null, comSource = null, comAnalyser = null;
-let comEqLow = null, comEqMid = null, comEqHigh = null, comComp = null;
-let comGain = null, comDest = null, comRecorder = null, comMeterRaf = null;
+let comDest = null, comRecorder = null, comMeterRaf = null;
 let comMicId = '', comLive = false;
-
-// Audio chain state (persists across restarts)
-let chainEqLow = 0, chainEqMid = 0, chainEqHigh = 0;
-let chainCompOn = false, chainCompThresh = -24;
-let chainGain = 1.0;
 
 async function comRefreshMics() {
   try {
@@ -633,27 +417,10 @@ async function comStart() {
     comCtx      = new (window.AudioContext || window.webkitAudioContext)();
     comSource   = comCtx.createMediaStreamSource(comStream);
     comAnalyser = comCtx.createAnalyser(); comAnalyser.fftSize = 256;
-
-    comEqLow = comCtx.createBiquadFilter();
-    comEqLow.type = 'lowshelf'; comEqLow.frequency.value = 120; comEqLow.gain.value = chainEqLow;
-    comEqMid = comCtx.createBiquadFilter();
-    comEqMid.type = 'peaking'; comEqMid.frequency.value = 1800; comEqMid.Q.value = 1.2; comEqMid.gain.value = chainEqMid;
-    comEqHigh = comCtx.createBiquadFilter();
-    comEqHigh.type = 'highshelf'; comEqHigh.frequency.value = 6000; comEqHigh.gain.value = chainEqHigh;
-
-    comComp = comCtx.createDynamicsCompressor();
-    applyCompSettings();
-
-    comGain = comCtx.createGain(); comGain.gain.value = chainGain;
-    comDest = comCtx.createMediaStreamDestination();
+    comDest     = comCtx.createMediaStreamDestination();
 
     comSource.connect(comAnalyser);
-    comSource.connect(comEqLow);
-    comEqLow.connect(comEqMid);
-    comEqMid.connect(comEqHigh);
-    comEqHigh.connect(comComp);
-    comComp.connect(comGain);
-    comGain.connect(comDest);
+    comSource.connect(comDest);
 
     const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4']
       .find(t => MediaRecorder.isTypeSupported(t));
@@ -686,8 +453,7 @@ function comStop() {
   comStream?.getTracks().forEach(t => t.stop());
   comStream = null;
   if (comCtx) comCtx.close().catch(() => {});
-  comCtx = comSource = comAnalyser = null;
-  comEqLow = comEqMid = comEqHigh = comComp = comGain = comDest = null;
+  comCtx = comSource = comAnalyser = comDest = null;
   comLive = false;
   comSetStatus('idle');
   comStopMeter();
@@ -731,52 +497,6 @@ function comStopMeter() {
   if (comMeterRaf) { cancelAnimationFrame(comMeterRaf); comMeterRaf = null; }
   document.getElementById('comMeter').style.width = '0%';
   document.getElementById('comLevel').textContent = '0%';
-}
-
-// ── audio chain controls ──────────────────────────────────────────────
-function setEQ(band, raw) {
-  const v = parseFloat(raw);
-  const label = (v > 0 ? '+' : '') + v;
-  if (band === 'low')  { chainEqLow  = v; if (comEqLow)  comEqLow.gain.value  = v; document.getElementById('eqLowVal').textContent  = label; }
-  if (band === 'mid')  { chainEqMid  = v; if (comEqMid)  comEqMid.gain.value  = v; document.getElementById('eqMidVal').textContent  = label; }
-  if (band === 'high') { chainEqHigh = v; if (comEqHigh) comEqHigh.gain.value = v; document.getElementById('eqHighVal').textContent = label; }
-}
-
-function setGainFader(raw) {
-  chainGain = parseFloat(raw);
-  if (comGain) comGain.gain.value = chainGain;
-  document.getElementById('gainFaderVal').textContent = chainGain.toFixed(2) + '×';
-}
-
-function setCompThresh(raw) {
-  chainCompThresh = parseInt(raw);
-  document.getElementById('compThreshVal').textContent = chainCompThresh + 'dB';
-  applyCompSettings();
-}
-
-function toggleComp() {
-  chainCompOn = !chainCompOn;
-  const btn = document.getElementById('compBtn');
-  btn.textContent = chainCompOn ? 'ON' : 'OFF';
-  btn.className   = 'comp-btn' + (chainCompOn ? ' on' : '');
-  applyCompSettings();
-}
-
-function applyCompSettings() {
-  if (!comComp) return;
-  if (chainCompOn) {
-    comComp.threshold.value = chainCompThresh;
-    comComp.knee.value      = 8;
-    comComp.ratio.value     = 4;
-    comComp.attack.value    = 0.003;
-    comComp.release.value   = 0.25;
-  } else {
-    comComp.threshold.value = 0;
-    comComp.knee.value      = 0;
-    comComp.ratio.value     = 1;
-    comComp.attack.value    = 0;
-    comComp.release.value   = 0;
-  }
 }
 
 // ── audio monitor ─────────────────────────────────────────────────────
@@ -931,71 +651,6 @@ function monSetStatus(s) {
   text.textContent = msg;
 }
 
-// ── pre-race grid ─────────────────────────────────────────────────────
-// ── athlete intro ─────────────────────────────────────────────────────
-let boats = {};
-let gridOpen = false;
-
-function toggleGrid(btn) {
-  gridOpen = !gridOpen;
-  document.getElementById('gridBody').classList.toggle('hidden', !gridOpen);
-  document.getElementById('gridArrow').textContent = gridOpen ? '▲' : '▼';
-}
-
-const BOAT_ORDER = [
-  ['girls-jv-2',      6], ['girls-jv-1',      5],
-  ['girls-varsity-4', 4], ['girls-varsity-3',  3],
-  ['girls-varsity-2', 2], ['girls-varsity-1',  1],
-  ['boys-jv-2',       6], ['boys-jv-1',        5],
-  ['boys-varsity-4',  4], ['boys-varsity-3',   3],
-  ['boys-varsity-2',  2], ['boys-varsity-1',   1],
-];
-
-function buildAthleteGrid() {
-  const entries = [];
-  BOAT_ORDER.forEach(([id, num]) => {
-    const boat = boats[id];
-    if (!boat || !boat.athletes?.length) return;
-    boat.athletes.forEach(athlete => {
-      if (!athlete.name) return;
-      entries.push({
-        laneLabel: 'BOAT',
-        lane: String(num),
-        name: athlete.name,
-        school: (athlete.seat ? athlete.seat + ' · ' : '') + (boat.name || id),
-        image: athlete.photoPath || ''
-      });
-    });
-  });
-  return entries;
-}
-
-function renderGridPreview() {
-  const entries = buildAthleteGrid();
-  const el = document.getElementById('gridPreview');
-  if (!el) return;
-  el.innerHTML = entries.length > 0
-    ? entries.length + ' athletes · Girls 6→1 then Boys 6→1'
-    : 'No athletes in roster — add them in <a href="/setup.html" style="color:var(--accent);text-decoration:none;">Setup → Boats</a>';
-}
-
-function gridRun() {
-  const entries = buildAthleteGrid();
-  if (!entries.length) { toast('No athletes in roster', 'err'); return; }
-  const duration = parseInt(document.getElementById('gridDuration').value) * 1000;
-  send({ type: 'grid-start', entries, duration });
-  document.getElementById('gridRunBtn').disabled = true;
-  document.getElementById('gridStopBtn').disabled = false;
-  toast('Running ' + entries.length + ' athletes', 'ok');
-}
-
-function gridSendStop() {
-  send({ type: 'grid-stop' });
-  document.getElementById('gridRunBtn').disabled = false;
-  document.getElementById('gridStopBtn').disabled = true;
-}
-
-renderGridPreview();
 renderSchedule();
 wsConnect();
 monConnect();
