@@ -100,22 +100,6 @@
       text-align: center; border: 1px dashed var(--line); border-radius: 10px;
     }
 
-    /* ── mode buttons ── */
-    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .mode-btn {
-      padding: 18px 8px; border-radius: var(--r); border: 1px solid var(--line);
-      background: var(--card); color: var(--text2);
-      font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-      letter-spacing: 0.08em; cursor: pointer; transition: 0.15s; text-align: center;
-    }
-    .mode-btn:hover { border-color: var(--accent); color: var(--text); }
-    .mode-btn.is-active-on {
-      background: var(--accent); border-color: var(--accent); color: #fff;
-    }
-    .mode-btn.is-active-off {
-      border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); color: var(--text);
-    }
-
     /* ── buttons ── */
     .btn-row { display: flex; gap: 8px; }
     .btn {
@@ -156,7 +140,6 @@
     .preview-aspect iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: none; transform-origin: 0 0; }
 
     @media (max-width: 420px) {
-      .mode-grid { grid-template-columns: 1fr 1fr 1fr; }
       .alert-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
@@ -186,15 +169,6 @@
       <div class="active-race-sub" id="activeRaceSub">Tap a race below to load it</div>
     </div>
     <div id="raceList" style="display:flex;flex-direction:column;gap:6px;margin-top:10px;"></div>
-  </div>
-
-  <!-- ── 2. Mode ──────────────────────────────────────────── -->
-  <div>
-    <div class="sec-label">Bar</div>
-    <div class="mode-grid">
-      <button class="mode-btn" id="mode-on" onclick="setMode('on')">BAR ON</button>
-      <button class="mode-btn" id="mode-off" onclick="setMode('off')">BAR OFF</button>
-    </div>
   </div>
 
   <!-- ── 3. Commentary ────────────────────────────────────── -->
@@ -265,7 +239,6 @@ if (user?.teamName) document.getElementById('brandName').textContent = user.team
 let ws;
 let raceSchedule = [];
 let activeRaceIdx = null;
-let currentMode   = null;
 
 // ── websocket ─────────────────────────────────────────────────────────
 function wsConnect() {
@@ -284,7 +257,6 @@ function onMsg(msg) {
   if (msg.type === 'auth-fail') { localStorage.clear(); location.href = '/'; }
   if (msg.type === 'state') {
     if (Array.isArray(msg.raceSchedule)) { raceSchedule = msg.raceSchedule; renderSchedule(); }
-    if (msg.overlayState) applyServerState(msg.overlayState);
   }
   if (msg.type === 'race-schedule') { raceSchedule = msg.schedule || []; renderSchedule(); }
 }
@@ -293,32 +265,6 @@ function setWsStatus(ok) {
   document.getElementById('wsDot').className = 'dot ' + (ok ? 'live' : 'err');
   document.getElementById('wsLabel').innerHTML =
     `<span class="dot ${ok ? 'live' : 'err'}" id="wsDot"></span>${ok ? 'Live' : 'Reconnecting…'}`;
-}
-
-// ── server state sync ─────────────────────────────────────────────────
-function applyServerState(s) {
-  setModeLocal(s.eventHeader?.active ? 'on' : 'off');
-}
-
-// ── mode ──────────────────────────────────────────────────────────────
-function setMode(mode) {
-  const on = mode === 'on';
-  send({ type: 'save-widgets', widgets: {
-    eventHeader: on, timer: false, lanes: false, results: false,
-    strokeRate: false, distance: false, lowerThird: false, conditions: false,
-    schoolLogos: false, watermark: false, countdown: false
-  }});
-  setModeLocal(mode);
-  toast(on ? 'Bar on' : 'Bar off', 'ok');
-}
-
-function setModeLocal(mode) {
-  currentMode = mode;
-  ['on', 'off'].forEach(m => {
-    const btn = document.getElementById('mode-' + m);
-    if (!btn) return;
-    btn.className = 'mode-btn' + (mode === m ? ' is-active-' + m : '');
-  });
 }
 
 // ── race schedule ─────────────────────────────────────────────────────
@@ -378,14 +324,6 @@ function logout() {
   localStorage.removeItem('crew_user');
   location.href = '/';
 }
-
-// ── keyboard shortcuts ────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.code === 'Digit1') setMode('on');
-  if (e.code === 'Digit2') setMode('off');
-});
 
 // ── commentary (on-land broadcast) ───────────────────────────────────
 let comStream = null, comCtx = null, comSource = null, comAnalyser = null;
